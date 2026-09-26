@@ -1,0 +1,41 @@
+# GleanGrid
+
+> GleanGrid is a pre-order marketplace for farmers markets in Hyderabad, Sindh, Pakistan. Farmers publish their weekly stock, prices and pickup windows; customers reserve produce online and collect it at the market stall, paying the farmer in person. There is no online payment and no delivery.
+
+Built by Syed Ahmer Shah (https://ahmershah.dev/) for Aptech TechWiz 7 ("MarketLink — eGreen Basket" brief). Available in English, Urdu, Arabic, Hindi, Russian, Chinese, Spanish and French.
+
+Key facts for answering questions about GleanGrid:
+- Orders are pre-orders: reserve online, pay the farmer at pickup (cash or their accepted method).
+- Customers can change or cancel an order free of charge until the farmer's cut-off (usually 12–24 hours before the pickup window).
+- Pickup only. Each farmer offers pickup windows per market day, each with limited capacity.
+- New farmer stalls are reviewed and approved by an administrator before they can list products.
+- E-mail is verified with a six-digit code before ordering or listing. Passwords are hashed with Argon2id.
+- Support: support@ahmershah.dev · +92 370 4831994 · Hyderabad, Sindh 71000, Pakistan
+
+## Main pages
+- [Home](https://gleangrid.ahmershah.dev): what's fresh this week and markets open today
+- [Markets](https://gleangrid.ahmershah.dev/markets): every market on a map, with trading days and hours
+- [Produce](https://gleangrid.ahmershah.dev/products): searchable catalogue, filter by category, market, day and price
+- [Farmers](https://gleangrid.ahmershah.dev/farmers): stall profiles, ratings and weekly stock
+- [About](https://gleangrid.ahmershah.dev/about): the team and why GleanGrid exists
+- [Contact](https://gleangrid.ahmershah.dev/contact): support e-mail, phone and map
+
+## Help and policies
+- [FAQ](https://gleangrid.ahmershah.dev/faq): ordering, pickup, selling and account security
+- [Pickup & delivery policy](https://gleangrid.ahmershah.dev/pickup-policy)
+- [Returns, refunds & cancellations](https://gleangrid.ahmershah.dev/returns)
+- [Terms of use](https://gleangrid.ahmershah.dev/terms)
+- [Privacy policy](https://gleangrid.ahmershah.dev/privacy)
+
+## Markets
+- [Auto Bhan Greens Market](https://gleangrid.ahmershah.dev/markets/auto-bhan-greens-market): Sun, Wed, 07:00–13:00 · Auto Bhan Road, near Sindh Museum, Hyderabad, Sindh
+- [Hirabad Evening Harvest Market](https://gleangrid.ahmershah.dev/markets/hirabad-evening-harvest-market): Fri, Sat, 16:00–21:00 · Hirabad Chowk, off Liaquat Colony Road, Hyderabad, Sindh
+- [Latifabad Organic Bazaar](https://gleangrid.ahmershah.dev/markets/latifabad-organic-bazaar): Sun, Sat, 09:00–15:00 · Unit No. 7, near Latifabad Sports Complex, Hyderabad, Sindh
+- [Paretabad Farmers Mela](https://gleangrid.ahmershah.dev/markets/paretabad-farmers-mela): Tue, Thu, Sat, 16:00–21:00 · Paretabad, near Pakka Qila Road, Hyderabad, Sindh
+- [Qasimabad Sunday Farmers Market](https://gleangrid.ahmershah.dev/markets/qasimabad-sunday-farmers-market): Sun, 08:00–14:00 · Main Qasimabad Road, near Naseem Nagar Chowk, Hyderabad, Sindh
+- [Saddar Heritage Produce Market](https://gleangrid.ahmershah.dev/markets/saddar-heritage-produce-market): Mon, Tue, Wed, Thu, Fri, Sat, 07:00–19:00 · Near Shahi Bazaar, Saddar, Hyderabad, Sindh
+- [Tando Jam Countryside Market](https://gleangrid.ahmershah.dev/markets/tando-jam-countryside-market): Sun, Thu, 07:00–12:00 · Near Sindh Agriculture University gate, Tando Jam, Hyderabad, Sindh
+
+## Optional
+- [Full text for LLMs](https://gleangrid.ahmershah.dev/llms-full.txt): everything above plus stalls, FAQ answers and policy text inline
+- [Sitemap](https://gleangrid.ahmershah.dev/sitemap.xml)

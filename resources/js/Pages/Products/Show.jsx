@@ -1,0 +1,161 @@
+import { Link, usePage } from '@inertiajs/react';
+import { motion } from 'motion/react';
+import { Leaf, MapPin, Package, ShoppingBasket, Star, Store, Timer } from 'lucide-react';
+import { useState } from 'react';
+import { ProductCard } from '@/Components/Cards';
+import { SplitWords } from '@/Components/motion';
+import { Button, StatusBadge } from '@/Components/ui';
+import { FavoriteButton, QtyStepper, toast } from '@/Components/widgets';
+import { ReviewList } from '@/Pages/Farmers/Show';
+import { cart, useCart } from '@/lib/cart';
+import { fly } from '@/lib/fly';
+import { useFormat, useT } from '@/lib/i18n';
+
+export default function ProductShow({ product, reviews, related, moreFromFarmer }) {
+    const t = useT();
+    const { money } = useFormat();
+    const { auth } = usePage().props;
+    const { quantityOf } = useCart();
+    const [qty, setQty] = useState(1);
+    const inCart = quantityOf(product.id);
+    const orderable = product.status === 'available' && product.stock_quantity > 0;
+    const canBuy = !auth.user || auth.user.role === 'customer';
+    const color = product.category?.color ?? '#C9E265';
+
+    const add = (e) => {
+        fly(e.currentTarget, 'cart', { image: product.image_url });
+        cart.add(product, qty);
+        toast('cart.added');
+    };
+
+    return (
+        <>
+            <section className="mx-auto max-w-[1400px] px-5 pt-6 sm:px-8">
+
+                <div className="grid gap-10 lg:grid-cols-2">
+                    <motion.div
+                        initial={{ clipPath: 'inset(12% 12% 12% 12% round 48px)' }}
+                        animate={{ clipPath: 'inset(0% 0% 0% 0% round 40px)' }}
+                        transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+                        className="relative flex aspect-square items-center justify-center overflow-hidden rounded-[40px]"
+                        style={{ background: `color-mix(in oklab, ${color} 35%, var(--bg-sunk))` }}
+                    >
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_55%,rgb(255_255_255/0.6),transparent_55%)] dark:opacity-20" />
+                        <div className="font-display absolute start-6 top-4 text-[9rem] leading-none font-light text-ink/[0.06] select-none md:text-[12rem]" aria-hidden="true">
+                            {product.name.split(' ').pop()}
+                        </div>
+                        <motion.img
+                            src={product.image_url}
+                            alt={product.name}
+                            initial={{ scale: 0.6, rotate: -20, opacity: 0 }}
+                            animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                            transition={{ delay: 0.3, type: 'spring', stiffness: 80, damping: 12 }}
+                            className={product.image_url?.includes('/produce/') ? 'relative w-3/5 animate-float drop-shadow-[0_40px_40px_rgba(0,0,0,0.25)]' : 'relative h-full w-full object-cover'}
+                        />
+                        <FavoriteButton type="product" id={product.id} className="absolute end-5 top-5" />
+                    </motion.div>
+
+                    <div className="flex flex-col">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <StatusBadge status={orderable ? 'available' : product.status === 'unavailable' ? 'unavailable' : 'sold_out'} kind="product" />
+                            {product.rating_count > 0 && (
+                                <span className="inline-flex items-center gap-1 text-sm text-ink-soft">
+                                    <Star className="size-4 fill-sun text-sun" /> {product.rating_avg.toFixed(1)} ({product.rating_count})
+                                </span>
+                            )}
+                        </div>
+                        <h1 className="font-display mt-4 text-5xl leading-[0.95] font-light md:text-7xl">
+                            <SplitWords text={product.name} immediate />
+                        </h1>
+                        <p className="mt-6 flex items-baseline gap-2">
+                            <span className="font-display text-5xl font-medium tabular-nums">{money(product.price)}</span>
+                            <span className="text-lg text-ink-faint">/ {t(`units.${product.unit}`)}</span>
+                        </p>
+                        {product.description && <p className="mt-6 max-w-lg text-lg text-ink-soft">{product.description}</p>}
+
+                        {canBuy && (
+                            <div className="mt-8 flex flex-wrap items-center gap-3">
+                                {orderable ? (
+                                    <>
+                                        <QtyStepper value={qty} min={1} max={Math.max(1, product.stock_quantity - inCart)} onChange={setQty} />
+                                        <Button size="lg" onClick={add} disabled={inCart >= product.stock_quantity}>
+                                            <ShoppingBasket className="size-5" /> {t('product.add_qty', { qty })}
+                                        </Button>
+                                        {inCart > 0 && (
+                                            <Link href={route('cart')} className="text-sm font-medium text-brand underline">
+                                                {t('product.in_basket', { count: inCart })}
+                                            </Link>
+                                        )}
+                                    </>
+                                ) : (
+                                    <p className="rounded-2xl bg-accent/10 px-4 py-3 text-sm text-accent">{t('product.sold_out_hint')}</p>
+                                )}
+                            </div>
+                        )}
+
+                        <dl className="mt-10 grid grid-cols-2 gap-3 text-sm">
+                            <div className="rounded-3xl border border-line bg-elev p-4">
+                                <dt className="flex items-center gap-1.5 text-ink-soft">
+                                    <Package className="size-4" /> {t('product.available_qty')}
+                                </dt>
+                                <dd className="font-display mt-1 text-2xl">
+                                    {product.stock_quantity} <span className="text-base text-ink-faint">{t(`units.${product.unit}`)}</span>
+                                </dd>
+                            </div>
+                            <div className="rounded-3xl border border-line bg-elev p-4">
+                                <dt className="flex items-center gap-1.5 text-ink-soft">
+                                    <Timer className="size-4" /> {t('product.cutoff')}
+                                </dt>
+                                <dd className="font-display mt-1 text-2xl">{t('product.hours_before', { hours: product.farmer.order_cutoff_hours })}</dd>
+                            </div>
+                        </dl>
+
+                        <Link href={route('farmers.show', product.farmer.slug)} className="group mt-3 flex items-center gap-4 rounded-3xl border border-line bg-elev p-4 transition hover:border-line-strong">
+                            {product.farmer.logo_url && <img src={product.farmer.logo_url} alt="" className="size-14 object-contain" />}
+                            <span className="min-w-0 flex-1">
+                                <span className="flex items-center gap-1.5 text-xs text-ink-faint">
+                                    <Store className="size-3.5" /> {t('product.grown_by')}
+                                </span>
+                                <span className="font-display block text-xl group-hover:underline">{product.farmer.stall_name}</span>
+                                <span className="flex flex-wrap items-center gap-1 text-xs text-ink-soft">
+                                    <MapPin className="size-3" /> {product.farmer.markets.map((m) => m.name).join(' · ')}
+                                </span>
+                            </span>
+                        </Link>
+                        <p className="mt-4 flex items-center gap-2 text-xs text-ink-faint">
+                            <Leaf className="size-3.5" /> {t('product.pay_at_pickup')}
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <section className="mx-auto mt-24 grid max-w-[1400px] gap-10 px-5 sm:px-8 lg:grid-cols-[1fr_1fr]">
+                <div>
+                    <h2 className="font-display mb-6 text-4xl font-light">{t('reviews.title')}</h2>
+                    <ReviewList reviews={reviews} />
+                </div>
+                {moreFromFarmer.length > 0 && (
+                    <div>
+                        <h2 className="font-display mb-6 text-4xl font-light">{t('product.more_from', { farmer: product.farmer.stall_name })}</h2>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            {moreFromFarmer.map((p) => (
+                                <ProductCard key={p.id} product={{ ...p, farmer: product.farmer }} />
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </section>
+
+            {related.length > 0 && (
+                <section className="mx-auto mt-24 max-w-[1400px] px-5 sm:px-8">
+                    <h2 className="font-display mb-6 text-4xl font-light">{t('product.related')}</h2>
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        {related.map((p) => (
+                            <ProductCard key={p.id} product={p} />
+                        ))}
+                    </div>
+                </section>
+            )}
+        </>
+    );
+}

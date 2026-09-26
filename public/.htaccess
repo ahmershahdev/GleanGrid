@@ -1,0 +1,131 @@
+# GleanGrid — Apache configuration for the public web root.
+# Works on shared hosting and XAMPP; every block is guarded by <IfModule>
+# so a missing module never breaks the site.
+
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+
+    # Force HTTPS in production (skipped for localhost / 127.0.0.1).
+    RewriteCond %{HTTPS} off
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)(:\d+)?$ [NC]
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Canonical host: drop "www." so there's one URL per page (good for SEO).
+    RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+    RewriteRule ^ https://%1%{REQUEST_URI} [L,R=301]
+
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Handle X-XSRF-Token Header
+    RewriteCond %{HTTP:x-xsrf-token} .
+    RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
+
+    # Serve Vite's pre-compressed build files: Brotli first, then gzip.
+    RewriteCond %{HTTP:Accept-Encoding} br
+    RewriteCond %{REQUEST_URI} /build/
+    RewriteCond %{REQUEST_FILENAME}.br -f
+    RewriteRule ^(.+)$ $1.br [L]
+
+    RewriteCond %{HTTP:Accept-Encoding} gzip
+    RewriteCond %{REQUEST_URI} /build/
+    RewriteCond %{REQUEST_FILENAME}.gz -f
+    RewriteRule ^(.+)$ $1.gz [L]
+
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Send Requests To Front Controller...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Pre-compressed files keep their real content type, advertise their encoding,
+# and are never compressed a second time.
+<FilesMatch "\.js\.br$">
+    ForceType application/javascript
+</FilesMatch>
+<FilesMatch "\.css\.br$">
+    ForceType text/css
+</FilesMatch>
+<FilesMatch "\.js\.gz$">
+    ForceType application/javascript
+</FilesMatch>
+<FilesMatch "\.css\.gz$">
+    ForceType text/css
+</FilesMatch>
+<IfModule mod_headers.c>
+    <FilesMatch "\.br$">
+        Header set Content-Encoding br
+        Header append Vary Accept-Encoding
+    </FilesMatch>
+    <FilesMatch "\.gz$">
+        Header set Content-Encoding gzip
+        Header append Vary Accept-Encoding
+    </FilesMatch>
+</IfModule>
+<IfModule mod_setenvif.c>
+    SetEnvIf Request_URI "\.(br|gz)$" no-gzip no-brotli
+</IfModule>
+
+# On-the-fly compression for everything else (HTML, JSON, SVG, fonts…).
+<IfModule mod_brotli.c>
+    AddOutputFilterByType BROTLI_COMPRESS text/html text/plain text/css text/xml application/javascript application/json application/xml application/rss+xml image/svg+xml application/manifest+json font/ttf font/otf
+</IfModule>
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml application/javascript application/json application/xml application/rss+xml image/svg+xml application/manifest+json font/ttf font/otf
+</IfModule>
+
+# Correct types for modern assets.
+<IfModule mod_mime.c>
+    AddType image/webp .webp
+    AddType image/avif .avif
+    AddType font/woff2 .woff2
+    AddType application/manifest+json .webmanifest
+    AddType text/plain .txt
+</IfModule>
+
+# Caching: Vite files are content-hashed, so they can be cached "forever";
+# images and icons for a month; HTML is always revalidated (Laravel sets it).
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresDefault "access plus 0 seconds"
+    ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType image/x-icon "access plus 1 month"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType application/manifest+json "access plus 1 week"
+</IfModule>
+<IfModule mod_headers.c>
+    <If "%{REQUEST_URI} =~ m#/build/assets/#">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </If>
+
+    # Hardening for files Apache serves directly (Laravel adds these to pages itself).
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header unset X-Powered-By
+    Header unset Server
+</IfModule>
+
+# Never serve dotfiles (.env, .git …) or backup/source files if they ever land here.
+<FilesMatch "^\.|\.(env|log|sql|bak|ini|sh|lock)$">
+    Require all denied
+</FilesMatch>
+<Files "llms.txt">
+    Require all granted
+</Files>
+<Files "llms-full.txt">
+    Require all granted
+</Files>

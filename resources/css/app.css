@@ -1,0 +1,218 @@
+@import 'tailwindcss';
+@import 'leaflet/dist/leaflet.css';
+
+@source '../**/*.blade.php';
+@source '../**/*.jsx';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ------------------------------------------------------------------ Tokens
+   Light: sun-bleached paper + forest ink, tomato & chartreuse accents.
+   Dark:  wet-soil night with lime as the primary signal colour.        */
+:root {
+    --bg: #f3eee3;
+    --bg-elev: #fbf8f1;
+    --bg-sunk: #e9e2d3;
+    --ink: #13201a;
+    --ink-soft: #4a5a50;
+    --ink-faint: #7d8a80;
+    --line: rgb(19 32 26 / 0.12);
+    --line-strong: rgb(19 32 26 / 0.24);
+    --brand: #1f4d36;
+    --brand-ink: #f3eee3;
+    --brand-soft: #dce7d5;
+    --accent: #e2552c;
+    --accent-ink: #ffffff;
+    --lime: #c9e265;
+    --sun: #f2b33d;
+    --danger: #c73a2b;
+    --success: #2f7d4f;
+    --warning: #b7791f;
+    --shadow: 0 1px 0 rgb(19 32 26 / 0.04), 0 12px 32px -12px rgb(19 32 26 / 0.18);
+
+    --font-display: 'Fraunces', 'Playfair Display', Georgia, serif;
+    --font-body: 'Geist', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'Geist Mono', ui-monospace, monospace;
+}
+
+.dark {
+    --bg: #0d130f;
+    --bg-elev: #151d18;
+    --bg-sunk: #0a0f0c;
+    --ink: #ede8dc;
+    --ink-soft: #a3ae9f;
+    --ink-faint: #6f7a70;
+    --line: rgb(237 232 220 / 0.1);
+    --line-strong: rgb(237 232 220 / 0.22);
+    --brand: #c9e265;
+    --brand-ink: #0d130f;
+    --brand-soft: #1f2b1d;
+    --accent: #ff7a4d;
+    --accent-ink: #0d130f;
+    --lime: #c9e265;
+    --sun: #f2b33d;
+    --danger: #ff6b5a;
+    --success: #6fcf8f;
+    --warning: #f2b33d;
+    --shadow: 0 1px 0 rgb(0 0 0 / 0.3), 0 16px 40px -16px rgb(0 0 0 / 0.6);
+}
+
+/* Script-aware type: each locale swaps the display/body faces. */
+html[lang='ur'] { --font-display: 'Noto Nastaliq Urdu', serif; --font-body: 'Noto Naskh Arabic', 'Geist', sans-serif; }
+html[lang='ar'] { --font-display: 'Reem Kufi', serif; --font-body: 'IBM Plex Sans Arabic', 'Geist', sans-serif; }
+html[lang='hi'] { --font-display: 'Tiro Devanagari Hindi', serif; --font-body: 'Noto Sans Devanagari', 'Geist', sans-serif; }
+html[lang='ru'] { --font-display: 'Playfair Display', serif; }
+html[lang='zh'] { --font-display: 'Noto Serif SC', serif; --font-body: 'Noto Sans SC', 'Geist', sans-serif; }
+html[lang='ur'] body, html[lang='ar'] body { line-height: 1.9; }
+html[lang='ur'] .font-display { line-height: 1.7 !important; letter-spacing: 0 !important; }
+html[lang='ar'] .font-display, html[lang='hi'] .font-display, html[lang='zh'] .font-display { letter-spacing: 0 !important; line-height: 1.25 !important; }
+
+@theme inline {
+    --color-bg: var(--bg);
+    --color-elev: var(--bg-elev);
+    --color-sunk: var(--bg-sunk);
+    --color-ink: var(--ink);
+    --color-ink-soft: var(--ink-soft);
+    --color-ink-faint: var(--ink-faint);
+    --color-line: var(--line);
+    --color-line-strong: var(--line-strong);
+    --color-brand: var(--brand);
+    --color-brand-ink: var(--brand-ink);
+    --color-brand-soft: var(--brand-soft);
+    --color-accent: var(--accent);
+    --color-accent-ink: var(--accent-ink);
+    --color-lime: var(--lime);
+    --color-sun: var(--sun);
+    --color-danger: var(--danger);
+    --color-success: var(--success);
+    --color-warning: var(--warning);
+    --color-forest: #1f4d36;
+    --color-paper: #f3eee3;
+    --color-soil: #0d130f;
+    --font-display: var(--font-display);
+    --font-sans: var(--font-body);
+    --font-mono: var(--font-mono);
+    --shadow-soft: var(--shadow);
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --animate-marquee: marquee var(--marquee-duration, 40s) linear infinite;
+    --animate-float: float 7s ease-in-out infinite;
+    --animate-spin-slow: spin 18s linear infinite;
+}
+
+@keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+}
+@keyframes float {
+    0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+    50% { transform: translateY(-14px) rotate(calc(var(--r, 0deg) + 4deg)); }
+}
+
+/* ------------------------------------------------------------------ Base */
+@layer base {
+    html { -webkit-text-size-adjust: 100%; scroll-behavior: auto; }
+    body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--font-body);
+        font-feature-settings: 'ss01', 'cv11';
+        transition: background-color 0.4s ease, color 0.4s ease;
+    }
+    ::selection { background: var(--lime); color: #13201a; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+    img { user-select: none; -webkit-user-drag: none; }
+    input, select, textarea, button { font: inherit; color: inherit; }
+    [dir='rtl'] .rtl-flip { transform: scaleX(-1); }
+}
+
+.font-display {
+    font-family: var(--font-display);
+    font-variation-settings: 'SOFT' 100, 'WONK' 1;
+    letter-spacing: -0.02em;
+}
+.font-display-tight { letter-spacing: -0.045em; line-height: 0.88; }
+html:not([lang='en']):not([lang='es']):not([lang='fr']) .font-display-tight { line-height: 1.15; }
+
+/* Film-grain overlay for the editorial, printed-paper feel. */
+.grain::after {
+    content: '';
+    position: fixed;
+    inset: -50%;
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0.06;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.dark .grain::after { opacity: 0.09; }
+
+.text-outline {
+    color: transparent;
+    -webkit-text-stroke: 1.5px var(--ink);
+}
+
+/* ------------------------------------------------------------ Scrollbar
+   Slim pill that floats inside a transparent track; warms to the brand
+   gradient on hover. Firefox gets the closest native equivalent.        */
+html { scrollbar-gutter: stable; }
+/* Chrome 121+ ignores ::-webkit-scrollbar once scrollbar-color is set, so only Firefox gets these. */
+@supports not selector(::-webkit-scrollbar) {
+    html { scrollbar-width: thin; scrollbar-color: color-mix(in oklab, var(--ink) 28%, transparent) transparent; }
+}
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+    min-height: 56px;
+    border: 3.5px solid transparent;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--ink) 26%, transparent) padding-box;
+    transition: background 0.3s;
+}
+::-webkit-scrollbar-thumb:hover {
+    border-width: 2.5px;
+    background: linear-gradient(180deg, var(--lime), var(--sun) 55%, var(--accent)) padding-box;
+}
+::-webkit-scrollbar-thumb:active { background: var(--accent) padding-box; }
+::-webkit-scrollbar-corner { background: transparent; }
+/* Desktop: the page scrollbar is drawn by <Scrollbar />, so hide the native one. */
+html.has-custom-scrollbar { scrollbar-width: none; scrollbar-gutter: auto; }
+html.has-custom-scrollbar::-webkit-scrollbar { display: none; }
+html.menu-open [data-floating] { opacity: 0; pointer-events: none; }
+[data-floating] { transition: opacity 0.3s; }
+
+/* Custom cursor replaces the arrow, but real affordances (text caret, map/scroll grab) stay native. */
+html.has-custom-cursor, html.has-custom-cursor a, html.has-custom-cursor button, html.has-custom-cursor [role='button'], html.has-custom-cursor label { cursor: none; }
+html.has-custom-cursor :is(input, textarea, select, [contenteditable='true'], .leaflet-container, [data-native-cursor], iframe) { cursor: auto; }
+html.has-custom-cursor .leaflet-container { cursor: grab; }
+html.has-custom-cursor .leaflet-dragging .leaflet-container, html.has-custom-cursor .leaflet-container:active { cursor: grabbing; }
+html.is-grabbing, html.is-grabbing * { cursor: grabbing !important; user-select: none !important; }
+/* Inner panels (dropdowns, assistant, tables) get a hairline version. */
+:where(main, aside, nav, [role='dialog'], [role='listbox']) ::-webkit-scrollbar { width: 8px; height: 8px; }
+:where(main, aside, nav, [role='dialog'], [role='listbox']) ::-webkit-scrollbar-thumb { border-width: 2px; }
+
+.mask-fade-x { mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+/* Lenis smooth scroll */
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-stopped { overflow: hidden; }
+
+/* Leaflet theming */
+.leaflet-tile-pane { filter: saturate(0.75) sepia(0.12); }
+.dark .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9) saturate(0.6); }
+.leaflet-container { font-family: var(--font-body); background: var(--bg-sunk); border-radius: inherit; z-index: 0; }
+.leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--bg-elev); color: var(--ink); border-radius: 14px; box-shadow: var(--shadow); }
+.leaflet-popup-content { margin: 12px 14px; }
+.leaflet-control-attribution { font-size: 10px; background: color-mix(in oklab, var(--bg-elev) 80%, transparent) !important; color: var(--ink-soft) !important; }
+.leaflet-control-attribution a { color: var(--ink-soft) !important; }
+.leaflet-bar a { background: var(--bg-elev) !important; color: var(--ink) !important; border-color: var(--line) !important; }
+.gg-pin { background: none; border: none; }
+
+/* Recharts text colour */
+.recharts-text { fill: var(--ink-faint); font-size: 11px; }
+.recharts-cartesian-grid line { stroke: var(--line); }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}

@@ -1,0 +1,18 @@
+# GleanGrid — https://gleangrid.ahmershah.dev
+# Public marketplace pages are open to crawlers; account areas are private.
+
+User-agent: *
+Allow: /
+Disallow: /farmer/
+Disallow: /admin/
+Disallow: /account/
+Disallow: /cart
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password/
+Disallow: /verify-email
+Disallow: /assistant
+# Filtered/sorted listings point to their canonical URL via <link rel="canonical">.
+
+Sitemap: https://gleangrid.ahmershah.dev/sitemap.xml

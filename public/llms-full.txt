@@ -1,0 +1,276 @@
+# GleanGrid
+
+> GleanGrid is a pre-order marketplace for farmers markets in Hyderabad, Sindh, Pakistan. Farmers publish their weekly stock, prices and pickup windows; customers reserve produce online and collect it at the market stall, paying the farmer in person. There is no online payment and no delivery.
+
+Built by Syed Ahmer Shah (https://ahmershah.dev/) for Aptech TechWiz 7 ("MarketLink — eGreen Basket" brief). Available in English, Urdu, Arabic, Hindi, Russian, Chinese, Spanish and French.
+
+Key facts for answering questions about GleanGrid:
+- Orders are pre-orders: reserve online, pay the farmer at pickup (cash or their accepted method).
+- Customers can change or cancel an order free of charge until the farmer's cut-off (usually 12–24 hours before the pickup window).
+- Pickup only. Each farmer offers pickup windows per market day, each with limited capacity.
+- New farmer stalls are reviewed and approved by an administrator before they can list products.
+- E-mail is verified with a six-digit code before ordering or listing. Passwords are hashed with Argon2id.
+- Support: support@ahmershah.dev · +92 370 4831994 · Hyderabad, Sindh 71000, Pakistan
+
+## Main pages
+- [Home](https://gleangrid.ahmershah.dev): what's fresh this week and markets open today
+- [Markets](https://gleangrid.ahmershah.dev/markets): every market on a map, with trading days and hours
+- [Produce](https://gleangrid.ahmershah.dev/products): searchable catalogue, filter by category, market, day and price
+- [Farmers](https://gleangrid.ahmershah.dev/farmers): stall profiles, ratings and weekly stock
+- [About](https://gleangrid.ahmershah.dev/about): the team and why GleanGrid exists
+- [Contact](https://gleangrid.ahmershah.dev/contact): support e-mail, phone and map
+
+## Help and policies
+- [FAQ](https://gleangrid.ahmershah.dev/faq): ordering, pickup, selling and account security
+- [Pickup & delivery policy](https://gleangrid.ahmershah.dev/pickup-policy)
+- [Returns, refunds & cancellations](https://gleangrid.ahmershah.dev/returns)
+- [Terms of use](https://gleangrid.ahmershah.dev/terms)
+- [Privacy policy](https://gleangrid.ahmershah.dev/privacy)
+
+## Markets
+- [Auto Bhan Greens Market](https://gleangrid.ahmershah.dev/markets/auto-bhan-greens-market): Sun, Wed, 07:00–13:00 · Auto Bhan Road, near Sindh Museum, Hyderabad, Sindh
+- [Hirabad Evening Harvest Market](https://gleangrid.ahmershah.dev/markets/hirabad-evening-harvest-market): Fri, Sat, 16:00–21:00 · Hirabad Chowk, off Liaquat Colony Road, Hyderabad, Sindh
+- [Latifabad Organic Bazaar](https://gleangrid.ahmershah.dev/markets/latifabad-organic-bazaar): Sun, Sat, 09:00–15:00 · Unit No. 7, near Latifabad Sports Complex, Hyderabad, Sindh
+- [Paretabad Farmers Mela](https://gleangrid.ahmershah.dev/markets/paretabad-farmers-mela): Tue, Thu, Sat, 16:00–21:00 · Paretabad, near Pakka Qila Road, Hyderabad, Sindh
+- [Qasimabad Sunday Farmers Market](https://gleangrid.ahmershah.dev/markets/qasimabad-sunday-farmers-market): Sun, 08:00–14:00 · Main Qasimabad Road, near Naseem Nagar Chowk, Hyderabad, Sindh
+- [Saddar Heritage Produce Market](https://gleangrid.ahmershah.dev/markets/saddar-heritage-produce-market): Mon, Tue, Wed, Thu, Fri, Sat, 07:00–19:00 · Near Shahi Bazaar, Saddar, Hyderabad, Sindh
+- [Tando Jam Countryside Market](https://gleangrid.ahmershah.dev/markets/tando-jam-countryside-market): Sun, Thu, 07:00–12:00 · Near Sindh Agriculture University gate, Tando Jam, Hyderabad, Sindh
+
+## Optional
+- [Full text for LLMs](https://gleangrid.ahmershah.dev/llms-full.txt): everything above plus stalls, FAQ answers and policy text inline
+- [Sitemap](https://gleangrid.ahmershah.dev/sitemap.xml)
+
+## Product categories
+- Vegetables: Roots, gourds and everything for the handi.
+- Fruits: Orchard-ripe, never cold-stored for months.
+- Herbs & Greens: Picked at dawn, on your table by noon.
+- Dairy & Eggs: Fresh milk, butter, cheese and free-range eggs.
+- Baked Goods: Sourdough, kulcha and bakes from local ovens.
+- Honey & Preserves: Raw honey, jams, pickles and achar.
+- Grains & Pulses: Heritage rice, daals and nuts.
+- Flowers: Seasonal stems and bouquets.
+
+## Farmer stalls
+### Sindh Valley Orchards
+Three generations of fruit growers from Tando Allahyar. (4.8★ from 6 reviews; 6 products listed; orders close 18 h before pickup)
+Page: https://gleangrid.ahmershah.dev/farmers/sindh-valley-orchards
+
+### Sunrise Poultry & Eggs
+Pasture-raised desi eggs from Hatri. (4.3★ from 7 reviews; 2 products listed; orders close 18 h before pickup)
+Page: https://gleangrid.ahmershah.dev/farmers/sunrise-poultry-eggs
+
+### Indus Delta Farms
+Heritage rice and pulses from Thatta. (4.3★ from 11 reviews; 4 products listed; orders close 12 h before pickup)
+Page: https://gleangrid.ahmershah.dev/farmers/indus-delta-farms
+
+### Bloom & Stem
+Seasonal flowers grown without chemical sprays. (4.3★ from 4 reviews; 3 products listed; orders close 24 h before pickup)
+Page: https://gleangrid.ahmershah.dev/farmers/bloom-stem
+
+### Thar Dairy Collective
+Grass-fed milk from a cooperative of 40 small herders. (4.2★ from 5 reviews; 4 products listed; orders close 24 h before pickup)
+Page: https://gleangrid.ahmershah.dev/farmers/thar-dairy-collective
+
+### Jamshoro River Growers
+Everyday kitchen staples at fair prices. (4.2★ from 5 reviews; 6 products listed; orders close 12 h before pickup)
+Page: https://gleangrid.ahmershah.dev/farmers/jamshoro-river-growers
+
+### Kotri Herb Garden
+Tender herbs and leafy greens from the Indus banks at Kotri, cut to order. (4.0★ from 8 reviews; 5 products listed; orders close 24 h before pickup)
+Page: https://gleangrid.ahmershah.dev/farmers/kotri-herb-garden
+
+### Hilltop Bakehouse
+Slow-fermented breads baked in a wood-fired oven in Latifabad. (3.9★ from 9 reviews; 6 products listed; orders close 12 h before pickup)
+Page: https://gleangrid.ahmershah.dev/farmers/hilltop-bakehouse
+
+### Mirpurkhas Mango House
+Tropical fruit from the orchards of Mirpurkhas. (3.9★ from 7 reviews; 5 products listed; orders close 18 h before pickup)
+Page: https://gleangrid.ahmershah.dev/farmers/mirpurkhas-mango-house
+
+### Green Acres Organic Farm
+Chemical-free vegetables from the fields of Tando Jam since 2009. (3.6★ from 8 reviews; 6 products listed; orders close 12 h before pickup)
+Page: https://gleangrid.ahmershah.dev/farmers/green-acres-organic-farm
+
+### Kirthar Honey Co.
+Wild honey from the Kirthar range, never heated or blended. (3.3★ from 10 reviews; 3 products listed; orders close 18 h before pickup)
+Page: https://gleangrid.ahmershah.dev/farmers/kirthar-honey-co
+
+## Sample of this week's produce
+- Raw Beri Honey — Rs 2400/jar from Kirthar Honey Co. · https://gleangrid.ahmershah.dev/products/raw-beri-honey-kirthar-honey-co
+- Mango Achar — Rs 650/jar from Kirthar Honey Co. · https://gleangrid.ahmershah.dev/products/mango-achar-kirthar-honey-co
+- Roasted Peanuts — Rs 600/kg from Indus Delta Farms · https://gleangrid.ahmershah.dev/products/roasted-peanuts-indus-delta-farms
+- Kinnow Tangerines — Rs 240/dozen from Sindh Valley Orchards (sold out) · https://gleangrid.ahmershah.dev/products/kinnow-tangerines-sindh-valley-orchards
+- Wildflower Honey — Rs 1800/jar from Kirthar Honey Co. · https://gleangrid.ahmershah.dev/products/wildflower-honey-kirthar-honey-co
+- Aged Basmati Rice — Rs 480/kg from Indus Delta Farms · https://gleangrid.ahmershah.dev/products/aged-basmati-rice-indus-delta-farms
+- Desi Eggs — Rs 480/dozen from Sunrise Poultry & Eggs · https://gleangrid.ahmershah.dev/products/desi-eggs-sunrise-poultry-eggs
+- Farm Chicken (whole) — Rs 1100/piece from Sunrise Poultry & Eggs · https://gleangrid.ahmershah.dev/products/farm-chicken-whole-sunrise-poultry-eggs
+- Cantaloupe — Rs 140/kg from Mirpurkhas Mango House · https://gleangrid.ahmershah.dev/products/cantaloupe-mirpurkhas-mango-house
+- Fresh Cow Milk — Rs 220/litre from Thar Dairy Collective · https://gleangrid.ahmershah.dev/products/fresh-cow-milk-thar-dairy-collective
+- Butter Croissants — Rs 280/piece from Hilltop Bakehouse · https://gleangrid.ahmershah.dev/products/butter-croissants-hilltop-bakehouse
+- Microgreens Mix — Rs 350/box from Kotri Herb Garden · https://gleangrid.ahmershah.dev/products/microgreens-mix-kotri-herb-garden
+- Green Chillies — Rs 260/kg from Kotri Herb Garden · https://gleangrid.ahmershah.dev/products/green-chillies-kotri-herb-garden
+- Heirloom Carrots — Rs 180/kg from Green Acres Organic Farm · https://gleangrid.ahmershah.dev/products/heirloom-carrots-green-acres-organic-farm
+- Broccoli Crowns — Rs 450/kg from Green Acres Organic Farm (sold out) · https://gleangrid.ahmershah.dev/products/broccoli-crowns-green-acres-organic-farm
+- Farmhouse Cheese — Rs 1400/kg from Thar Dairy Collective · https://gleangrid.ahmershah.dev/products/farmhouse-cheese-thar-dairy-collective
+- Sesame Bagels — Rs 200/piece from Hilltop Bakehouse · https://gleangrid.ahmershah.dev/products/sesame-bagels-hilltop-bakehouse
+- Spinach (Palak) — Rs 90/bunch from Kotri Herb Garden · https://gleangrid.ahmershah.dev/products/spinach-palak-kotri-herb-garden
+- Chaunsa Mangoes — Rs 380/kg from Mirpurkhas Mango House · https://gleangrid.ahmershah.dev/products/chaunsa-mangoes-mirpurkhas-mango-house
+- Fresh Green Peas — Rs 280/kg from Indus Delta Farms (sold out) · https://gleangrid.ahmershah.dev/products/fresh-green-peas-indus-delta-farms
+- Market Bouquet — Rs 1500/piece from Bloom & Stem · https://gleangrid.ahmershah.dev/products/market-bouquet-bloom-stem
+- Baguette — Rs 350/piece from Hilltop Bakehouse · https://gleangrid.ahmershah.dev/products/baguette-hilltop-bakehouse
+- Button Mushrooms — Rs 380/pack from Jamshoro River Growers · https://gleangrid.ahmershah.dev/products/button-mushrooms-jamshoro-river-growers
+- Pineapple — Rs 450/piece from Mirpurkhas Mango House · https://gleangrid.ahmershah.dev/products/pineapple-mirpurkhas-mango-house
+- Sweet Corn — Rs 60/piece from Green Acres Organic Farm · https://gleangrid.ahmershah.dev/products/sweet-corn-green-acres-organic-farm
+
+## Frequently asked questions
+### Ordering
+**Do I pay online?** No. GleanGrid only reserves your produce. You pay the farmer at the stall when you collect, after checking your order.
+
+**Can I order from several farmers at once?** Yes. Your basket can hold items from many stalls. At checkout each farmer becomes a separate pre-order with its own pickup window.
+
+**How do I change or cancel an order?** Open it under My orders and choose Modify or Cancel. Both work until the farmer’s cut-off time, shown on the order.
+
+**What does “sold out” mean on a product?** The farmer’s stock for this week is fully reserved. Tap the heart to save it and we’ll alert you when it’s back.
+
+**Can my family share one basket?** Yes — use Family sharing to link accounts. Linked members can see household orders and reorder together.
+
+### Pickup
+**Where do I collect my order?** At the farmer’s stall in the market you chose at checkout. The order page has the stall number, a map and directions from your location.
+
+**What if I’m late?** Message the farmer from your order. Most will hold your order until the market closes.
+
+**Is there delivery?** Not at the moment — GleanGrid is pickup-only so produce stays fresh and farmers get a fair price.
+
+### Farmers
+**How do I start selling?** Register as a farmer with your stall details. Our team reviews new stalls, usually within a day. Once approved you can list products, set pickup windows and receive orders.
+
+**Does GleanGrid take a commission?** No. Customers pay you directly and in full at your stall.
+
+**What is the weekly stock template?** Set a usual weekly quantity for each product, then reset your whole stall to it in one click at the start of each week.
+
+**Can I pause a product?** Yes — mark it sold out or temporarily unavailable any time. Customers who favourited it are alerted when you bring it back.
+
+### Account & security
+**Why do I need to verify my e-mail?** Order updates and pickup codes are sent by e-mail, so we confirm the address with a six-digit code before you can place orders or list products.
+
+**I got a “new sign-in” e-mail. What should I do?** If it was you, nothing. If not, change your password — that also signs out every other device — and contact us.
+
+**How is my password stored?** With Argon2id, a slow, memory-hard hashing algorithm. We can’t see or recover it; we can only help you reset it.
+
+**Which languages are supported?** English, Urdu, Arabic, Hindi, Russian, Chinese, Spanish and French. Switch any time from the globe icon.
+
+### Help
+**How do I contact you?** E-mail support@ahmershah.dev or call +92 370 4831994. You can also use the contact form — we reply within one working day.
+
+**Can Basket Buddy help me?** Yes. Tap Basket Buddy at the bottom of any page to find produce, check what’s open today, or get pickup and order answers instantly.
+
+## Pickup & Delivery Policy
+GleanGrid is pickup-only by design. It keeps produce fresh, keeps prices fair for farmers, and gets you to the market where the good stuff is.
+
+### How pickup works
+- Choose a pickup window at checkout — each farmer offers slots on the days their market trades.
+- You’ll get an e-mail and an in-app alert when the farmer accepts, and again when your order is packed and ready.
+- At the stall, show your order code (for example GG-7K2M9Q). The farmer hands over your order and you pay them directly.
+
+### Windows and capacity
+Each pickup window has a limited number of orders so nobody queues for long. Full windows disappear from checkout automatically.
+
+### Missed your window?
+Message the farmer from your order page as soon as you can. Many will hold an order until the market closes, but perishables can’t be kept for the next market day.
+
+### Delivery
+We don’t offer delivery or courier services. You’re welcome to send a family member — linked family accounts can see and collect household orders.
+
+### Payment at pickup
+Pay the farmer in cash or by any method they accept (many take bank transfer or mobile wallets). GleanGrid never asks for card details.
+
+## Returns, Refunds & Cancellations
+Fresh food doesn’t travel back to the farm, so our approach is simple: check it at the stall, and speak up right there.
+
+### Cancelling a pre-order
+You can change or cancel any pre-order for free until the farmer’s cut-off time. The cut-off is shown on every order and is usually 12–24 hours before your pickup window. After the cut-off the farmer has picked and packed for you, so the order is locked.
+
+### Check before you pay
+Because you pay at pickup, you see everything before any money changes hands. If an item is missing, damaged or not what was listed, tell the farmer at the stall — you only pay for what you accept.
+
+### After you’ve left the market
+Found a problem once you got home? Contact the farmer through your order page, or write to us, within 24 hours with your order code and a photo. Farmers on GleanGrid commit to a fair outcome — usually a replacement at your next pickup or money back in person.
+
+### When a farmer cancels
+If a farmer declines or can’t fulfil your order, you owe nothing and are notified immediately. Items you favourited will alert you when they are back in stock.
+
+### Disputes
+If you can’t reach agreement with a farmer, our team will step in. Stalls with repeated unresolved complaints are reviewed and may be suspended.
+
+## Terms of Use
+These terms are the ground rules for using GleanGrid, the pre-order platform for farmers markets in Hyderabad, Sindh. By creating an account or placing a pre-order you agree to them. We have kept them as short and plain as we can.
+
+### What GleanGrid is — and isn’t
+GleanGrid is a meeting place. Farmers list what they will bring to market; customers reserve it and collect it in person. The sale itself is between you and the farmer. We do not buy, store, transport or resell produce.
+We do not process payments. Every order is paid for at the stall, directly to the farmer, in the way you both agree.
+
+### Your account
+- Give accurate details — your name, phone number and address help farmers recognise you at pickup.
+- Keep your password private. You are responsible for activity on your account until you tell us it has been compromised.
+- One person per account. Households can link accounts with Family sharing instead of sharing a password.
+- You must be at least 16, or have a parent or guardian’s permission.
+
+### Pre-orders
+A pre-order is a reservation, not a purchase. It holds stock for you until the pickup window. You can change or cancel it until the farmer’s cut-off time shown on the order.
+A farmer may decline an order, for example after a poor harvest. You will be told straight away and nothing is owed.
+Please turn up. Repeated no-shows hurt small growers who set produce aside for you, and may lead us to limit your account.
+
+### Farmers and listings
+Farmers must describe produce honestly — price, unit, quantity and growing practices. Stalls are approved by our team before they can list, but we do not certify organic status, food safety or licences; that responsibility stays with each farmer.
+We may remove listings or reviews that are misleading, unsafe, abusive or break the law, and suspend accounts that do so repeatedly.
+
+### Reviews
+Reviews can only be left after a completed order, so every rating comes from a real pickup. Keep them honest and respectful. Farmers can reply publicly.
+
+### Fair use
+- No scraping, automated ordering, or attempts to get around rate limits and security controls.
+- No fake accounts, fake reviews or harassment of farmers, customers or staff.
+- No uploading anything you don’t have the rights to.
+
+### Liability
+We work hard to keep GleanGrid accurate and available, but market days, weather and harvests are unpredictable. The service is provided “as is”. To the extent the law allows, GleanGrid is not liable for the quality of produce, missed pickups or losses arising from a transaction between a customer and a farmer.
+
+### Changes and governing law
+If these terms change in a meaningful way we will post an announcement on the site first. These terms are governed by the laws of Pakistan, and the courts of Hyderabad, Sindh have jurisdiction.
+Questions? Write to support@ahmershah.dev or call +92 370 4831994.
+
+## Privacy Policy
+We collect as little as we can, use it only to run GleanGrid, and never sell it. This page explains exactly what we hold and why.
+
+### What we collect
+- Account details: name, username, e-mail, phone number, address and preferred language.
+- For farmers: stall name, contact person, stall location and map pin, and the markets you trade at.
+- Order history: what you reserved, from whom, and your pickup windows.
+- Reviews, favourites and family links you create.
+- Security records: sign-in times, IP address and a coarse device description (for example “Chrome on Android”), used to spot suspicious sign-ins.
+We never collect card or bank details — payment happens in person at the stall.
+
+### How we use it
+- To run your orders: the farmer you order from sees your name, phone number and order so they can prepare it and recognise you.
+- To send the e-mails you need: codes, order updates, pickup reminders and security alerts.
+- To keep the platform safe: rate limiting, bot protection and fraud prevention.
+- To produce anonymous, aggregated market statistics.
+
+### Who else sees it
+Only the farmers you order from, and our small team when they need to help you. We use a few service providers to operate the site — e-mail delivery, map tiles from OpenStreetMap and, where enabled, Google reCAPTCHA to tell people from bots. reCAPTCHA is subject to Google’s own privacy policy and terms.
+
+### Cookies
+We use only the cookies needed to keep you signed in, protect forms against forgery (CSRF) and remember your language and theme. No advertising or cross-site tracking cookies.
+
+### How long we keep it
+Account data stays while your account is open. Order records are kept for two years for farmers’ bookkeeping, then anonymised. Sign-in records are kept for 90 days.
+
+### Your rights
+You can view and correct your details on your profile at any time, sign out of other devices, and ask us to export or delete your data. We will reply within 30 days.
+
+### Security
+Passwords are stored with Argon2id, a slow, memory-hard hash — nobody at GleanGrid can read them. Traffic is encrypted with HTTPS, forms are protected against forgery, and sign-ins from new devices trigger an e-mail alert.
+
+### Contact
+Privacy questions go to support@ahmershah.dev. GleanGrid is operated from Hyderabad, Sindh 71000, Pakistan.
+
