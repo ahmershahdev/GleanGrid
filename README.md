@@ -302,7 +302,7 @@ On the sign-in page, the three **demo tiles sign in with one tap**. Every `…@g
 
 ## Deploying to production
 
-A complete, step-by-step guide for a **free Oracle Cloud server** (Nginx, PHP-FPM, MySQL 8, the SSR process, the queue worker, the scheduler, Cloudflare HTTPS and DDoS protection, backups and a one-command deploy script) is in **[docs/wiki/Deployment.md](docs/wiki/Deployment.md)**. The short version:
+A complete, step-by-step guide for a **free Oracle Cloud server** (Nginx, PHP-FPM, MySQL 8, the SSR process, the queue worker, the scheduler, Cloudflare HTTPS and DDoS protection, backups and a one-command deploy script) is in the wiki: **[Deployment](https://github.com/ahmershahdev/GleanGrid/wiki/Deployment)**. The short version:
 
 1. `composer install --no-dev --optimize-autoloader && npm ci && npm run build` (builds the client and the SSR bundle).
 2. Fill `.env` for production: `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL`, database, `QUEUE_CONNECTION=database`, `SESSION_SECURE_COOKIE=true`, Resend and reCAPTCHA keys, and `TRUSTED_PROXIES` when behind Cloudflare or a load balancer.
@@ -359,7 +359,7 @@ public/
 tests/Feature/                              OrderFlow, Pages, Security, RaceCondition, Coupon, Platform…
 tests/e2e/                                  Playwright browser tests (playwright.config.js)
 tests/Stress/checkout-race.php              parallel-process race test against MySQL
-docs/                                       screenshots, diagrams and the wiki (incl. Deployment)
+docs/images/                                screenshots and diagrams (guides live in the GitHub wiki)
 ```
 
 ## Assumptions
