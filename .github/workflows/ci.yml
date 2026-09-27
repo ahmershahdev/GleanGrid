@@ -86,7 +86,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: composer audit --no-interaction
+      - run: composer audit --locked --no-interaction
       - run: npm audit --audit-level=high --omit=dev
 
   e2e:
