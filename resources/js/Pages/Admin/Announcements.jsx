@@ -1,9 +1,10 @@
-import { router, useForm } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import { Megaphone, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Badge, Button, buttonClass, Card, Checkbox, EmptyState, Input, Modal, PageHeader, Select, Textarea } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+import { confirmDelete } from '@/lib/confirm';
 
 function AnnouncementForm({ item, onDone }) {
     const t = useT();
@@ -89,7 +90,7 @@ export default function Announcements({ announcements }) {
                             <button onClick={() => setEditing(a)} className={buttonClass('ghost', 'icon')} aria-label={t('common.edit')}>
                                 <Pencil className="size-4" />
                             </button>
-                            <button onClick={() => router.delete(route('admin.announcements.destroy', a.id), { preserveScroll: true })} className={buttonClass('ghost', 'icon', 'text-danger')} aria-label={t('common.delete')}>
+                            <button onClick={() => confirmDelete(route('admin.announcements.destroy', a.id), { title: t('confirm.delete_announcement', {}, 'Delete this announcement?') })} className={buttonClass('ghost', 'icon', 'text-danger')} aria-label={t('common.delete')}>
                                 <Trash2 className="size-4" />
                             </button>
                         </div>

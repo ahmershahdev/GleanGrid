@@ -1,19 +1,29 @@
 import { Link, router } from '@inertiajs/react';
-import { Check, ClipboardList, Mail, MapPinned, ShieldAlert, ShieldCheck, Store, Users, Wallet } from 'lucide-react';
+import { Check, ClipboardList, Mail, MapPinned, ShieldAlert, ShieldCheck, Store, Users } from 'lucide-react';
+import { useState } from 'react';
+import { HealthPanels, KpiStrip, LeaderBoards, TodayStrip } from '@/Components/AdminInsights';
 import { StatusDonut, TrendChart } from '@/Components/Charts';
 import { CountUp } from '@/Components/motion';
 import { Button, Card, SectionTitle, Stat, StatusBadge } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
 
-export default function AdminDashboard({ stats, daily, byStatus, topFarmers, pendingFarmers, recentOrders, security }) {
+export default function AdminDashboard({ stats, daily, byStatus, topFarmers, pendingFarmers, recentOrders, security, kpis, today, catalogue, marketRevenue, topProducts, pickupsWeek, system }) {
     const t = useT();
-    const { money, date, relative } = useFormat();
+    const { money, date, dateLong, relative } = useFormat();
+    const [metric, setMetric] = useState('orders');
 
     return (
         <>
             <div className="mb-8">
                 <p className="font-mono text-xs tracking-[0.2em] text-ink-faint uppercase">{t('admin.eyebrow')}</p>
                 <h1 className="font-display mt-1 text-4xl font-light md:text-5xl">{t('admin.title')}</h1>
+                <p className="mt-2 flex items-center gap-2 text-sm text-ink-soft">
+                    <span className="relative flex size-2">
+                        <span className="absolute inset-0 animate-ping rounded-full bg-success opacity-60" />
+                        <span className="relative size-2 rounded-full bg-success" />
+                    </span>
+                    {t('admin.live_as_of', { date: dateLong(new Date().toISOString()) }, `Live · ${dateLong(new Date().toISOString())}`)}
+                </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -23,13 +33,25 @@ export default function AdminDashboard({ stats, daily, byStatus, topFarmers, pen
                 <Stat label={t('admin.stat_orders')} value={<CountUp value={stats.orders} />} hint={t('admin.open_hint', { count: stats.open_orders })} icon={ClipboardList} tone="lime" />
             </div>
 
+            <TodayStrip today={today} />
+            <KpiStrip kpis={kpis} />
+
             <div className="mt-6 grid gap-6 xl:grid-cols-[1.7fr_1fr]">
                 <Card className="p-6">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                         <SectionTitle eyebrow={t('admin.chart_eyebrow')} title={t('admin.chart_title')} />
-                        <div className="text-end">
-                            <p className="text-xs text-ink-faint">{t('admin.revenue_total')}</p>
-                            <p className="font-display text-2xl">{money(stats.revenue)}</p>
+                        <div className="flex items-center gap-4">
+                            <div className="flex rounded-full bg-ink/5 p-1 text-xs font-medium" role="tablist">
+                                {['orders', 'revenue'].map((m) => (
+                                    <button key={m} type="button" role="tab" aria-selected={metric === m} onClick={() => setMetric(m)} className={metric === m ? 'rounded-full bg-elev px-3 py-1.5 shadow-soft' : 'px-3 py-1.5 text-ink-soft'}>
+                                        {t(`admin.${m}`, {}, m)}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="text-end">
+                                <p className="text-xs text-ink-faint">{t('admin.revenue_total')}</p>
+                                <p className="font-display text-2xl">{money(stats.revenue)}</p>
+                            </div>
                         </div>
                     </div>
                     <TrendChart
@@ -37,9 +59,7 @@ export default function AdminDashboard({ stats, daily, byStatus, topFarmers, pen
                         x="date"
                         formatX={(d) => date(d, { day: 'numeric', month: 'short' })}
                         formatValue={(v, key) => (key === 'revenue' ? money(v) : v)}
-                        series={[
-                            { key: 'orders', name: t('admin.orders'), color: 'var(--brand)' },
-                        ]}
+                        series={[metric === 'orders' ? { key: 'orders', name: t('admin.orders'), color: 'var(--brand)' } : { key: 'revenue', name: t('admin.revenue', {}, 'Revenue'), color: 'var(--accent)' }]}
                     />
                 </Card>
                 <Card className="p-6">
@@ -47,6 +67,8 @@ export default function AdminDashboard({ stats, daily, byStatus, topFarmers, pen
                     <StatusDonut counts={byStatus} height={180} />
                 </Card>
             </div>
+
+            <LeaderBoards marketRevenue={marketRevenue} topProducts={topProducts} pickupsWeek={pickupsWeek} />
 
             <div className="mt-6 grid gap-6 xl:grid-cols-3">
                 <Card className="p-6">
@@ -162,6 +184,7 @@ export default function AdminDashboard({ stats, daily, byStatus, topFarmers, pen
                     </div>
                 </div>
             </Card>
+            <HealthPanels catalogue={catalogue} system={system} />
         </>
     );
 }

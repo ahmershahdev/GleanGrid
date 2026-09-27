@@ -1,20 +1,10 @@
 import { Link, usePage } from '@inertiajs/react';
-import axios from 'axios';
+import { postJson } from '@/lib/http';
 import { AnimatePresence, motion } from 'motion/react';
 import { ArrowLeft, ArrowUp, CalendarClock, Clock, HandCoins, Keyboard, LayoutGrid, MapPin, RotateCcw, ShoppingBasket, Sprout, Star, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { translate, useFormat, useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
-
-/*
- * Basket Buddy is guided first: pick a topic, then a question, then follow
- * the suggested next questions. Every chip shows translated text but sends a
- * canonical English query, so the server-side intent matching stays simple
- * and answers render in the visitor's language.
- *
- * Typing is still available (behind the keyboard button) because the SRS asks
- * for finding *specific* items — "who sells ginger?" can't be a preset.
- */
 
 const TOPICS = [
     { key: 'produce', icon: ShoppingBasket, questions: ['q_fruit', 'q_veg', 'q_dairy', 'q_honey', 'q_bread', 'q_mangoes'] },
@@ -24,7 +14,6 @@ const TOPICS = [
     { key: 'farmers', icon: Sprout, questions: ['q_become_farmer', 'q_how'] },
 ];
 
-// What to offer next, keyed by the intent the server answered with.
 const FOLLOW_UPS = {
     greeting: ['s_open_today', 'q_fruit', 's_payment'],
     open_today: ['s_timings', 'q_fruit', 'q_pickup'],
@@ -173,7 +162,6 @@ export default function Assistant() {
         try {
             sessionStorage.setItem(STORE, JSON.stringify(messages.slice(-30)));
         } catch {
-            /* storage blocked — conversation just won't survive a reload */
         }
         scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: 'smooth' });
     }, [messages, busy, topic]);
@@ -197,7 +185,7 @@ export default function Assistant() {
         setInput('');
         setBusy(true);
         try {
-            const { data } = await axios.post(route('assistant'), { message: query.trim() });
+            const { data } = await postJson(route('assistant'), { message: query.trim() });
             setMessages((m) => [...m, { from: 'bot', reply: data }]);
         } catch (err) {
             const intent = err?.response?.status === 429 ? 'slow_down' : 'error';
@@ -222,11 +210,11 @@ export default function Assistant() {
                 aria-expanded={open}
                 aria-controls="basket-buddy"
                 data-floating
-                aria-label={t('assistant.open')}
+                aria-label={`${t('assistant.name')} · ${t('assistant.open')}`}
                 data-no-magnet
             >
                 <span className="relative flex size-10 items-center justify-center rounded-full bg-lime text-forest">
-                    <img src="/images/produce/basket.png" alt="" className="size-6" />
+                    <img src="/images/produce/basket.webp" alt="" className="size-6" />
                     <span className="absolute -end-0.5 -top-0.5 flex size-3">
                         <span className="absolute inset-0 animate-ping rounded-full bg-accent opacity-60" />
                         <span className="relative size-3 rounded-full border-2 border-ink bg-accent" />
@@ -249,7 +237,7 @@ export default function Assistant() {
                         className="fixed inset-x-3 bottom-22 z-[75] flex max-h-[min(660px,calc(100vh-7rem))] flex-col overflow-hidden rounded-[28px] border border-line bg-elev shadow-soft sm:inset-x-auto sm:end-6 sm:w-[410px]"
                     >
                         <header className="flex items-center gap-3 bg-brand px-5 py-4 text-brand-ink">
-                            <img src="/images/produce/basket.png" alt="" className="size-10" />
+                            <img src="/images/produce/basket.webp" alt="" className="size-10" />
                             <div className="flex-1">
                                 <p className="font-display text-lg leading-tight">{t('assistant.name')}</p>
                                 <p className="flex items-center gap-1.5 text-xs opacity-80">
@@ -322,7 +310,7 @@ export default function Assistant() {
                             )}
 
                             {busy && (
-                                <div className="flex w-16 gap-1 rounded-3xl bg-sunk px-4 py-3.5" aria-label={t('assistant.thinking')}>
+                                <div role="status" className="flex w-16 gap-1 rounded-3xl bg-sunk px-4 py-3.5" aria-label={t('assistant.thinking')}>
                                     {[0, 1, 2].map((i) => (
                                         <motion.span key={i} className="size-2 rounded-full bg-ink-faint" animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.8, delay: i * 0.15 }} />
                                     ))}

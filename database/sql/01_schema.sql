@@ -1,8 +1,8 @@
 -- GleanGrid (MarketLink) — database structure
--- Tables, primary/foreign keys, unique + composite indexes, CHECK constraints and reporting views.
+-- Tables, primary/foreign keys, unique + composite indexes, CHECK constraints, FULLTEXT search index,
+-- reporting views, the trg_orders_status_* triggers and the sp_platform_summary stored procedure.
 -- MySQL 8 / MariaDB 10.4+. Import this first, then 02_seed_data.sql.
--- Generated from the Laravel migrations (the source of truth): php artisan migrate
-
+-- Generated from the Laravel migrations (the source of truth): php artisan gleangrid:export-sql
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -32,6 +32,27 @@ CREATE TABLE `announcements` (
   KEY `announcements_user_id_foreign` (`user_id`),
   KEY `announcements_visible` (`is_published`,`audience`,`expires_at`),
   CONSTRAINT `announcements_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `audit_logs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `audit_logs` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) unsigned DEFAULT NULL,
+  `action` varchar(60) NOT NULL,
+  `subject_type` varchar(40) DEFAULT NULL,
+  `subject_id` bigint(20) unsigned DEFAULT NULL,
+  `description` varchar(255) NOT NULL,
+  `meta` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`meta`)),
+  `ip_address` varchar(45) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `audit_logs_user_id_foreign` (`user_id`),
+  KEY `audit_logs_subject_type_subject_id_index` (`subject_type`,`subject_id`),
+  KEY `audit_logs_action_created_at_index` (`action`,`created_at`),
+  KEY `audit_logs_created_at_index` (`created_at`),
+  CONSTRAINT `audit_logs_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `cache`;
@@ -81,14 +102,74 @@ CREATE TABLE `contact_messages` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
   `email` varchar(100) NOT NULL,
+  `topic` varchar(20) NOT NULL DEFAULT 'other',
   `subject` varchar(150) NOT NULL,
   `message` text NOT NULL,
+  `source` varchar(10) NOT NULL DEFAULT 'form',
+  `external_id` varchar(100) DEFAULT NULL,
   `ip_address` varchar(45) DEFAULT NULL,
   `is_read` tinyint(1) NOT NULL DEFAULT 0,
+  `reply_body` text DEFAULT NULL,
+  `replied_at` datetime DEFAULT NULL,
+  `replied_by` bigint(20) unsigned DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `contact_messages_is_read_created_at_index` (`is_read`,`created_at`)
+  UNIQUE KEY `contact_messages_external_id_unique` (`external_id`),
+  KEY `contact_messages_is_read_created_at_index` (`is_read`,`created_at`),
+  KEY `contact_messages_replied_by_foreign` (`replied_by`),
+  KEY `contact_messages_topic_index` (`topic`),
+  CONSTRAINT `contact_messages_replied_by_foreign` FOREIGN KEY (`replied_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `chk_contact_topic` CHECK (`topic` in ('order','sell','partner','feedback','other'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `coupon_redemptions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `coupon_redemptions` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `coupon_id` bigint(20) unsigned NOT NULL,
+  `order_id` bigint(20) unsigned NOT NULL,
+  `user_id` bigint(20) unsigned NOT NULL,
+  `discount_amount` decimal(10,2) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `coupon_redemptions_order_id_unique` (`order_id`),
+  KEY `coupon_redemptions_user_id_foreign` (`user_id`),
+  KEY `coupon_redemptions_coupon_id_user_id_index` (`coupon_id`,`user_id`),
+  CONSTRAINT `coupon_redemptions_coupon_id_foreign` FOREIGN KEY (`coupon_id`) REFERENCES `coupons` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `coupon_redemptions_order_id_foreign` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `coupon_redemptions_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `coupons`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `coupons` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `farmer_profile_id` bigint(20) unsigned NOT NULL,
+  `code` varchar(30) NOT NULL,
+  `description` varchar(160) DEFAULT NULL,
+  `type` varchar(10) NOT NULL,
+  `value` decimal(10,2) NOT NULL,
+  `min_subtotal` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `max_discount` decimal(10,2) DEFAULT NULL,
+  `usage_limit` int(10) unsigned DEFAULT NULL,
+  `per_customer_limit` smallint(5) unsigned NOT NULL DEFAULT 1,
+  `used_count` int(10) unsigned NOT NULL DEFAULT 0,
+  `starts_at` datetime DEFAULT NULL,
+  `ends_at` datetime DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `coupons_code_unique` (`code`),
+  KEY `coupons_farmer_profile_id_is_active_index` (`farmer_profile_id`,`is_active`),
+  CONSTRAINT `coupons_farmer_profile_id_foreign` FOREIGN KEY (`farmer_profile_id`) REFERENCES `farmer_profiles` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `chk_coupon_type` CHECK (`type` in ('percent','fixed')),
+  CONSTRAINT `chk_coupon_value` CHECK (`value` > 0 and (`type` <> 'percent' or `value` <= 100)),
+  CONSTRAINT `chk_coupon_window` CHECK (`ends_at` is null or `starts_at` is null or `ends_at` > `starts_at`),
+  CONSTRAINT `chk_coupon_usage` CHECK (`usage_limit` is null or `used_count` <= `usage_limit`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `failed_jobs`;
@@ -321,6 +402,20 @@ CREATE TABLE `order_items` (
   CONSTRAINT `chk_item_price` CHECK (`unit_price` >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `order_status_history`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `order_status_history` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `order_id` bigint(20) unsigned NOT NULL,
+  `from_status` varchar(20) DEFAULT NULL,
+  `to_status` varchar(20) NOT NULL,
+  `changed_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `order_status_history_order_id_changed_at_index` (`order_id`,`changed_at`),
+  CONSTRAINT `order_status_history_order_id_foreign` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `orders`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -336,6 +431,9 @@ CREATE TABLE `orders` (
   `pickup_ends_at` time NOT NULL,
   `cutoff_at` datetime NOT NULL,
   `status` varchar(20) NOT NULL DEFAULT 'placed',
+  `subtotal` decimal(10,2) DEFAULT NULL,
+  `discount_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `coupon_code` varchar(30) DEFAULT NULL,
   `total_amount` decimal(10,2) NOT NULL,
   `items_count` int(10) unsigned NOT NULL,
   `customer_note` text DEFAULT NULL,
@@ -345,6 +443,8 @@ CREATE TABLE `orders` (
   `completed_at` timestamp NULL DEFAULT NULL,
   `cancelled_at` timestamp NULL DEFAULT NULL,
   `declined_at` timestamp NULL DEFAULT NULL,
+  `no_show_at` datetime DEFAULT NULL,
+  `reminder_sent_at` datetime DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -357,15 +457,51 @@ CREATE TABLE `orders` (
   KEY `orders_market_status` (`market_id`,`status`),
   KEY `orders_created_at_index` (`created_at`),
   KEY `orders_completed_at_index` (`completed_at`),
+  KEY `orders_reminder_due` (`status`,`pickup_date`,`reminder_sent_at`),
   CONSTRAINT `orders_customer_id_foreign` FOREIGN KEY (`customer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `orders_farmer_profile_id_foreign` FOREIGN KEY (`farmer_profile_id`) REFERENCES `farmer_profiles` (`id`) ON DELETE CASCADE,
   CONSTRAINT `orders_market_id_foreign` FOREIGN KEY (`market_id`) REFERENCES `markets` (`id`),
   CONSTRAINT `orders_pickup_slot_id_foreign` FOREIGN KEY (`pickup_slot_id`) REFERENCES `pickup_slots` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `chk_order_status` CHECK (`status` in ('placed','accepted','ready','completed','declined','cancelled')),
   CONSTRAINT `chk_order_total` CHECK (`total_amount` >= 0),
-  CONSTRAINT `chk_order_window` CHECK (`pickup_ends_at` > `pickup_starts_at`)
+  CONSTRAINT `chk_order_window` CHECK (`pickup_ends_at` > `pickup_starts_at`),
+  CONSTRAINT `chk_order_discount` CHECK (`discount_amount` >= 0),
+  CONSTRAINT `chk_order_status` CHECK (`status` in ('placed','accepted','ready','completed','declined','cancelled','no_show'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017*/ /*!50003 TRIGGER trg_orders_status_insert AFTER INSERT ON orders FOR EACH ROW
+                INSERT INTO order_status_history (order_id, from_status, to_status, changed_at)
+                VALUES (NEW.id, NULL, NEW.status, NOW()) */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017*/ /*!50003 TRIGGER trg_orders_status_update AFTER UPDATE ON orders FOR EACH ROW
+                INSERT INTO order_status_history (order_id, from_status, to_status, changed_at)
+                SELECT NEW.id, OLD.status, NEW.status, NOW() FROM DUAL WHERE NOT (NEW.status <=> OLD.status) */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 DROP TABLE IF EXISTS `password_reset_tokens`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -415,6 +551,7 @@ CREATE TABLE `products` (
   `stock_quantity` int(10) unsigned NOT NULL DEFAULT 0,
   `weekly_quantity` int(10) unsigned NOT NULL DEFAULT 0,
   `image` varchar(255) DEFAULT NULL,
+  `photo` varchar(255) DEFAULT NULL,
   `status` varchar(20) NOT NULL DEFAULT 'available',
   `is_featured` tinyint(1) NOT NULL DEFAULT 0,
   `removed_at` timestamp NULL DEFAULT NULL,
@@ -434,6 +571,7 @@ CREATE TABLE `products` (
   KEY `products_featured` (`is_featured`,`status`),
   KEY `products_sold_count_index` (`sold_count`),
   KEY `products_rating_avg_index` (`rating_avg`),
+  FULLTEXT KEY `products_fulltext` (`name`,`description`),
   CONSTRAINT `products_category_id_foreign` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`),
   CONSTRAINT `products_farmer_profile_id_foreign` FOREIGN KEY (`farmer_profile_id`) REFERENCES `farmer_profiles` (`id`) ON DELETE CASCADE,
   CONSTRAINT `chk_product_price` CHECK (`price` >= 0),
@@ -499,6 +637,21 @@ CREATE TABLE `sessions` (
   KEY `sessions_last_activity_index` (`last_activity`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `settings`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `settings` (
+  `key` varchar(60) NOT NULL,
+  `value` text NOT NULL,
+  `updated_by` bigint(20) unsigned DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`key`),
+  KEY `settings_updated_by_foreign` (`updated_by`),
+  CONSTRAINT `settings_updated_by_foreign` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `chk_settings_key` CHECK (`key` regexp '^[a-z_]+$')
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `users`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -512,12 +665,14 @@ CREATE TABLE `users` (
   `city` varchar(80) DEFAULT NULL,
   `role` varchar(20) NOT NULL DEFAULT 'customer',
   `status` varchar(20) NOT NULL DEFAULT 'active',
+  `no_show_count` smallint(5) unsigned NOT NULL DEFAULT 0,
   `locale` varchar(8) NOT NULL DEFAULT 'en',
   `avatar` varchar(255) DEFAULT NULL,
   `email_verified_at` timestamp NULL DEFAULT NULL,
   `password` varchar(255) NOT NULL,
   `password_changed_at` timestamp NULL DEFAULT NULL,
   `last_login_at` timestamp NULL DEFAULT NULL,
+  `anonymized_at` datetime DEFAULT NULL,
   `remember_token` varchar(100) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
@@ -527,7 +682,8 @@ CREATE TABLE `users` (
   KEY `users_role_index` (`role`),
   KEY `users_status_index` (`status`),
   CONSTRAINT `chk_users_role` CHECK (`role` in ('customer','farmer','admin')),
-  CONSTRAINT `chk_users_status` CHECK (`status` in ('active','inactive'))
+  CONSTRAINT `chk_users_status` CHECK (`status` in ('active','inactive')),
+  CONSTRAINT `chk_users_no_shows` CHECK (`no_show_count` <= 1000)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `v_daily_orders`;
@@ -605,6 +761,34 @@ CREATE TABLE `verification_codes` (
   CONSTRAINT `verification_codes_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_platform_summary` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
+DELIMITER ;;
+CREATE PROCEDURE `sp_platform_summary`(IN p_from DATE, IN p_to DATE)
+BEGIN
+                SELECT
+                    (SELECT COUNT(*) FROM farmer_profiles WHERE status = 'approved') AS farmers,
+                    (SELECT COUNT(*) FROM users WHERE role = 'customer' AND anonymized_at IS NULL) AS customers,
+                    (SELECT COUNT(*) FROM markets) AS markets,
+                    COUNT(o.id) AS orders,
+                    COALESCE(SUM(CASE WHEN o.status = 'completed' THEN o.total_amount END), 0) AS revenue,
+                    SUM(o.status = 'no_show') AS no_shows,
+                    SUM(o.status IN ('declined','cancelled')) AS lost
+                FROM orders o
+                WHERE o.pickup_date BETWEEN p_from AND p_to;
+            END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50001 DROP VIEW IF EXISTS `v_daily_orders`*/;
 /*!50001 SET @saved_cs_client          = @@character_set_client */;
 /*!50001 SET @saved_cs_results         = @@character_set_results */;
@@ -613,7 +797,7 @@ CREATE TABLE `verification_codes` (
 /*!50001 SET character_set_results     = utf8mb4 */;
 /*!50001 SET collation_connection      = utf8mb4_unicode_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
-/*!50013 SQL SECURITY DEFINER */
+
 /*!50001 VIEW `v_daily_orders` AS select cast(`o`.`created_at` as date) AS `day`,count(0) AS `orders`,sum(case when `o`.`status` = 'completed' then `o`.`total_amount` else 0 end) AS `revenue` from `orders` `o` group by cast(`o`.`created_at` as date) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
@@ -626,7 +810,7 @@ CREATE TABLE `verification_codes` (
 /*!50001 SET character_set_results     = utf8mb4 */;
 /*!50001 SET collation_connection      = utf8mb4_unicode_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
-/*!50013 SQL SECURITY DEFINER */
+
 /*!50001 VIEW `v_farmer_performance` AS select `f`.`id` AS `farmer_profile_id`,`f`.`stall_name` AS `stall_name`,`f`.`status` AS `status`,`u`.`email` AS `email`,`f`.`rating_avg` AS `rating_avg`,`f`.`rating_count` AS `rating_count`,count(`o`.`id`) AS `orders_total`,sum(case when `o`.`status` = 'completed' then 1 else 0 end) AS `orders_completed`,sum(case when `o`.`status` in ('declined','cancelled') then 1 else 0 end) AS `orders_lost`,coalesce(sum(case when `o`.`status` = 'completed' then `o`.`total_amount` end),0) AS `revenue`,(select count(0) from `products` `p` where `p`.`farmer_profile_id` = `f`.`id` and `p`.`deleted_at` is null and `p`.`removed_at` is null) AS `listings` from ((`farmer_profiles` `f` join `users` `u` on(`u`.`id` = `f`.`user_id`)) left join `orders` `o` on(`o`.`farmer_profile_id` = `f`.`id`)) group by `f`.`id`,`f`.`stall_name`,`f`.`status`,`u`.`email`,`f`.`rating_avg`,`f`.`rating_count` */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
@@ -639,7 +823,7 @@ CREATE TABLE `verification_codes` (
 /*!50001 SET character_set_results     = utf8mb4 */;
 /*!50001 SET collation_connection      = utf8mb4_unicode_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
-/*!50013 SQL SECURITY DEFINER */
+
 /*!50001 VIEW `v_market_revenue` AS select `m`.`id` AS `market_id`,`m`.`name` AS `market_name`,`m`.`city` AS `city`,count(`o`.`id`) AS `orders_total`,sum(case when `o`.`status` = 'completed' then 1 else 0 end) AS `orders_completed`,sum(case when `o`.`status` in ('placed','accepted','ready') then 1 else 0 end) AS `orders_open`,coalesce(sum(case when `o`.`status` = 'completed' then `o`.`total_amount` end),0) AS `revenue` from (`markets` `m` left join `orders` `o` on(`o`.`market_id` = `m`.`id`)) group by `m`.`id`,`m`.`name`,`m`.`city` */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
@@ -652,7 +836,7 @@ CREATE TABLE `verification_codes` (
 /*!50001 SET character_set_results     = utf8mb4 */;
 /*!50001 SET collation_connection      = utf8mb4_unicode_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
-/*!50013 SQL SECURITY DEFINER */
+
 /*!50001 VIEW `v_product_catalog` AS select `p`.`id` AS `product_id`,`p`.`name` AS `name`,`p`.`slug` AS `slug`,`p`.`price` AS `price`,`p`.`unit` AS `unit`,`p`.`stock_quantity` AS `stock_quantity`,`p`.`status` AS `status`,`c`.`name` AS `category`,`f`.`id` AS `farmer_profile_id`,`f`.`stall_name` AS `stall_name`,`p`.`rating_avg` AS `rating_avg`,`p`.`sold_count` AS `sold_count` from (((`products` `p` join `categories` `c` on(`c`.`id` = `p`.`category_id`)) join `farmer_profiles` `f` on(`f`.`id` = `p`.`farmer_profile_id`)) join `users` `u` on(`u`.`id` = `f`.`user_id`)) where `p`.`deleted_at` is null and `p`.`removed_at` is null and `f`.`status` = 'approved' and `u`.`status` = 'active' */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\FarmerProfile;
 use App\Models\Order;
 use App\Notifications\PlatformNotification;
@@ -26,7 +27,7 @@ class FarmerController extends Controller
                 ->orderByRaw("field(status, 'pending', 'approved', 'suspended')")->latest()
                 ->paginate(15)->withQueryString(),
             'counts' => FarmerProfile::selectRaw('status, count(*) as c')->groupBy('status')->pluck('c', 'status'),
-            'filters' => $filters,
+            'filters' => (object) $filters,
         ]);
     }
 
@@ -64,6 +65,8 @@ class FarmerController extends Controller
         if (in_array($data['status'], ['approved', 'suspended'], true)) {
             $farmer->user->notify(new PlatformNotification('farmer_'.$data['status'], [], route('farmer.dashboard'), true));
         }
+
+        AuditLog::record('farmer.'.$data['status'], ucfirst($data['status'])." stall {$farmer->stall_name}".(filled($data['reason'] ?? null) ? " — {$data['reason']}" : ''), $farmer);
 
         return back()->with('success', 'flash.farmer_'.$data['status']);
     }

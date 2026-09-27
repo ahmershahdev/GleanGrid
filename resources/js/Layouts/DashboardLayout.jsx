@@ -31,9 +31,12 @@ import {
     Users,
     UsersRound,
     X,
+    ScanLine,
+    ScrollText,
+    Settings2,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import Assistant from '@/Components/Assistant';
+import { AfterIdle, DeferredAssistant as Assistant } from '@/Components/Deferred';
 import { Logo } from '@/Components/Brand';
 import { Avatar } from '@/Components/ui';
 import { LanguageSwitcher, NotificationBell, ThemeToggle, Toaster } from '@/Components/widgets';
@@ -54,6 +57,7 @@ const NAV = {
     farmer: [
         { key: 'overview', route: 'farmer.dashboard', icon: LayoutGrid, match: 'farmer.dashboard' },
         { key: 'orders', route: 'farmer.orders.index', icon: ClipboardList, match: 'farmer.orders.*' },
+        { key: 'scan', route: 'farmer.scan', icon: ScanLine, match: 'farmer.scan' },
         { key: 'products', route: 'farmer.products.index', icon: Carrot, match: 'farmer.products.*' },
         { key: 'pickup', route: 'farmer.slots.index', icon: CalendarClock, match: 'farmer.slots.*' },
         { key: 'reviews', route: 'farmer.reviews.index', icon: Star, match: 'farmer.reviews.*' },
@@ -74,6 +78,9 @@ const NAV = {
         { key: 'announcements', route: 'admin.announcements.index', icon: Megaphone, match: 'admin.announcements.*' },
         { key: 'coupons', route: 'admin.coupons.index', icon: TicketPercent, match: 'admin.coupons.*' },
         { key: 'messages', route: 'admin.messages.index', icon: Mail, match: 'admin.messages.*' },
+        { divider: true },
+        { key: 'audit', route: 'admin.audit.index', icon: ScrollText, match: 'admin.audit.*' },
+        { key: 'settings', route: 'admin.settings.edit', icon: Settings2, match: 'admin.settings.*' },
     ],
 };
 
@@ -204,15 +211,17 @@ export default function DashboardLayout({ children }) {
                         <NotificationBell />
                     </div>
                 </header>
-                <motion.main key={url?.split('?')[0]} initial={{ opacity: 0.35, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }} className="mx-auto max-w-[1280px] px-4 py-8 sm:px-8">
+                <main className="mx-auto max-w-[1280px] px-4 py-8 sm:px-8">
                     <Breadcrumbs className="mb-6" />
                     <FarmerStatusBanner />
                     {children}
-                </motion.main>
+                </main>
             </div>
-            <Scrollbar />
-            <ScrollToTop raised={auth.user.role === 'customer'} />
-            <SearchPalette />
+            <AfterIdle>
+                <Scrollbar />
+                <ScrollToTop raised={auth.user.role === 'customer'} />
+                <SearchPalette />
+            </AfterIdle>
             {auth.user.role === 'customer' && <Assistant />}
             <Toaster />
         </div>

@@ -6,10 +6,13 @@ use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -20,13 +23,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        if ($proxies = env('TRUSTED_PROXIES')) {
+            $middleware->trustProxies(at: $proxies === '*' ? '*' : array_map('trim', explode(',', $proxies)));
+        }
         $middleware->web(append: [
+            ThrottleRequests::using('global'),
             SecurityHeaders::class,
             SetLocale::class,
             HandleInertiaRequests::class,
         ]);
-        // Third-party webhooks authenticate with their own signatures, not CSRF tokens.
-        $middleware->validateCsrfTokens(except: ['webhooks/*']);
+        $middleware->validateCsrfTokens(except: ['webhooks/resend/inbound']);
         $middleware->alias([
             'role' => EnsureRole::class,
             'farmer.approved' => EnsureFarmerApproved::class,
@@ -36,8 +42,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectUsersTo(fn (Request $request) => route($request->user()->dashboardRoute()));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // Friendly Inertia error pages. "Expected" errors (403/404/429) always get the
-        // designed page; server errors only outside debug mode so stack traces stay useful locally.
+        $exceptions->map(UniqueConstraintViolationException::class, function (UniqueConstraintViolationException $e) {
+            $field = collect(['email', 'username', 'code', 'slug', 'stall_name', 'name'])->first(fn ($f) => str_contains($e->getMessage(), $f)) ?? 'form';
+
+            return ValidationException::withMessages([$field => __('validation.unique', ['attribute' => str_replace('_', ' ', $field)])]);
+        });
         $exceptions->respond(function (Response $response, Throwable $e, Request $request) {
             $status = $response->getStatusCode();
             $friendly = in_array($status, [403, 404, 429], true) || (! app()->hasDebugModeEnabled() && in_array($status, [500, 503], true));

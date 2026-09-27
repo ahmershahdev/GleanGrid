@@ -9,14 +9,6 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-/**
- * Receives e-mail sent to your Resend inbound address (e.g. support@…) and
- * files it in the admin inbox next to contact-form messages.
- *
- * Security: every request must carry a valid Svix signature made with
- * RESEND_WEBHOOK_SECRET and be less than 5 minutes old (no replays).
- * Idempotent: Resend retries are de-duplicated on the e-mail id.
- */
 class ResendWebhookController extends Controller
 {
     private const TOLERANCE = 300;
@@ -36,7 +28,6 @@ class ResendWebhookController extends Controller
             return response()->json(['ok' => true]);
         }
 
-        // The webhook carries metadata only; the body comes from the Receiving API.
         $body = $this->fetchBody($id);
         [$name, $email] = $this->parseAddress((string) ($data['from'] ?? $body['from'] ?? ''));
 
@@ -63,7 +54,6 @@ class ResendWebhookController extends Controller
         $key = base64_decode(Str::after($secret, 'whsec_'));
         $expected = base64_encode(hash_hmac('sha256', "{$id}.{$timestamp}.{$request->getContent()}", $key, true));
 
-        // The header may hold several space-separated "v1,<sig>" values; any match is valid.
         foreach (explode(' ', $header) as $candidate) {
             if (hash_equals($expected, Str::after($candidate, ','))) {
                 return true;
@@ -85,7 +75,6 @@ class ResendWebhookController extends Controller
         }
     }
 
-    /** "Ayesha Khan <ayesha@example.com>" → ['Ayesha Khan', 'ayesha@example.com'] */
     private function parseAddress(string $from): array
     {
         if (preg_match('/^\s*"?([^"<]*)"?\s*<([^>]+)>\s*$/', $from, $m)) {

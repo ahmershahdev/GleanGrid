@@ -8,15 +8,8 @@ use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Routing\Route;
 
-/**
- * One definition of every page's trail. React renders it (translating `key`),
- * and Seo turns the public ones into schema.org BreadcrumbList JSON-LD.
- *
- * Item shape: ['key' => i18n key|null, 'label' => English/raw label, 'url' => string].
- */
 class Breadcrumbs
 {
-    /** Public pages: route name => [[i18n key, English, route name], …] after "Home". */
     private const PUBLIC = [
         'markets.index' => [['nav.markets', 'Markets', 'markets.index']],
         'farmers.index' => [['nav.farmers', 'Farmers', 'farmers.index']],
@@ -31,7 +24,6 @@ class Breadcrumbs
         'pickup-policy' => [['footer.help', 'Help', 'faq'], ['legal.pickup', 'Pickup policy', 'pickup-policy']],
     ];
 
-    /** Signed-in areas: route-name prefix => [i18n key, English, index route]. Longest prefix wins. */
     private const SECTIONS = [
         'customer.orders' => ['dash.orders', 'Orders', 'customer.orders.index'],
         'customer.favorites' => ['dash.favorites', 'Favourites', 'customer.favorites.index'],
@@ -44,6 +36,9 @@ class Breadcrumbs
         'farmer.slots' => ['dash.pickup', 'Pickup & cut-off', 'farmer.slots.index'],
         'farmer.stall' => ['dash.stall', 'Stall profile', 'farmer.stall.edit'],
         'farmer.reviews' => ['dash.reviews', 'Reviews', 'farmer.reviews.index'],
+        'farmer.scan' => ['dash.scan', 'Scan pass', 'farmer.scan'],
+        'admin.audit' => ['dash.audit', 'Audit log', 'admin.audit.index'],
+        'admin.settings' => ['dash.settings', 'Settings', 'admin.settings.edit'],
         'admin.farmers' => ['dash.farmers', 'Farmers', 'admin.farmers.index'],
         'admin.customers' => ['dash.customers', 'Customers', 'admin.customers.index'],
         'admin.markets' => ['dash.markets', 'Markets', 'admin.markets.index'],

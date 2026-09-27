@@ -7,7 +7,7 @@ import { useT } from '@/lib/i18n';
 export default function ForgotPassword() {
     const t = useT();
     const form = useForm({ email: '', website: '', captcha_v2: '' });
-    const guard = useBotGuard(form, 'forgot');
+    const guard = useBotGuard(form, 'forgot', 'checkbox');
 
     return (
         <AuthLayout title={t('auth.forgot_title')} subtitle={t('auth.forgot_sub')}>
@@ -18,8 +18,8 @@ export default function ForgotPassword() {
                 }}
                 className="relative space-y-5"
             >
-                <BotFields form={form} guard={guard} t={t} />
                 <Input label={t('fields.email')} placeholder={t('ph.email')} type="email" value={form.data.email} onChange={(e) => form.setData('email', e.target.value)} error={form.errors.email} autoFocus required />
+                <BotFields form={form} guard={guard} t={t} />
                 <Button type="submit" size="lg" className="w-full" loading={form.processing}>
                     {t('auth.send_link')}
                 </Button>

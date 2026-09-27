@@ -1,21 +1,9 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { Check, ChevronDown, Search } from 'lucide-react';
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { useT } from '@/lib/i18n';
-import { cn } from '@/lib/utils';
+import { clientPortal, cn } from '@/lib/utils';
 
-/**
- * Themed replacement for <select>.
- *
- * - Listbox semantics (aria-activedescendant), full keyboard support:
- *   ↑ ↓ Home End to move, Enter/Space to pick, Esc to close, type-ahead by letter.
- * - Rendered in a portal with fixed positioning so cards and tables with
- *   overflow:hidden never clip it; flips upward when there's no room below.
- * - Long lists (> 8) get a filter box.
- *
- * options: [{ value, label, hint?, icon? }]
- */
 export default function Dropdown({ value, onChange, options, placeholder, icon: Icon, size = 'md', className, buttonClassName, align = 'start', ariaLabel, invalid, disabled, id: idProp }) {
     const t = useT();
     const autoId = useId();
@@ -72,7 +60,6 @@ export default function Dropdown({ value, onChange, options, placeholder, icon: 
         return () => document.removeEventListener('pointerdown', close);
     }, [open]);
 
-    // Keep the highlighted option in view.
     useEffect(() => {
         if (open) list.current?.querySelector(`[data-index="${active}"]`)?.scrollIntoView({ block: 'nearest' });
     }, [active, open]);
@@ -108,7 +95,6 @@ export default function Dropdown({ value, onChange, options, placeholder, icon: 
             e.preventDefault();
             if (shown[active]) choose(shown[active]);
         } else if (!searchable && e.key.length === 1) {
-            // Type-ahead: jump to the first option starting with what was typed.
             const now = Date.now();
             typed.current = { text: (now - typed.current.at < 600 ? typed.current.text : '') + e.key.toLowerCase(), at: now };
             const hit = shown.findIndex((o) => String(o.label).toLowerCase().startsWith(typed.current.text));
@@ -130,12 +116,12 @@ export default function Dropdown({ value, onChange, options, placeholder, icon: 
                 aria-haspopup="listbox"
                 aria-expanded={open}
                 aria-controls={`${id}-list`}
-                aria-label={ariaLabel}
+                aria-label={ariaLabel ? `${ariaLabel}: ${selected ? selected.label : (placeholder ?? '')}` : undefined}
                 aria-invalid={invalid || undefined}
                 aria-activedescendant={open && shown[active] ? `${id}-opt-${active}` : undefined}
                 className={cn(
-                    'group flex w-full items-center gap-2 rounded-full border bg-elev text-start transition hover:border-ink/40 focus-visible:border-brand focus-visible:ring-4 focus-visible:ring-brand/15 focus-visible:outline-none disabled:opacity-50',
-                    open ? 'border-brand ring-4 ring-brand/15' : 'border-line-strong',
+                    'group flex w-full items-center gap-2 rounded-full border bg-elev text-start transition hover:border-ink/40 focus-visible:border-brand focus-visible:ring-1 focus-visible:ring-brand focus-visible:outline-none disabled:opacity-50',
+                    open ? 'border-brand ring-1 ring-brand' : 'border-line-strong',
                     invalid && 'border-danger',
                     sizes[size],
                     buttonClassName,
@@ -147,7 +133,7 @@ export default function Dropdown({ value, onChange, options, placeholder, icon: 
                 <ChevronDown className={cn('size-4 shrink-0 text-ink-faint transition-transform duration-300', open && 'rotate-180 text-ink')} />
             </button>
 
-            {createPortal(
+            {clientPortal(
                 <AnimatePresence>
                     {open && pos && (
                         <motion.div
@@ -205,13 +191,11 @@ export default function Dropdown({ value, onChange, options, placeholder, icon: 
                         </motion.div>
                     )}
                 </AnimatePresence>,
-                document.body,
             )}
         </div>
     );
 }
 
-/** Turn <option> children (as used by the old <Select>) into Dropdown options. */
 export function optionsFromChildren(children) {
     const out = [];
     const walk = (nodes) =>
@@ -224,10 +208,6 @@ export function optionsFromChildren(children) {
     return out;
 }
 
-/**
- * Drop-in for a bare <select> in filter bars: same <option> children and
- * onChange(event) signature, themed dropdown underneath.
- */
 export function SelectMenu({ value, onChange, children, className, size = 'sm', icon, ariaLabel, 'aria-label': ariaLabelAttr, align }) {
     const options = optionsFromChildren(children).map((o) => ({ ...o, label: Array.isArray(o.label) ? o.label.join('') : o.label }));
     return (
@@ -238,7 +218,7 @@ export function SelectMenu({ value, onChange, children, className, size = 'sm', 
             icon={icon}
             align={align}
             ariaLabel={ariaLabel ?? ariaLabelAttr}
-            className={className}
+            className={cn('min-w-40', className)}
             onChange={(v) => onChange?.({ target: { value: v } })}
         />
     );

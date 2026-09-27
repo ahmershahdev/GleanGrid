@@ -28,7 +28,7 @@ export default function AdminCustomers({ customers, filters }) {
                     <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('common.search')} className="w-44 bg-transparent text-sm focus:outline-none" />
                 </form>
             </div>
-            <Table className="mt-6" head={[t('acustomers.customer'), t('fields.phone'), t('afarmers.orders'), t('acustomers.spent'), t('acustomers.joined'), t('afarmers.status'), '']}>
+            <Table className="mt-6" head={[t('acustomers.customer'), t('fields.phone'), t('afarmers.orders'), t('acustomers.no_shows', {}, 'Missed'), t('acustomers.spent'), t('acustomers.joined'), t('afarmers.status'), '']}>
                 {customers.data.map((c) => (
                     <tr key={c.id} className="hover:bg-ink/[0.02]">
                         <td className="px-5 py-3.5">
@@ -44,6 +44,21 @@ export default function AdminCustomers({ customers, filters }) {
                             {c.phone}
                         </td>
                         <td className="px-5 py-3.5 tabular-nums">{c.orders_count}</td>
+                        <td className="px-5 py-3.5">
+                            {c.recent_no_shows > 0 ? (
+                                <button
+                                    type="button"
+                                    onClick={() => router.patch(route('admin.customers.no-shows.reset', c.id), {}, { preserveScroll: true })}
+                                    className="group inline-flex items-center gap-1.5 rounded-full bg-danger/10 px-2.5 py-1 text-xs font-semibold text-danger"
+                                    title={t('acustomers.reset_no_shows', {}, 'Reset missed pickups')}
+                                >
+                                    {c.recent_no_shows}
+                                    <span className="hidden group-hover:inline">· {t('acustomers.reset', {}, 'Reset')}</span>
+                                </button>
+                            ) : (
+                                <span className="text-ink-faint">0</span>
+                            )}
+                        </td>
                         <td className="px-5 py-3.5 tabular-nums">{money(c.spent ?? 0)}</td>
                         <td className="px-5 py-3.5 text-ink-soft">{relative(c.created_at)}</td>
                         <td className="px-5 py-3.5">

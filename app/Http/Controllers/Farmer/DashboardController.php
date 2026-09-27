@@ -18,7 +18,6 @@ class DashboardController extends Controller
         $orders = Order::where('farmer_profile_id', $farmer->id);
         $completed = (clone $orders)->where('status', 'completed');
 
-        // Revenue for the last 8 weeks, oldest first, zero-filled.
         $start = CarbonImmutable::now()->startOfWeek()->subWeeks(7);
         $weekly = (clone $completed)->where('completed_at', '>=', $start)->get(['completed_at', 'total_amount'])
             ->groupBy(fn ($o) => $o->completed_at->startOfWeek()->toDateString());

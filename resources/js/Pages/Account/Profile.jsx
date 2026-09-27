@@ -1,20 +1,25 @@
 import { useForm, usePage } from '@inertiajs/react';
-import { BadgeCheck, Camera, CircleAlert, Laptop, LogOut, ShieldCheck } from 'lucide-react';
-import { Avatar, Button, Card, Input, PageHeader, Select, Textarea, PasswordInput } from '@/Components/ui';
+import { BadgeCheck, CircleAlert, Database, Download, Laptop, LogOut, ShieldCheck, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import ImagePicker from '@/Components/ImagePicker';
+import { useUnsavedGuard } from '@/lib/confirm';
+import { Avatar, Button, buttonClass, Card, Input, PageHeader, Select, Textarea, PasswordInput } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
 
 export default function Profile({ profile, security }) {
     const t = useT();
     const { auth, app } = usePage().props;
-    const form = useForm({ ...profile, city: profile.city ?? '', avatar: null });
+    const form = useForm({ ...profile, city: profile.city ?? '', avatar: null, remove_avatar: false });
     const pwd = useForm({ current_password: '', password: '', password_confirmation: '' });
     const others = useForm({ password: '' });
     const fmt = useFormat();
     const field = (f, name) => ({ value: f.data[name] ?? '', onChange: (e) => f.setData(name, e.target.value), error: f.errors[name] });
 
+    useUnsavedGuard((form.isDirty || pwd.isDirty) && !form.processing && !pwd.processing);
+
     const save = (e) => {
         e.preventDefault();
-        form.transform((data) => ({ ...data, _method: 'put' }));
+        form.transform((data) => ({ ...data, remove_avatar: data.remove_avatar ? 1 : 0, _method: 'put' }));
         form.post(route('profile.update'), { forceFormData: true, preserveScroll: true, preserveState: false });
     };
 
@@ -23,19 +28,22 @@ export default function Profile({ profile, security }) {
             <PageHeader eyebrow={t(`roles.${auth.user.role}`)} title={t('profile.title')} description={t('profile.subtitle')} />
             <div className="mt-8 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
                 <Card as="form" onSubmit={save} className="space-y-5 p-6 md:p-8">
-                    <div className="flex items-center gap-5">
-                        <div className="relative">
-                            <Avatar name={auth.user.name} src={form.data.avatar ? URL.createObjectURL(form.data.avatar) : auth.user.avatar} size="size-20" />
-                            <label className="absolute -end-1 -bottom-1 flex size-8 cursor-pointer items-center justify-center rounded-full bg-ink text-bg">
-                                <Camera className="size-4" />
-                                <input type="file" accept="image/*" className="sr-only" onChange={(e) => form.setData('avatar', e.target.files[0])} />
-                            </label>
-                        </div>
-                        <div>
-                            <p className="font-display text-2xl">{auth.user.name}</p>
-                            <p className="text-sm text-ink-soft">@{auth.user.username}</p>
-                            {form.errors.avatar && <p className="text-sm text-danger">{form.errors.avatar}</p>}
-                        </div>
+                    <div>
+                        <p className="font-display text-2xl">{auth.user.name}</p>
+                        <p className="mb-4 text-sm text-ink-soft">@{auth.user.username}</p>
+                        <ImagePicker
+                            shape="circle"
+                            maxSide={512}
+                            label={t('profile.photo', {}, 'Profile photo')}
+                            file={form.data.avatar}
+                            current={auth.user.avatar}
+                            removed={form.data.remove_avatar}
+                            onPick={(f) => form.setData((d) => ({ ...d, avatar: f, remove_avatar: f ? false : d.remove_avatar }))}
+                            onRemove={() => form.setData('remove_avatar', true)}
+                            onUndo={() => form.setData('remove_avatar', false)}
+                            error={form.errors.avatar}
+                            fallback={<Avatar name={auth.user.name} size="size-24" />}
+                        />
                     </div>
                     <div className="grid gap-5 sm:grid-cols-2">
                         <Input label={t('fields.name')} placeholder={t('ph.name')} {...field(form, 'name')} required />
@@ -143,7 +151,63 @@ export default function Profile({ profile, security }) {
                         </div>
                     </div>
                 </Card>
+
+                <YourData />
             </section>
         </>
+    );
+}
+
+function YourData() {
+    const t = useT();
+    const { auth } = usePage().props;
+    const [open, setOpen] = useState(false);
+    const del = useForm({ password: '', confirm: '' });
+
+    return (
+        <Card className="mt-6 p-6 md:p-8">
+            <h2 className="font-display flex items-center gap-2 text-2xl">
+                <Database className="size-5" /> {t('data.title', {}, 'Your data')}
+            </h2>
+            <div className="mt-6 grid gap-6 md:grid-cols-2">
+                <div className="rounded-2xl border border-line p-5">
+                    <p className="font-medium">{t('data.export_title', {}, 'Download a copy')}</p>
+                    <p className="mt-1 text-sm text-ink-soft">{t('data.export_body', {}, 'Your profile, orders, reviews, favourites, family links, recent sign-ins and notifications, as a JSON file.')}</p>
+                    <a href={route('profile.export')} data-no-prefetch className={buttonClass('outline', 'sm', 'mt-4')} download>
+                        <Download className="size-4" /> {t('data.export', {}, 'Download my data')}
+                    </a>
+                </div>
+                <div className="rounded-2xl border border-danger/30 bg-danger/[0.03] p-5">
+                    <p className="font-medium text-danger">{t('data.delete_title', {}, 'Delete account')}</p>
+                    <p className="mt-1 text-sm text-ink-soft">{t('data.delete_body', {}, 'Open pre-orders are cancelled, your profile, favourites and family links are erased, and past orders are anonymised so farmers’ records stay correct. This can’t be undone.')}</p>
+                    {auth.user.role === 'admin' ? (
+                        <p className="mt-4 text-xs text-ink-faint">{t('data.admin_note', {}, 'Administrator accounts are removed by another administrator.')}</p>
+                    ) : !open ? (
+                        <Button variant="ghost" size="sm" className="mt-4 text-danger" onClick={() => setOpen(true)}>
+                            <Trash2 className="size-4" /> {t('data.delete', {}, 'Delete my account')}
+                        </Button>
+                    ) : (
+                        <form
+                            className="mt-4 space-y-3"
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                del.delete(route('profile.destroy'), { preserveScroll: true });
+                            }}
+                        >
+                            <PasswordInput label={t('fields.password')} value={del.data.password} onChange={(e) => del.setData('password', e.target.value)} error={del.errors.password} autoComplete="current-password" required />
+                            <Input label={t('data.type_delete', {}, 'Type DELETE to confirm')} value={del.data.confirm} onChange={(e) => del.setData('confirm', e.target.value)} error={del.errors.confirm} autoComplete="off" required />
+                            <div className="flex gap-2">
+                                <Button type="submit" variant="danger" size="sm" loading={del.processing} disabled={del.data.confirm !== 'DELETE' || !del.data.password}>
+                                    {t('data.delete_forever', {}, 'Delete forever')}
+                                </Button>
+                                <Button variant="ghost" size="sm" onClick={() => (setOpen(false), del.reset())}>
+                                    {t('common.cancel')}
+                                </Button>
+                            </div>
+                        </form>
+                    )}
+                </div>
+            </div>
+        </Card>
     );
 }

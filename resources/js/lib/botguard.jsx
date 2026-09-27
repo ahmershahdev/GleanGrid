@@ -1,61 +1,69 @@
 import { usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 
-/*
- * Client half of App\Support\BotGuard.
- *
- * Every protected form carries a honeypot field and the time it was opened.
- * When reCAPTCHA keys are configured, submit() also fetches an invisible v3
- * token; if the server answers `captcha.challenge` the v2 checkbox appears.
- */
-
 let scriptPromise = null;
 
-function loadRecaptcha(siteKey) {
-    if (window.grecaptcha?.execute) return Promise.resolve(window.grecaptcha);
+function loadRecaptcha(v3Key, lang) {
+    if (window.grecaptcha?.render) return new Promise((resolve) => window.grecaptcha.ready(() => resolve(window.grecaptcha)));
     scriptPromise ??= new Promise((resolve, reject) => {
         const s = document.createElement('script');
-        s.src = `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(siteKey)}`;
+        const params = new URLSearchParams({ render: v3Key || 'explicit' });
+        if (lang) params.set('hl', lang);
+        s.src = `https://www.google.com/recaptcha/api.js?${params}`;
         s.async = true;
         s.onload = () => window.grecaptcha.ready(() => resolve(window.grecaptcha));
-        s.onerror = reject;
+        s.onerror = () => {
+            scriptPromise = null;
+            reject(new Error('recaptcha blocked'));
+        };
         document.head.appendChild(s);
     });
     return scriptPromise;
 }
 
-export function useBotGuard(form, action) {
-    const captcha = usePage().props.captcha ?? {};
+export function useBotGuard(form, action, mode = 'invisible') {
+    const { captcha = {}, app = {} } = usePage().props;
     const startedAt = useRef(Date.now());
+    const widget = useRef(null);
     const [challenge, setChallenge] = useState(false);
+    const needsBox = Boolean(captcha.v2) && (mode === 'checkbox' || challenge);
+    const anyKey = captcha.v3 || captcha.v2;
 
     useEffect(() => {
-        if (captcha.enabled && captcha.v3) loadRecaptcha(captcha.v3).catch(() => {});
-    }, [captcha.enabled, captcha.v3]);
+        if (anyKey) loadRecaptcha(captcha.v3, app.locale).catch(() => {});
+    }, [anyKey, captcha.v3, app.locale]);
 
     useEffect(() => {
         if (form.errors.captcha === 'captcha.challenge' && captcha.v2) setChallenge(true);
     }, [form.errors.captcha, captcha.v2]);
 
-    /** Wrap form.post: adds bot fields and a fresh v3 token, then submits. */
+    const resetBox = () => {
+        if (widget.current !== null) window.grecaptcha?.reset(widget.current);
+        form.setData('captcha_v2', '');
+    };
+
     const submit = async (method, url, options = {}) => {
         let token = '';
-        if (captcha.enabled && captcha.v3 && !form.data.captcha_v2) {
+        if (captcha.v3) {
             try {
-                const g = await loadRecaptcha(captcha.v3);
+                const g = await loadRecaptcha(captcha.v3, app.locale);
                 token = await g.execute(captcha.v3, { action });
             } catch {
-                /* network blocked: the server-side honeypot still runs */
             }
         }
         form.transform((data) => ({ ...data, website: data.website ?? '', form_started_at: startedAt.current, captcha_token: token }));
-        form[method](url, options);
+        form[method](url, {
+            ...options,
+            onError: (errors) => {
+                resetBox();
+                options.onError?.(errors);
+            },
+        });
     };
 
-    return { submit, challenge, siteKeyV2: captcha.v2 };
+    return { submit, needsBox, widget, locale: app.locale, v3: captcha.v3, v2: captcha.v2 };
 }
 
-/** Invisible-to-humans honeypot. Off-screen (not display:none, which some bots skip). */
 export function Honeypot({ form }) {
     return (
         <div aria-hidden="true" className="pointer-events-none absolute -start-[9999px] top-0 h-px w-px overflow-hidden opacity-0">
@@ -67,44 +75,77 @@ export function Honeypot({ form }) {
     );
 }
 
-/** reCAPTCHA v2 checkbox, rendered only after the server asks for a challenge. */
-export function CaptchaChallenge({ siteKey, form }) {
-    const box = useRef(null);
+function CaptchaBox({ guard, form }) {
+    const host = useRef(null);
+    const [failed, setFailed] = useState(false);
+    const [dark, setDark] = useState(() => typeof document !== 'undefined' && document.documentElement.classList.contains('dark'));
+
     useEffect(() => {
-        let widget;
-        const script = document.createElement('script');
-        script.src = 'https://www.google.com/recaptcha/api.js?render=explicit';
-        script.async = true;
-        script.onload = () =>
-            window.grecaptcha.ready(() => {
-                if (!box.current) return;
-                widget = window.grecaptcha.render(box.current, {
-                    sitekey: siteKey,
-                    theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
+        const obs = new MutationObserver(() => setDark(document.documentElement.classList.contains('dark')));
+        obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        return () => obs.disconnect();
+    }, []);
+
+    useEffect(() => {
+        let alive = true;
+        loadRecaptcha(guard.v3, guard.locale)
+            .then((g) => {
+                if (!alive || !host.current) return;
+                host.current.replaceChildren();
+                const slot = document.createElement('div');
+                host.current.appendChild(slot);
+                guard.widget.current = g.render(slot, {
+                    sitekey: guard.v2,
+                    theme: dark ? 'dark' : 'light',
                     callback: (token) => form.setData('captcha_v2', token),
                     'expired-callback': () => form.setData('captcha_v2', ''),
+                    'error-callback': () => form.setData('captcha_v2', ''),
                 });
-            });
-        document.head.appendChild(script);
-        return () => widget !== undefined && window.grecaptcha?.reset(widget);
+                form.setData('captcha_v2', '');
+            })
+            .catch(() => alive && setFailed(true));
+        return () => {
+            alive = false;
+            guard.widget.current = null;
+        };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [siteKey]);
+    }, [guard.v2, dark]);
 
-    return <div ref={box} className="min-h-[78px]" />;
+    if (failed) {
+        return <p className="text-xs text-ink-faint">reCAPTCHA couldn’t load. Check your connection or disable blockers for this site.</p>;
+    }
+
+    return <div ref={host} className="min-h-[78px] overflow-hidden rounded-[3px]" />;
 }
 
-/** Drop-in for any protected form: honeypot, v2 challenge when asked, and the error line. */
+export function CaptchaNotice({ t }) {
+    return (
+        <p className="text-[11px] leading-relaxed text-ink-faint">
+            {t('captcha.notice_pre', {}, 'Protected by reCAPTCHA — Google’s')}{' '}
+            <a className="underline hover:text-ink" href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">
+                {t('captcha.privacy', {}, 'Privacy Policy')}
+            </a>{' '}
+            &amp;{' '}
+            <a className="underline hover:text-ink" href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer">
+                {t('captcha.terms', {}, 'Terms')}
+            </a>{' '}
+            {t('captcha.notice_post', {}, 'apply.')}
+        </p>
+    );
+}
+
 export function BotFields({ form, guard, t }) {
     const error = form.errors.captcha;
     return (
         <>
             <Honeypot form={form} />
-            {guard.challenge && guard.siteKeyV2 && <CaptchaChallenge siteKey={guard.siteKeyV2} form={form} />}
+            {guard.needsBox && <CaptchaBox guard={guard} form={form} />}
             {error && (
                 <p className="rounded-2xl bg-danger/10 px-4 py-3 text-sm text-danger" role="alert">
                     {t(error)}
                 </p>
             )}
+            {(guard.v3 || guard.v2) && <CaptchaNotice t={t} />}
         </>
     );
 }

@@ -33,8 +33,6 @@ class FavoriteController extends Controller
         abort_unless(isset(Favorite::TYPES[$type]), 404);
         Favorite::TYPES[$type]::findOrFail($id);
 
-        // Race-safe toggle: the DELETE tells us atomically whether a row existed, and
-        // insertOrIgnore leans on the unique index if two taps land at once.
         $removed = $request->user()->favorites()->where('favoritable_type', $type)->where('favoritable_id', $id)->delete();
 
         if ($removed) {

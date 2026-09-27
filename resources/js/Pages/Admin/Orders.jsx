@@ -1,4 +1,4 @@
-import { router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { Search } from 'lucide-react';
 import { useState } from 'react';
 import { PageHeader, Pagination, StatusBadge, Table } from '@/Components/ui';
@@ -26,7 +26,7 @@ export default function AdminOrders({ orders, markets, filters }) {
                     <Search className="size-4 text-ink-faint" />
                     <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('aorders.search')} className="w-40 bg-transparent text-sm focus:outline-none" />
                 </form>
-                <SelectMenu value={filters.status ?? ''} onChange={(e) => apply({ status: e.target.value })} className="h-10 rounded-full border border-line-strong bg-elev px-4 text-sm">
+                <SelectMenu value={filters.status ?? ''} onChange={(e) => apply({ status: e.target.value })}>
                     <option value="">{t('aorders.any_status')}</option>
                     {['placed', 'accepted', 'ready', 'completed', 'declined', 'cancelled'].map((s) => (
                         <option key={s} value={s}>
@@ -34,7 +34,7 @@ export default function AdminOrders({ orders, markets, filters }) {
                         </option>
                     ))}
                 </SelectMenu>
-                <SelectMenu value={filters.market ?? ''} onChange={(e) => apply({ market: e.target.value })} className="h-10 rounded-full border border-line-strong bg-elev px-4 text-sm">
+                <SelectMenu value={filters.market ?? ''} onChange={(e) => apply({ market: e.target.value })}>
                     <option value="">{t('farmers.all_markets')}</option>
                     {markets.map((m) => (
                         <option key={m.id} value={m.id}>
@@ -46,7 +46,11 @@ export default function AdminOrders({ orders, markets, filters }) {
             <Table className="mt-6" head={[t('aorders.code'), t('acustomers.customer'), t('afarmers.stall'), t('order.pickup'), t('afarmers.status'), t('cart.total')]}>
                 {orders.data.map((o) => (
                     <tr key={o.id} className="hover:bg-ink/[0.02]">
-                        <td className="px-5 py-3 font-mono text-xs font-semibold">{o.code}</td>
+                        <td className="px-5 py-3 font-mono text-xs font-semibold">
+                            <Link href={route('admin.orders.show', o.code)} className="underline decoration-line-strong underline-offset-4 hover:decoration-ink">
+                                {o.code}
+                            </Link>
+                        </td>
                         <td className="px-5 py-3">{o.customer.name}</td>
                         <td className="px-5 py-3">{o.farmer.stall_name}</td>
                         <td className="px-5 py-3 text-ink-soft">

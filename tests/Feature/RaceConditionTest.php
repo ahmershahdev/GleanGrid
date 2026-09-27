@@ -16,10 +16,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
-/**
- * PHP tests run in one process, so these simulate the interleavings that real
- * concurrent requests produce: a stale model, a held lock, a full slot.
- */
 class RaceConditionTest extends TestCase
 {
     use RefreshDatabase;
@@ -72,14 +68,12 @@ class RaceConditionTest extends TestCase
         $order = $this->orders->place($this->customer, [$this->group($product, 2)])->first();
         $stock = $product->fresh()->stock_quantity;
 
-        // Meanwhile the farmer declines it in another request; our copy is stale.
         Order::whereKey($order->id)->update(['status' => 'declined']);
 
         $this->expectException(ValidationException::class);
         try {
             $this->orders->cancel($order);
         } finally {
-            // Stock must not be released twice.
             $this->assertSame($stock, $product->fresh()->stock_quantity);
         }
     }
@@ -89,7 +83,7 @@ class RaceConditionTest extends TestCase
         $product = $this->farmer->products()->orderable()->first();
         $order = $this->orders->place($this->customer, [$this->group($product)])->first();
 
-        Order::whereKey($order->id)->update(['status' => 'cancelled']); // customer cancelled first
+        Order::whereKey($order->id)->update(['status' => 'cancelled']);
 
         $this->expectException(ValidationException::class);
         $this->orders->transition($order, 'accepted');
@@ -100,7 +94,6 @@ class RaceConditionTest extends TestCase
         $product = $this->farmer->products()->orderable()->first();
         $slot = $this->orders->availableSlots($this->farmer)->first();
         $window = [$slot['id'], $slot['dates'][0]];
-        // Leave exactly one free place, whatever the demo seed already booked in this window.
         $booked = Order::where('pickup_slot_id', $slot['id'])->whereDate('pickup_date', $window[1])->whereIn('status', Order::OPEN)->count();
         PickupSlot::whereKey($slot['id'])->update(['capacity' => $booked + 1]);
 
@@ -116,7 +109,7 @@ class RaceConditionTest extends TestCase
         $product = $this->farmer->products()->orderable()->first();
         $product->update(['stock_quantity' => 3]);
         $group = $this->group($product, 2);
-        $group['items'][] = ['product_id' => $product->id, 'quantity' => 2]; // 2 + 2 > 3
+        $group['items'][] = ['product_id' => $product->id, 'quantity' => 2];
 
         $this->expectException(ValidationException::class);
         $this->orders->place($this->customer, [$group]);
@@ -127,7 +120,6 @@ class RaceConditionTest extends TestCase
         $product = Product::listed()->first();
         $row = ['user_id' => $this->customer->id, 'favoritable_type' => 'product', 'favoritable_id' => $product->id, 'notify_restock' => true, 'created_at' => now(), 'updated_at' => now()];
 
-        // Two "add" taps landing together.
         Favorite::insertOrIgnore($row);
         Favorite::insertOrIgnore($row);
 

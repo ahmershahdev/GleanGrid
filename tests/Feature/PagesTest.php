@@ -97,4 +97,21 @@ class PagesTest extends TestCase
         $this->postJson(route('assistant'), ['message' => 'How do I pay?'])->assertOk()->assertJsonPath('intent', 'faq_payment');
         $this->postJson(route('assistant'), ['message' => 'Is Hilltop Bakehouse available?'])->assertOk()->assertJsonPath('intent', 'farmer_availability');
     }
+
+    public function test_urls_are_case_insensitive_and_aliases_redirect(): void
+    {
+        $this->get('/Contact')->assertStatus(301)->assertRedirect('/contact');
+        $this->get('/FARMERS?sort=name')->assertStatus(301)->assertRedirect('/farmers?sort=name');
+        $this->get('/contact-us')->assertStatus(301)->assertRedirect('/contact');
+        $this->get('/TOS')->assertStatus(301)->assertRedirect('/terms');
+        $this->get('/Products/'.strtoupper(Product::listed()->value('slug')))->assertStatus(301);
+        $this->get('/definitely-not-a-page')->assertNotFound();
+    }
+
+    public function test_empty_filters_are_sent_as_an_object(): void
+    {
+        foreach (['farmers.index', 'products.index', 'markets.index'] as $name) {
+            $this->assertStringContainsString('"filters":{}', $this->get(route($name))->getContent(), $name);
+        }
+    }
 }

@@ -77,6 +77,15 @@
     SetEnvIf Request_URI "\.(br|gz)$" no-gzip no-brotli
 </IfModule>
 
+# The service worker and offline page must always be re-checked, or a deploy
+# could leave visitors on an old worker for up to a day.
+<IfModule mod_headers.c>
+    <FilesMatch "^(sw\.js|offline\.html)$">
+        Header set Cache-Control "no-cache, max-age=0, must-revalidate"
+        Header set Service-Worker-Allowed "/"
+    </FilesMatch>
+</IfModule>
+
 # On-the-fly compression for everything else (HTML, JSON, SVG, fonts…).
 <IfModule mod_brotli.c>
     AddOutputFilterByType BROTLI_COMPRESS text/html text/plain text/css text/xml application/javascript application/json application/xml application/rss+xml image/svg+xml application/manifest+json font/ttf font/otf

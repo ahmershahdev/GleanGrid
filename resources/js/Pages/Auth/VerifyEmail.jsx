@@ -25,7 +25,6 @@ export default function VerifyEmail({ email }) {
         return () => clearTimeout(id);
     }, [cooldown]);
 
-    // Wrong code: clear and shake, focus the first box again.
     useEffect(() => {
         if (!form.errors.code) return;
         setDigits(Array(LENGTH).fill(''));
@@ -48,7 +47,6 @@ export default function VerifyEmail({ email }) {
     const onChange = (i, value) => {
         const clean = value.replace(/\D/g, '');
         if (!clean) return update(digits.map((d, k) => (k === i ? '' : d)));
-        // Typing or autofill of several digits at once spreads across the boxes.
         const next = [...digits];
         clean.split('').slice(0, LENGTH - i).forEach((c, k) => (next[i + k] = c));
         update(next, i + clean.length);
@@ -105,7 +103,7 @@ export default function VerifyEmail({ email }) {
                             autoFocus={i === 0}
                             aria-label={t('verify.digit', { n: i + 1 })}
                             className={cn(
-                                'font-display size-12 rounded-2xl border bg-elev text-center text-2xl tabular-nums transition focus:scale-105 focus:border-brand focus:ring-4 focus:ring-brand/15 focus:outline-none sm:size-14 sm:text-3xl',
+                                'font-display size-12 rounded-2xl border bg-elev text-center text-2xl tabular-nums transition focus:scale-105 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none sm:size-14 sm:text-3xl',
                                 d ? 'border-brand' : 'border-line-strong',
                                 form.errors.code && 'border-danger',
                             )}

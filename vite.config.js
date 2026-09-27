@@ -8,12 +8,11 @@ export default defineConfig({
     plugins: [
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.jsx'],
+            ssr: 'resources/js/ssr.jsx',
             refresh: true,
         }),
         react(),
         tailwindcss(),
-        // Pre-compressed .br and .gz copies of every build asset; public/.htaccess serves
-        // them directly, so Apache never compresses the same file twice.
         compression({
             algorithms: [defineAlgorithm('brotliCompress'), defineAlgorithm('gzip', { level: 9 })],
             threshold: 1024,

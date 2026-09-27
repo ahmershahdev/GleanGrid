@@ -44,7 +44,7 @@ export default function FarmersIndex({ farmers, markets, filters }) {
                         ))}
                     </div>
                     <div className="flex gap-2 lg:ms-auto">
-                        <SelectMenu value={filters.market ?? ''} onChange={(e) => apply({ market: e.target.value })} className="h-10 max-w-52 rounded-full border border-line-strong bg-elev px-4 text-sm" aria-label={t('farmers.market')}>
+                        <SelectMenu value={filters.market ?? ''} onChange={(e) => apply({ market: e.target.value })} className="max-w-52" aria-label={t('farmers.market')}>
                             <option value="">{t('farmers.all_markets')}</option>
                             {markets.map((m) => (
                                 <option key={m.id} value={m.slug}>
@@ -52,7 +52,7 @@ export default function FarmersIndex({ farmers, markets, filters }) {
                                 </option>
                             ))}
                         </SelectMenu>
-                        <SelectMenu value={filters.sort ?? 'rating'} onChange={(e) => apply({ sort: e.target.value })} className="h-10 rounded-full border border-line-strong bg-elev px-4 text-sm" aria-label={t('common.sort')}>
+                        <SelectMenu value={filters.sort || 'rating'} onChange={(e) => apply({ sort: e.target.value })} aria-label={t('common.sort')}>
                             <option value="rating">{t('farmers.sort_rating')}</option>
                             <option value="name">{t('farmers.sort_name')}</option>
                             <option value="newest">{t('farmers.sort_newest')}</option>

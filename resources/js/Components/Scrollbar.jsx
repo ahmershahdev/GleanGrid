@@ -6,11 +6,6 @@ import { cn } from '@/lib/utils';
 const MIN_THUMB = 48;
 const IDLE_MS = 1300;
 
-/**
- * Page scrollbar that replaces the native one on fine-pointer devices.
- * Drag the thumb (grab → grabbing), click the rail to jump, or just scroll.
- * Touch devices keep their native overlay scrollbars.
- */
 export default function Scrollbar() {
     const [enabled, setEnabled] = useState(false);
     const [thumb, setThumb] = useState({ size: 0, offset: 0, pct: 0, scrollable: false });
@@ -61,7 +56,6 @@ export default function Scrollbar() {
         ro.observe(document.body);
         window.addEventListener('scroll', onScroll, { passive: true });
         window.addEventListener('resize', measure);
-        // Reveal the rail when the pointer approaches the edge.
         const onMove = (e) => {
             const nearEdge = document.dir === 'rtl' ? e.clientX < 28 : window.innerWidth - e.clientX < 28;
             if (nearEdge) wake();
@@ -127,19 +121,19 @@ export default function Scrollbar() {
             onPointerLeave={() => setHover(false)}
             aria-hidden="true"
             data-native-cursor
-            className={cn('fixed inset-y-0 end-0 z-[125] w-4 transition-colors duration-300', hover || dragging ? 'bg-ink/[0.04]' : 'bg-transparent')}
+            className={cn('fixed inset-y-0 end-0 z-[125] w-3 transition-colors duration-300', hover || dragging ? 'bg-ink/[0.04]' : 'bg-transparent')}
         >
             <motion.div
                 onPointerDown={onThumbDown}
                 onPointerMove={onThumbMove}
                 onPointerUp={endDrag}
                 onPointerCancel={endDrag}
-                animate={{ opacity: visible ? 1 : 0, width: hover || dragging ? 10 : 6 }}
+                animate={{ opacity: visible ? 1 : 0, width: hover || dragging ? 6 : 3.5 }}
                 transition={{ opacity: { duration: 0.35 }, width: { type: 'spring', stiffness: 500, damping: 30 } }}
                 style={{ height: thumb.size, transform: `translateY(${thumb.offset}px)` }}
                 className={cn(
-                    'absolute end-[3px] top-0 rounded-full',
-                    dragging ? 'cursor-grabbing bg-gradient-to-b from-lime via-sun to-accent shadow-[0_0_0_4px_rgb(226_85_44/0.15)]' : 'cursor-grab bg-ink/35 hover:bg-gradient-to-b hover:from-lime hover:via-sun hover:to-accent',
+                    'absolute end-[2px] top-0 rounded-full',
+                    dragging ? 'cursor-grabbing bg-gradient-to-b from-lime via-sun to-accent shadow-[0_0_0_4px_rgb(226_85_44/0.15)]' : 'cursor-grab bg-ink/30 hover:bg-gradient-to-b hover:from-lime hover:via-sun hover:to-accent',
                 )}
             >
                 <AnimatePresence>

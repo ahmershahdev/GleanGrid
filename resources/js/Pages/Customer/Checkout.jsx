@@ -1,5 +1,5 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import axios from 'axios';
+import { postJson } from '@/lib/http';
 import { motion } from 'motion/react';
 import { CalendarCheck2, Check, Loader2, MapPin, TicketPercent, Timer, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -49,7 +49,6 @@ function SlotPicker({ group, value, onChange }) {
     );
 }
 
-/** Per-stall coupon: preview comes from the server (live prices), and is re-checked when the order is placed. */
 function CouponBox({ group, applied, onApply, onRemove }) {
     const t = useT();
     const { money } = useFormat();
@@ -63,7 +62,7 @@ function CouponBox({ group, applied, onApply, onRemove }) {
         setBusy(true);
         setError(null);
         try {
-            const { data } = await axios.post(route('customer.coupons.preview'), {
+            const { data } = await postJson(route('customer.coupons.preview'), {
                 code,
                 farmer_profile_id: group.farmer.id,
                 items: group.items.map((i) => ({ product_id: i.product.id, quantity: i.quantity })),
@@ -95,7 +94,7 @@ function CouponBox({ group, applied, onApply, onRemove }) {
 
     return (
         <form onSubmit={apply} className="mt-5">
-            <label className={cn('flex h-12 items-center gap-2 rounded-full border bg-bg ps-4 pe-1.5 transition focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/15', error ? 'border-danger' : 'border-line-strong')}>
+            <label className={cn('flex h-12 items-center gap-2 rounded-full border bg-bg ps-4 pe-1.5 transition focus-within:border-brand focus-within:ring-1 focus-within:ring-brand', error ? 'border-danger' : 'border-line-strong')}>
                 <TicketPercent className="size-4 shrink-0 text-ink-faint" />
                 <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder={t('checkout.coupon')} aria-label={t('checkout.coupon')} maxLength={30} className="h-full min-w-0 flex-1 bg-transparent font-mono text-sm tracking-wider uppercase placeholder:font-sans placeholder:tracking-normal placeholder:normal-case focus:outline-none" />
                 <Button type="submit" size="sm" variant="soft" loading={busy} disabled={!code.trim()}>
@@ -117,7 +116,6 @@ export default function Checkout({ customer }) {
     const [coupons, setCoupons] = useState({});
     const [processing, setProcessing] = useState(false);
 
-    // Pre-select the earliest window for each stall.
     useEffect(() => {
         setChoices((c) => {
             const next = { ...c };

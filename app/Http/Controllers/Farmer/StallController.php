@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Farmer;
 
 use App\Http\Controllers\Controller;
 use App\Models\Market;
+use App\Support\ImageUpload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -44,17 +44,20 @@ class StallController extends Controller
             'market_ids' => 'array',
             'market_ids.*' => 'integer|exists:markets,id',
             'stall_numbers' => 'array',
-            'logo' => 'nullable|image|max:2048',
+            'logo' => ['nullable', ...ImageUpload::RULES],
+            'remove_logo' => 'boolean',
         ]);
 
         if ($request->hasFile('logo')) {
-            if ($farmer->logo && ! str_starts_with($farmer->logo, 'produce:')) {
-                Storage::disk('public')->delete($farmer->logo);
-            }
-            $data['logo'] = $request->file('logo')->store('logos', 'public');
+            ImageUpload::delete($farmer->logo);
+            $data['logo'] = ImageUpload::store($request->file('logo'), 'logos', 'logo', maxSide: 640);
+        } elseif ($request->boolean('remove_logo')) {
+            ImageUpload::delete($farmer->logo);
+            $data['logo'] = null;
         } else {
             unset($data['logo']);
         }
+        unset($data['remove_logo']);
 
         $farmer->update(collect($data)->except('market_ids', 'stall_numbers')->all());
         $farmer->markets()->sync(collect($data['market_ids'] ?? [])->mapWithKeys(fn ($id) => [

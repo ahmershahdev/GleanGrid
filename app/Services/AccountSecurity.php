@@ -9,28 +9,24 @@ use App\Notifications\NewSignInAlert;
 use App\Notifications\PasswordChangedAlert;
 use App\Notifications\VerifyEmailCode;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\Notification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
-/**
- * Everything about keeping an account safe after the password check:
- * one-time e-mail codes, sign-in audit + new-device alerts, and session control.
- */
 class AccountSecurity
 {
     private const CODE_TTL_MINUTES = 15;
-
-    /* ------------------------------------------------ E-mail verification */
 
     public function sendEmailCode(User $user): void
     {
         $code = (string) random_int(100000, 999999);
 
         DB::transaction(function () use ($user, $code) {
-            // Only the newest code is valid; older ones die immediately.
             VerificationCode::where('user_id', $user->id)->where('purpose', VerificationCode::EMAIL)
                 ->whereNull('consumed_at')->update(['consumed_at' => now()]);
 
@@ -42,15 +38,12 @@ class AccountSecurity
             ]);
         });
 
-        $user->notify(new VerifyEmailCode($code, self::CODE_TTL_MINUTES));
+        $this->notify($user, new VerifyEmailCode($code, self::CODE_TTL_MINUTES));
     }
 
     public function verifyEmailCode(User $user, string $code): void
     {
-        // Decide inside the transaction, throw after it commits: throwing inside
-        // would roll back the attempt counter and allow unlimited guessing.
         $outcome = DB::transaction(function () use ($user, $code) {
-            // Lock the row so parallel guesses can't each get "one more" attempt.
             $record = VerificationCode::where('user_id', $user->id)->where('purpose', VerificationCode::EMAIL)
                 ->whereNull('consumed_at')->latest('id')->lockForUpdate()->first();
 
@@ -75,8 +68,6 @@ class AccountSecurity
         }
     }
 
-    /* ---------------------------------------------------- Sign-in audit */
-
     public function recordLogin(Request $request, string $login, ?User $user, bool $successful): void
     {
         $hash = $this->deviceHash($request);
@@ -95,19 +86,16 @@ class AccountSecurity
         ]);
 
         if ($isNewDevice) {
-            $user->notify(new NewSignInAlert($this->describeAgent($request->userAgent()), $request->ip(), now()));
+            $this->notify($user, new NewSignInAlert($this->describeAgent($request->userAgent()), $request->ip(), now()));
         }
     }
 
-    /* --------------------------------------------------------- Sessions */
-
-    /** Active database sessions for the profile page. */
     public function sessions(Request $request): Collection
     {
         return DB::table('sessions')->where('user_id', $request->user()->id)
             ->orderByDesc('last_activity')->get(['id', 'ip_address', 'user_agent', 'last_activity'])
             ->map(fn ($s) => [
-                'id' => hash('sha256', $s->id), // never expose raw session ids to the browser
+                'id' => hash('sha256', $s->id),
                 'device' => $this->describeAgent($s->user_agent),
                 'ip' => $s->ip_address,
                 'last_active' => date(DATE_ATOM, $s->last_activity),
@@ -131,17 +119,23 @@ class AccountSecurity
             DB::table('sessions')->where('user_id', $user->id)->delete();
         }
 
-        $user->notify(new PasswordChangedAlert($request->ip(), now()));
+        $this->notify($user, new PasswordChangedAlert($request->ip(), now()));
     }
 
-    /* ---------------------------------------------------------- Helpers */
+    private function notify(User $user, Notification $notification): void
+    {
+        try {
+            $user->notify($notification);
+        } catch (Throwable $e) {
+            Log::error('Security notification failed', ['user' => $user->id, 'type' => class_basename($notification), 'error' => $e->getMessage()]);
+        }
+    }
 
     private function deviceHash(Request $request): string
     {
         return hash('sha256', $this->describeAgent($request->userAgent()));
     }
 
-    /** "Chrome on Windows" — coarse on purpose so browser updates aren't "new devices". */
     public function describeAgent(?string $ua): string
     {
         $ua = (string) $ua;

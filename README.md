@@ -15,25 +15,39 @@
   Hyderabad, Sindh, Pakistan
 </p>
 
+<p align="center">
+  <a href="https://github.com/ahmershahdev/GleanGrid/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/ahmershahdev/GleanGrid/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="LICENSE.txt"><img alt="MIT licence" src="https://img.shields.io/badge/licence-MIT-2f7d4f.svg"></a>
+  <img alt="Laravel 12" src="https://img.shields.io/badge/Laravel-12-e2552c.svg">
+  <img alt="React 19" src="https://img.shields.io/badge/React-19-1f4d36.svg">
+  <img alt="Inertia 3" src="https://img.shields.io/badge/Inertia-3-c9e265.svg">
+  <img alt="8 languages" src="https://img.shields.io/badge/languages-8-f2b33d.svg">
+  <a href="CONTRIBUTING.md"><img alt="PRs welcome" src="https://img.shields.io/badge/PRs-welcome-13201a.svg"></a>
+</p>
+
 ---
 
 ## Contents
 
 1. [What it is](#what-it-is)
-2. [SRS coverage](#srs-coverage)
-3. [Tech stack](#tech-stack)
-4. [Architecture](#architecture)
-5. [Database design](#database-design)
-6. [Security](#security)
-7. [Concurrency & race conditions](#concurrency--race-conditions)
-8. [SEO, performance & accessibility](#seo-performance--accessibility)
-9. [Internationalisation](#internationalisation)
-10. [Running locally (XAMPP)](#running-locally-xampp)
-11. [Deploying to production](#deploying-to-production)
-12. [Testing](#testing)
-13. [Project structure](#project-structure)
-14. [Assumptions](#assumptions)
-15. [Team, credits & AI acknowledgement](#team-credits--ai-acknowledgement)
+2. [Screenshots](#screenshots)
+3. [Features at a glance](#features-at-a-glance)
+4. [SRS coverage](#srs-coverage)
+5. [Tech stack](#tech-stack)
+6. [Architecture](#architecture)
+7. [Database design](#database-design)
+8. [Security](#security)
+9. [Concurrency & race conditions](#concurrency--race-conditions)
+10. [SEO, performance & accessibility](#seo-performance--accessibility)
+11. [Internationalisation](#internationalisation)
+12. [Running locally (XAMPP)](#running-locally-xampp)
+13. [Troubleshooting](#troubleshooting)
+14. [Deploying to production](#deploying-to-production)
+15. [Testing & CI](#testing--ci)
+16. [Project structure](#project-structure)
+17. [Assumptions](#assumptions)
+18. [Contributing, security & licence](#contributing-security--licence)
+19. [Team & credits](#team--credits)
 
 ---
 
@@ -46,6 +60,34 @@ Shoppers rarely know which farmers will be at a market, what they’ll have, or 
 - **Administrators** approve stalls, moderate content, manage markets and master data, publish announcements and read platform reports.
 
 Every page is responsive, available in **8 languages** (including right-to-left Urdu and Arabic), and works in light and dark themes.
+
+## Screenshots
+
+| Home | Produce | Product |
+|---|---|---|
+| ![Home](docs/images/home.webp) | ![Produce with filters](docs/images/produce.webp) | ![Product page](docs/images/product.webp) |
+| **Basket** | **Checkout** | **Search** |
+| ![Basket](docs/images/basket.webp) | ![Checkout](docs/images/checkout.webp) | ![Search palette](docs/images/search.webp) |
+| **Customer dashboard** | **Farmer dashboard** | **Admin dashboard** |
+| ![Customer](docs/images/dash-customer.webp) | ![Farmer](docs/images/dash-farmer.webp) | ![Admin](docs/images/dash-admin.webp) |
+
+<p align="center"><img src="docs/images/mobile-home.webp" width="200" alt="Mobile home"> <img src="docs/images/mobile-filters.webp" width="200" alt="Mobile filters"> <img src="docs/images/mobile-basket.webp" width="200" alt="Mobile basket"> <img src="docs/images/mobile-menu.webp" width="200" alt="Mobile menu"></p>
+
+## Features at a glance
+
+| For customers | For farmers | For administrators |
+|---|---|---|
+| Live market map, *open today* and *near me* | Stall profile with map pin, markets and stall numbers | Platform KPIs, 30-day trends, system health |
+| Produce search (⌘K), filters for category, market, day, price, stock | Products with photos, units, weekly stock template | Approve / suspend stalls with a reason |
+| Guest basket that syncs after sign-in | Sold-out and temporarily-unavailable states | Activate / deactivate customers |
+| One pre-order per farmer, pickup window per order | Pickup windows with capacity, one cut-off for all | Markets (days, hours, coordinates) and categories |
+| Modify / cancel until cut-off, reorder in one tap | Accept → ready → complete, decline with a note | Listing and review moderation |
+| Order code, directions, call / WhatsApp / e-mail the farmer | Revenue, pipeline, best sellers, low-stock alerts | Reports with CSV export and a report history |
+| Favourites with restock alerts, family sharing | Public replies to reviews | Coupons, announcements, contact inbox with replies |
+| Reviews for farmers and products after pickup | Stall coupons | Failed-sign-in and suspicious-IP panel |
+| Basket Buddy assistant, 8 languages, light/dark | E-mail + in-app notifications | Every order across all markets |
+
+**Experience details:** instant page changes (links prefetch on hover or touch), optimistic favourites that fly into — and back out of — the header heart, fly-to-basket, a magnetic back-to-top medallion, a sun/moon theme switch that spreads from the toggle, a slim custom scrollbar, smooth scrolling and a custom cursor, all switched off for people who prefer reduced motion. URLs are forgiving: `/Contact`, `/FAQ`, `/contact-us`, `/tos` or `/refund-policy` redirect (301) to the canonical lowercase page.
 
 ## SRS coverage
 
@@ -108,21 +150,10 @@ Every functional requirement in the *MarketLink SRS v1.0* is implemented. Where 
 
 ## Architecture
 
+![Architecture](docs/images/architecture.webp)
+
 A classic multi-tier web application, as the SRS asks, organised so each layer has one job:
 
-```mermaid
-flowchart LR
-    B[Browser<br>React + Inertia] -- HTTPS, CSRF token --> MW
-    subgraph Laravel
-      MW[Middleware<br>SecurityHeaders · SetLocale · HandleInertiaRequests<br>auth · role · verified · throttle] --> C[Thin controllers<br>validate + authorise]
-      C --> S[Domain services<br>OrderService · AccountSecurity · AssistantService]
-      C --> SP[Support<br>Seo · BotGuard · LegalContent]
-      S --> M[Eloquent models<br>scopes · relations · events]
-      S --> N[Queued notifications<br>after commit]
-    end
-    M --> DB[(MySQL / MariaDB<br>FKs · indexes · CHECKs · views)]
-    N --> Q[(Queue)] --> SMTP[SMTP]
-```
 
 **Design decisions that keep it scalable:**
 
@@ -136,28 +167,10 @@ flowchart LR
 
 ## Database design
 
-26 tables (plus 4 views). The core relationships:
+![Entity–relationship diagram](docs/images/erd.webp)
 
-```mermaid
-erDiagram
-    users ||--o| farmer_profiles : "has (farmer role)"
-    users ||--o{ orders : "places (customer)"
-    users ||--o{ favorites : saves
-    users ||--o{ reviews : writes
-    users ||--o{ family_links : "owner / member"
-    users ||--o{ login_events : "sign-in audit"
-    users ||--o{ verification_codes : "one-time codes"
-    farmer_profiles ||--o{ products : lists
-    farmer_profiles }o--o{ markets : "farmer_market (stall no.)"
-    farmer_profiles ||--o{ pickup_slots : offers
-    markets ||--o{ pickup_slots : hosts
-    categories ||--o{ products : groups
-    orders ||--|{ order_items : contains
-    products ||--o{ order_items : "snapshot of"
-    pickup_slots ||--o{ orders : "booked in"
-    markets ||--o{ orders : "collected at"
-    orders ||--o{ reviews : "unlocks"
-```
+26 tables (plus 4 views), drawn above.
+
 
 - **Keys & integrity:** every relationship is a real foreign key with an explicit `ON DELETE` rule (cascade, restrict or set null, chosen per relation). Unique keys stop duplicate usernames, e-mails, slugs, favourites, stall-market links and reviews-per-order.
 - **Indexes:** composite indexes match the queries dashboards actually run, e.g. `orders(customer_id, status, pickup_date)`, `orders(farmer_profile_id, status, pickup_date)`, `orders(pickup_slot_id, pickup_date, status)` for capacity checks, and `products(farmer_profile_id, status, removed_at)`.
@@ -174,16 +187,20 @@ erDiagram
 |---|---|
 | Password theft | **Argon2id** (64 MiB, 4 passes). Old bcrypt hashes upgrade on next sign-in. The policy requires upper- and lower-case letters, a number and a symbol; production also rejects known-breached passwords. |
 | Credential stuffing / brute force | Per-account + IP lockout with growing cool-downs, named rate limiters on every public write, and a failed-login audit trail with a suspicious-IP panel for admins |
-| Bots & spam | Honeypot field, a minimum-time trap, **reCAPTCHA v3** scoring that escalates to the **v2** checkbox when the score is low (enabled by setting keys) |
+| Bots & spam | Honeypot field, a minimum-time trap, and Google reCAPTCHA: the **v2 “I’m not a robot” checkbox** is required on sign-up, contact and both password-reset forms, while sign-in uses invisible **v3** scoring that escalates to the checkbox on a low score. One script load serves both versions. The published demo accounts skip Google (their passwords are public anyway) but keep the honeypot and lockout. |
 | Account takeover | 6-digit e-mail codes (hashed, single-use, 15-minute life, 5 attempts, row-locked), new-device sign-in e-mails, password-change e-mails, and *sign out other devices* |
 | XSS | React escaping by default, plus a **nonce-based Content-Security-Policy** with `strict-dynamic`, `object-src 'none'` and `base-uri 'self'` |
 | CSRF | Laravel CSRF tokens on every state-changing request (Inertia sends the XSRF header automatically) |
-| Clickjacking & sniffing | `frame-ancestors 'self'`, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `COOP`, HSTS over HTTPS |
+| Clickjacking & sniffing | `frame-ancestors 'self'`, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `X-Permitted-Cross-Domain-Policies`, HSTS and `upgrade-insecure-requests` over HTTPS only. `Cross-Origin-Opener-Policy` is opt-in (`SECURITY_COOP=true`) because it stops Lighthouse/PageSpeed from tracing the page. |
 | Session fixation / hijacking | Session ID regenerated on sign-in, encrypted, `HttpOnly`, `Secure`, `SameSite=Lax` cookies; database sessions users can revoke |
 | Account enumeration | Password-reset answers the same way whether the e-mail exists or not |
 | Broken access control | `role:` + `verified` middleware on every private area, plus ownership checks on orders, reviews and family links |
-| SQL injection | Eloquent/query builder bindings throughout; no raw user input in SQL |
+| SQL injection | Every query goes through PDO prepared statements (Eloquent / query builder bindings); the few raw fragments are fixed strings or use `?` placeholders |
+| Floods, DoS and scrapers | A site-wide limiter on every page (300 requests a minute per IP for guests, 600 per signed-in account) on top of the per-form limits; writes are capped at 60 a minute per account while page views stay free. Set `TRUSTED_PROXIES` when running behind Cloudflare or a load balancer so limits apply to the real visitor IP, not the proxy |
+| Duplicate-value races | If two people claim the same username, e-mail or coupon code at the same instant, the database's unique index decides and the loser gets a normal form error instead of a server error |
 | Unsafe downloads | CSV exports are generated only on an explicit click (SRS non-functional requirement) |
+| Malicious uploads | Photos are shrunk and converted to WebP **in the browser** before upload, then the server checks the real MIME type, dimensions and pixel count, decodes and **re-encodes** the pixels with GD (dropping EXIF/GPS and anything hidden after the image data), and stores them under a random name. SVG is never accepted. Users can remove a photo; nothing is deleted until they save. |
+| Lost work | Profile, stall, product and contact forms warn before an in-app link, refresh or tab close would discard unsaved changes. Every delete asks for confirmation first. |
 
 ## Concurrency & race conditions
 
@@ -199,8 +216,11 @@ Farmers-market mornings are bursty: many shoppers reserve the same limited stock
 | Double-tap on the heart | Duplicate favourites / flicker | Atomic `DELETE`, then `INSERT IGNORE` backed by a unique index |
 | Parallel reviews | Stale average rating | Rating recomputed with a single `UPDATE … SET avg = (SELECT …)` |
 | Parallel OTP guesses | Extra guesses; attempt counter lost on rollback | Code row locked; the decision is made inside the transaction but the error thrown **after** commit, so failed attempts persist |
+| Many buyers hit a pickup window at once | A stale snapshot: under MySQL’s REPEATABLE READ, a plain `COUNT` after waiting for a lock still sees the data from before the wait | The booking count is a locking read (`FOR UPDATE`), which always sees the latest committed orders |
 | Deadlocks under load | Request fails | Transactions retry up to 3 times (`DB::transaction(..., attempts: 3)`) |
 | Notifications for rolled-back work | “Back in stock” / “order placed” e-mails for things that never happened | Notifications are dispatched **after commit** |
+
+**Proven with real parallel processes:** `php tests/Stress/checkout-race.php 50` fires 50 separate PHP processes at checkout at the same instant, against the real MySQL database: one item left in stock, a coupon that can be used once, a pickup window with room for three, and one buyer double-submitting. Every run ends with exactly 1 sale, 1 coupon use, 3 bookings, 0 crashes and 0 negative stock, and the script cleans up after itself.
 
 A MariaDB quirk found during testing is also documented in the migration. The first non-null `TIMESTAMP` column in a table silently gets `ON UPDATE CURRENT_TIMESTAMP`, which reset the code expiry on every guess. Expiry and report dates now use `DATETIME`.
 
@@ -210,8 +230,12 @@ A MariaDB quirk found during testing is also documented in the migration. The fi
 - Canonical URLs, Open Graph and Twitter cards with a **1200×1200** share image, `robots` directives (`noindex` on private areas), `robots.txt` and a live **`/sitemap.xml`**.
 - **JSON-LD:** Organization, WebSite with site search, Product (offer, pickup, rating), Place (opening hours, geo) for markets, LocalBusiness for stalls, and FAQPage.
 - **`/llms.txt` and `/llms-full.txt`** for AI assistants, generated from live data with `php artisan gleangrid:llms`.
-- Images: the logo went from 665 KB PNG to 40 KB WebP, the team photo from 1.8 MB to 19 KB, and the favicon SVG from 1 MB to 4 KB.
-- Code-split pages, prefetching, fingerprinted assets, lazy images, and system fonts before web fonts load.
+- Images: the logo went from 665 KB PNG to 40 KB WebP, the team photo from 1.8 MB to 19 KB, the favicon SVG from 1 MB to 4 KB, and the 65 produce illustrations from 2.1 MB of PNG to 301 KB of WebP.
+- JavaScript: only English ships in the main bundle; each other language is a separate chunk fetched on first use. Leaflet maps load when they approach the viewport, the Basket Buddy assistant loads when the browser is idle, and axios was replaced with a 20-line `fetch` helper.
+- **PWA:** installable (manifest with shortcuts), with a service worker that caches hashed assets, images and fonts and shows a branded offline page. HTML is never cached, because every page carries a fresh CSP nonce and the signed-in user’s data.
+- **Lighthouse 13** (local run; mobile is simulated slow 4G with a 4× slower CPU): Accessibility, Best Practices, SEO and Agentic Browsing score **100** on the public pages. Performance is 70–94 on desktop and 34–71 on mobile. Pages are server-rendered with Inertia SSR when the SSR process runs (`npm run build` builds both bundles, `npm run ssr` starts it); without it the site falls back to client rendering, which is what costs mobile Performance. Sign-in pages score lower on SEO on purpose, because private pages are `noindex`.
+- Code-split pages, prefetching, fingerprinted assets, lazy images, and web fonts that never block the first paint.
+- **Search:** a ⌘K / Ctrl K / `/` palette with live results grouped into produce, farmers and markets. Every typed word must match, results are ranked (exact, then prefix, then word start, with in-stock items first), matches are highlighted, and misspellings get a “did you mean” suggestion (“tomatos” → “tomatoes”). It keeps recent searches on the device, scopes switch with Tab, and it follows the ARIA combobox pattern.
 - Accessibility: semantic landmarks, a skip link, visible focus rings, `aria-*` on interactive widgets, full keyboard support (⌘K / `/` search, arrow keys, Esc), `prefers-reduced-motion` respected everywhere. The custom cursor steps aside for text fields and native grab cursors.
 
 ## Internationalisation
@@ -220,7 +244,17 @@ English, **Urdu** (RTL), **Arabic** (RTL), Hindi, Russian, Chinese, Spanish and 
 
 ## Running locally (XAMPP)
 
-Requirements: PHP 8.2+ (with `pdo_mysql`, `mbstring`, `openssl`; Argon2 support is standard in XAMPP builds), Composer, Node 20+, MySQL/MariaDB (XAMPP).
+Requirements: PHP 8.2+ (with `pdo_mysql`, `mbstring`, `openssl`, `gd`; Argon2 support is standard in XAMPP builds), Composer, Node 20+, MySQL/MariaDB (XAMPP).
+
+**Quick start** — after creating an empty `gleangrid` database:
+
+```bash
+composer setup          # install, create .env, generate a key only if none exists, migrate, build
+php artisan db:seed     # demo markets, farmers, produce, orders and accounts
+composer dev            # server + queue + logs + Vite, side by side
+```
+
+**Step by step:**
 
 ```bash
 git clone <repo> gleangrid && cd gleangrid
@@ -237,6 +271,10 @@ php artisan serve               # http://127.0.0.1:8000
 
 With `MAIL_MAILER=log`, verification codes and every other e-mail are written to `storage/logs/laravel.log`.
 
+**PHP extensions:** enable `extension=gd` (WebP re-encoding of uploads) and `zend_extension=opcache` with `opcache.enable=1` in `C:\xampp\php\php.ini`. Restart Apache or `php artisan serve` afterwards.
+
+**reCAPTCHA:** in the Google reCAPTCHA admin console, add `localhost`, `127.0.0.1` and your production domain to **both** keys (v3 and v2). See [Troubleshooting](#troubleshooting) if the box doesn’t appear.
+
 **Demo accounts** (already verified):
 
 | Role | E-mail | Password |
@@ -245,27 +283,45 @@ With `MAIL_MAILER=log`, verification codes and every other e-mail are written to
 | Farmer | `farmer@gleangrid.test` | `Farmer@123` |
 | Admin | `admin@gleangrid.test` | `Admin@123` |
 
+On the sign-in page, the three **demo tiles sign in with one tap**. Every `…@gleangrid.test` account counts as verified and never receives e-mail (those inboxes don’t exist), but still gets in-app notifications.
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| reCAPTCHA box missing or shows *“ERROR for site owner: Invalid domain”*; sign-in keeps asking for the checkbox | Google treats `127.0.0.1` and `localhost` as different domains. If only `localhost` is on the key, a site opened at `http://127.0.0.1:8000` gets *“Localhost is not supported by default”* | Add **`127.0.0.1`** to both keys in the reCAPTCHA console, or open the site at `http://localhost:8000` |
+| Every form says *Page expired (419)* locally | `.env` still has production values (`SESSION_SECURE_COOKIE=true` on plain `http`) | For local work use `APP_ENV=local`, `APP_DEBUG=true`, `APP_URL=http://127.0.0.1:8000`, `SESSION_SECURE_COOKIE=false` |
+| *Vite manifest not found* | Assets were never built on this checkout (`public/build` is git-ignored) | `npm ci && npm run build`, or `npm run dev` |
+| *No application encryption key* | Empty `APP_KEY` | `php artisan key:generate` (only when the key is empty — changing it logs everyone out) |
+| Uploaded photos don’t appear | Missing storage link | `php artisan storage:link` |
+| No e-mails arrive locally | No mail provider configured | `MAIL_MAILER=log` and read `storage/logs/laravel.log`; demo `@gleangrid.test` accounts never receive mail by design |
+| Changed `.env` but nothing changed | Config is cached | `php artisan optimize:clear` |
+
 ## Deploying to production
 
 1. Point `gleangrid.ahmershah.dev` at the server, serve `public/` over HTTPS.
 2. Copy `.env.example` → `.env`; fill `APP_KEY`, the database credentials, SMTP for `support@ahmershah.dev`, and (optionally) reCAPTCHA keys.
 3. `composer install --no-dev --optimize-autoloader && npm ci && npm run build`
-4. `php artisan migrate --force && php artisan config:cache route:cache view:cache`
+4. `php artisan migrate --force && php artisan optimize` (enable OPcache; it cut response time from ~0.7 s to ~0.2 s in testing)
 5. Set `QUEUE_CONNECTION=database` and keep `php artisan queue:work` running (Supervisor or systemd).
 6. Regenerate AI-assistant files after content changes: `php artisan gleangrid:llms`.
+7. After any schema change, refresh the SRS SQL scripts: `php artisan migrate:fresh --seed && php artisan gleangrid:export-sql`.
 
-## Testing
+## Testing & CI
 
 ```bash
 php artisan test
 ```
 
-31 feature tests (160 assertions) run against a real MySQL/MariaDB test database (`gleangrid_test`), covering:
+53 feature tests (≈250 assertions) run against a real MySQL/MariaDB test database (`gleangrid_test`), covering:
 
 - **Order lifecycle** — place, accept, ready, complete, review; stock and cut-off rules.
 - **Security** — OTP flow and attempt limits, honeypot and time trap, password policy, lockout, new-device alerts, bcrypt → Argon2id upgrade, CSP nonce headers.
 - **Race conditions** — the interleavings listed above, plus database CHECK constraints.
 - **Pages and roles** — every page renders for its role, and each role is blocked from the others.
+- **Platform** — reCAPTCHA rules (Google faked), demo-account behaviour, contact topics, live search ranking and typo suggestions, WebP upload and removal, SVG rejection, per-response CSP nonces, throttling, case-insensitive URLs and aliases.
+
+**Continuous integration** (`.github/workflows/ci.yml`) runs on every push and pull request: a clean MySQL 8 database, PHP 8.2 and 8.3, `npm ci` + production build (fails if the Vite manifest is missing), Laravel Pint in check mode, the full test suite, and `composer audit` / `npm audit`.
 
 ## Project structure
 
@@ -301,7 +357,14 @@ tests/Feature/                              OrderFlow, Pages, Security, RaceCond
 - Currency is the Pakistani rupee; times are Pakistan Standard Time (`Asia/Karachi` is the IANA zone name).
 - Map data comes from OpenStreetMap contributors; the Contact page uses a keyless Google Maps embed as the SRS asks.
 
-## Team, credits & AI acknowledgement
+## Contributing, security & licence
+
+- **Contributing:** issues and pull requests are welcome — read [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow, coding style and commit conventions.
+- **Security:** please report vulnerabilities privately as described in [SECURITY.md](SECURITY.md), not in public issues.
+- **Licence:** GleanGrid is open source under the [MIT licence](LICENSE.txt). Third-party assets keep their own licences (see Credits).
+- **Wiki:** longer guides for each role, the architecture and the API surface live in the [project wiki](https://github.com/ahmershahdev/GleanGrid/wiki).
+
+## Team & credits
 
 | | Role |
 |---|---|
@@ -310,4 +373,4 @@ tests/Feature/                              OrderFlow, Pages, Security, RaceCond
 
 Support: **support@ahmershah.dev** · **+92 370 4831994** · Hyderabad, Sindh, Pakistan
 
-**Credits.** Maps © OpenStreetMap contributors (ODbL). Produce illustrations: Microsoft Fluent Emoji (MIT). Fonts: Fraunces and Geist (SIL OFL). Icons: Lucide (ISC).
+**Credits.** Maps © OpenStreetMap contributors (ODbL). Produce illustrations: Microsoft Fluent Emoji (MIT). Photographs: public-domain / CC0 images via Openverse (full list in `public/images/photos/CREDITS.json` and `public/images/photos/products/CREDITS.json`). Fonts: Fraunces and Geist (SIL OFL). Icons: Lucide (ISC).

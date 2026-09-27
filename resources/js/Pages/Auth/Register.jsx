@@ -8,14 +8,13 @@ import { BotFields, useBotGuard } from '@/lib/botguard';
 import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
-// Which fields live on which step, so a server error can send the user straight back to it.
 const STEPS = [
     { key: 'you', fields: ['role', 'stall_name', 'contact_person', 'name', 'username'] },
     { key: 'reach', fields: ['email', 'phone', 'address', 'city'] },
     { key: 'secure', fields: ['password', 'password_confirmation', 'terms', 'captcha'] },
 ];
 
-export default function Register({ role }) {
+export default function Register({ role, open = { customer: true, farmer: true } }) {
     const t = useT();
     const [step, setStep] = useState(0);
     const [dir, setDir] = useState(1);
@@ -36,10 +35,9 @@ export default function Register({ role }) {
         website: '',
         captcha_v2: '',
     });
-    const guard = useBotGuard(form, 'register');
+    const guard = useBotGuard(form, 'register', 'checkbox');
     const farmer = form.data.role === 'farmer';
 
-    // Server rejected something: jump to the first step that owns an errored field.
     useEffect(() => {
         const keys = Object.keys(form.errors);
         if (!keys.length) return;
@@ -56,7 +54,6 @@ export default function Register({ role }) {
         1: ['email', 'phone', 'address'],
     };
 
-    // Light client checks before moving on; the server re-validates everything.
     const check = (i) => {
         const errs = {};
         (required[i] ?? []).forEach((f) => !String(form.data[f]).trim() && (errs[f] = t('validation.required')));
@@ -83,7 +80,6 @@ export default function Register({ role }) {
 
     return (
         <AuthLayout title={t('auth.register_title')} subtitle={t(farmer ? 'auth.register_sub_farmer' : 'auth.register_sub')}>
-            {/* Progress rail */}
             <ol className="mb-8 grid grid-cols-3 gap-2" aria-label={t('auth.progress')}>
                 {STEPS.map((s, i) => (
                     <li key={s.key}>
@@ -101,7 +97,6 @@ export default function Register({ role }) {
             </ol>
 
             <form onSubmit={submit} className="relative" noValidate>
-                <BotFields form={form} guard={guard} t={t} />
                 <AnimatePresence mode="wait" custom={dir} initial={false}>
                     <motion.div
                         key={step}
@@ -132,6 +127,12 @@ export default function Register({ role }) {
                                         </button>
                                     ))}
                                 </div>
+                                {open[form.data.role] === false && (
+                                    <p role="status" className="rounded-2xl bg-sun/15 px-4 py-3 text-sm">
+                                        {t('auth.signups_paused', {}, 'New sign-ups for this account type are paused for now — please check back soon.')}
+                                    </p>
+                                )}
+                                {form.errors.role && <p className="text-sm text-danger" role="alert">{form.errors.role}</p>}
                                 <AnimatePresence initial={false}>
                                     {farmer && (
                                         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="grid gap-5 overflow-hidden sm:grid-cols-2">
@@ -173,6 +174,7 @@ export default function Register({ role }) {
                                     {form.errors.terms && <p className="mt-1 text-sm text-danger">{t(form.errors.terms)}</p>}
                                 </div>
                                 {farmer && <p className="rounded-2xl bg-sun/20 p-3 text-sm">{t('auth.farmer_review_note')}</p>}
+                                <BotFields form={form} guard={guard} t={t} />
                             </>
                         )}
                     </motion.div>
@@ -184,7 +186,7 @@ export default function Register({ role }) {
                             <ArrowLeft className="rtl-flip size-5" />
                         </Button>
                     )}
-                    <Button type="submit" size="lg" className="flex-1" loading={form.processing} disabled={step === 2 && (!strongEnough || !form.data.terms)}>
+                    <Button type="submit" size="lg" className="flex-1" loading={form.processing} disabled={step === 2 && (!strongEnough || !form.data.terms || (guard.needsBox && !form.data.captcha_v2))}>
                         {step < 2 ? (
                             <>
                                 {t('auth.next')} <ArrowRight className="rtl-flip size-5" />

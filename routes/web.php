@@ -18,10 +18,10 @@ use App\Http\Controllers\PreferenceController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ResendWebhookController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SitemapController;
 use Illuminate\Support\Facades\Route;
 
-/* ---------------------------------------------------------------- Public */
 Route::get('/', HomeController::class)->name('home');
 Route::get('/markets', [MarketController::class, 'index'])->name('markets.index');
 Route::get('/markets/{market:slug}', [MarketController::class, 'show'])->name('markets.show');
@@ -37,16 +37,15 @@ Route::get('/privacy', [PageController::class, 'legal'])->defaults('page', 'priv
 Route::get('/returns', [PageController::class, 'legal'])->defaults('page', 'returns')->name('returns');
 Route::get('/pickup-policy', [PageController::class, 'legal'])->defaults('page', 'pickup')->name('pickup-policy');
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
+Route::get('/search/suggest', SearchController::class)->middleware('throttle:search')->name('search.suggest');
 
-// Inbound e-mail from Resend (Svix-signed; CSRF-exempt in bootstrap/app.php).
 Route::post('/webhooks/resend/inbound', ResendWebhookController::class)->middleware('throttle:60,1')->name('webhooks.resend');
 Route::post('/contact', [PageController::class, 'sendContact'])->middleware('throttle:contact')->name('contact.send');
 Route::get('/cart', [CartController::class, 'show'])->name('cart');
-Route::post('/cart/sync', [CartController::class, 'sync'])->name('cart.sync');
+Route::post('/cart/sync', [CartController::class, 'sync'])->middleware('throttle:cart')->name('cart.sync');
 Route::post('/assistant', AssistantController::class)->middleware('throttle:assistant')->name('assistant');
-Route::post('/preferences/locale', [PreferenceController::class, 'locale'])->name('preferences.locale');
+Route::post('/preferences/locale', [PreferenceController::class, 'locale'])->middleware('throttle:prefs')->name('preferences.locale');
 
-/* ------------------------------------------------------------------ Auth */
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
@@ -67,15 +66,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', fn () => redirect()->route(auth()->user()->dashboardRoute()))->name('dashboard');
 
     Route::get('/account/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::put('/account/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/account/profile', [ProfileController::class, 'update'])->middleware('throttle:writes')->name('profile.update');
     Route::put('/account/password', [ProfileController::class, 'password'])->middleware('throttle:password')->name('profile.password');
     Route::delete('/account/sessions', [ProfileController::class, 'destroyOtherSessions'])->middleware('throttle:password')->name('profile.sessions.destroy');
+    Route::get('/account/export', [ProfileController::class, 'export'])->middleware('throttle:6,1')->name('profile.export');
+    Route::delete('/account', [ProfileController::class, 'destroy'])->middleware('throttle:password')->name('profile.destroy');
 
     Route::get('/account/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-    Route::post('/account/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
-    Route::post('/account/notifications/{id}/read', [NotificationController::class, 'read'])->name('notifications.read');
+    Route::post('/account/notifications/read-all', [NotificationController::class, 'readAll'])->middleware('throttle:writes')->name('notifications.read-all');
+    Route::post('/account/notifications/{id}/read', [NotificationController::class, 'read'])->middleware('throttle:writes')->name('notifications.read');
 
-    /* ------------------------------------------------------- Customer */
     Route::middleware(['role:customer', 'verified', 'throttle:writes'])->prefix('account')->name('customer.')->group(function () {
         Route::get('/', Customer\DashboardController::class)->name('dashboard');
         Route::get('/checkout', [Customer\CheckoutController::class, 'show'])->name('checkout');
@@ -97,7 +97,6 @@ Route::middleware('auth')->group(function () {
         Route::delete('/family/{link}', [Customer\FamilyController::class, 'destroy'])->name('family.destroy');
     });
 
-    /* --------------------------------------------------------- Farmer */
     Route::middleware(['role:farmer', 'verified', 'throttle:writes'])->prefix('farmer')->name('farmer.')->group(function () {
         Route::get('/', Farmer\DashboardController::class)->name('dashboard');
         Route::get('/stall-profile', [Farmer\StallController::class, 'edit'])->name('stall.edit');
@@ -109,6 +108,8 @@ Route::middleware('auth')->group(function () {
             Route::resource('products', Farmer\ProductController::class)->except('show');
 
             Route::get('/orders', [Farmer\OrderController::class, 'index'])->name('orders.index');
+            Route::get('/scan', [Farmer\OrderController::class, 'scan'])->name('scan');
+            Route::get('/orders/lookup', [Farmer\OrderController::class, 'lookup'])->middleware('throttle:search')->name('orders.lookup');
             Route::get('/orders/{order}', [Farmer\OrderController::class, 'show'])->name('orders.show');
             Route::patch('/orders/{order}/status', [Farmer\OrderController::class, 'status'])->name('orders.status');
 
@@ -128,8 +129,7 @@ Route::middleware('auth')->group(function () {
         });
     });
 
-    /* ---------------------------------------------------------- Admin */
-    Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
+    Route::middleware(['role:admin', 'throttle:writes'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/', Admin\DashboardController::class)->name('dashboard');
 
         Route::get('/farmers', [Admin\FarmerController::class, 'index'])->name('farmers.index');
@@ -160,10 +160,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/messages', [Admin\MessageController::class, 'index'])->name('messages.index');
         Route::patch('/messages/{message}', [Admin\MessageController::class, 'read'])->name('messages.read');
         Route::post('/messages/{message}/reply', [Admin\MessageController::class, 'reply'])->middleware('throttle:20,1')->name('messages.reply');
+
+        Route::get('/audit', [Admin\AuditController::class, 'index'])->name('audit.index');
+        Route::get('/settings', [Admin\SettingsController::class, 'edit'])->name('settings.edit');
+        Route::put('/settings', [Admin\SettingsController::class, 'update'])->name('settings.update');
+        Route::patch('/customers/{user}/no-shows', [Admin\CustomerController::class, 'resetNoShows'])->name('customers.no-shows.reset');
+        Route::post('/orders/{order}/cancel', [Admin\OrderController::class, 'cancel'])->name('orders.cancel');
+        Route::get('/orders/{order}', [Admin\OrderController::class, 'show'])->name('orders.show');
     });
 });
 
-/* -------------------------------------------------------- Not found
-   Runs through the web middleware (session, locale, shared props), so the
-   designed 404 page gets the full header, footer and translations. */
 Route::fallback([PageController::class, 'notFound']);

@@ -1,7 +1,7 @@
 import { Link, router } from '@inertiajs/react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { MapView } from '@/Components/Map';
+import { LazyMapView as MapView } from '@/Components/LazyMap';
 import { Badge, Button, buttonClass, Modal, PageHeader, Table } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
 

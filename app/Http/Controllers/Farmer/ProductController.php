@@ -5,10 +5,10 @@ namespace App\Http\Controllers\Farmer;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
+use App\Support\ImageUpload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -25,7 +25,7 @@ class ProductController extends Controller
                 ->when($filters['q'] ?? null, fn ($q, $t) => $q->where('name', 'like', "%{$t}%"))
                 ->when($filters['status'] ?? null, fn ($q, $s) => $q->where('status', $s))
                 ->orderBy('name')->get(),
-            'filters' => $filters,
+            'filters' => (object) $filters,
         ]);
     }
 
@@ -39,6 +39,7 @@ class ProductController extends Controller
         $data = $this->validated($request);
         $data['slug'] = Str::slug($data['name']).'-'.Str::lower(Str::random(5));
         $data['image'] = $this->storeImage($request) ?? $data['image'] ?? null;
+        unset($data['remove_image']);
         $data['status'] = $data['stock_quantity'] > 0 ? $data['status'] : 'sold_out';
 
         $this->farmer($request)->products()->create($data);
@@ -61,9 +62,15 @@ class ProductController extends Controller
         if ($path = $this->storeImage($request)) {
             $this->deleteImage($product);
             $data['image'] = $path;
+        } elseif ($request->boolean('remove_image') && empty($data['image'])) {
+            $this->deleteImage($product);
+            $data['image'] = null;
         } elseif (empty($data['image'])) {
             unset($data['image']);
+        } elseif ($data['image'] !== $product->image) {
+            $this->deleteImage($product);
         }
+        unset($data['remove_image']);
         if ((int) $data['stock_quantity'] === 0 && $data['status'] === 'available') {
             $data['status'] = 'sold_out';
         }
@@ -81,7 +88,6 @@ class ProductController extends Controller
         return back()->with('success', 'flash.product_deleted');
     }
 
-    /** Quick toggle between available / sold out / temporarily unavailable. */
     public function status(Request $request, Product $product): RedirectResponse
     {
         $this->authorizeProduct($request, $product);
@@ -102,7 +108,6 @@ class ProductController extends Controller
         return back()->with('success', 'flash.product_updated');
     }
 
-    /** Reset stock for every product to its recurring weekly quantity. */
     public function applyTemplate(Request $request): RedirectResponse
     {
         $this->farmer($request)->products()->whereNull('removed_at')->where('weekly_quantity', '>', 0)->get()
@@ -129,20 +134,19 @@ class ProductController extends Controller
             'weekly_quantity' => 'required|integer|min:0|max:100000',
             'status' => 'required|in:available,sold_out,unavailable',
             'image' => ['nullable', 'string', 'regex:/^produce:[a-z_]+$/'],
-            'upload' => 'nullable|image|max:3072',
+            'upload' => ['nullable', ...ImageUpload::RULES],
+            'remove_image' => 'boolean',
         ]);
     }
 
     private function storeImage(Request $request): ?string
     {
-        return $request->hasFile('upload') ? $request->file('upload')->store('products', 'public') : null;
+        return $request->hasFile('upload') ? ImageUpload::store($request->file('upload'), 'products', 'upload') : null;
     }
 
     private function deleteImage(Product $product): void
     {
-        if ($product->image && ! str_starts_with($product->image, 'produce:')) {
-            Storage::disk('public')->delete($product->image);
-        }
+        ImageUpload::delete($product->image);
     }
 
     private function formData(): array

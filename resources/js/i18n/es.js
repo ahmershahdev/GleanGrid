@@ -211,3 +211,150 @@ export default {
     coupons: { eyebrow: 'Tu puesto', eyebrow_admin: 'Todos los puestos', title: 'Cupones', subtitle: 'Premia a tus clientes habituales con un código para el checkout. El descuento se resta de lo que pagan al recoger.', add: 'Nuevo cupón', off: 'de descuento', copy: 'Copiar código', status_live: 'Activo', status_scheduled: 'Programado', status_expired: 'Caducado', status_used_up: 'Agotado', status_off: 'En pausa', min_short: 'Mín. :amount', cap_short: 'Hasta :amount', per_customer_short: ':count por cliente', until: 'Hasta el :date', used: ':count / :limit usados', pause: 'Pausar', resume: 'Reanudar', empty_title: 'Aún no hay cupones', empty_body: 'Crea un código como FRESH10 y compártelo con tus habituales.', stall: 'Puesto', pick_stall: 'Elige un puesto', code: 'Código', generate: 'Generar un código', description: 'Descripción', description_ph: 'p. ej. 10% en tu primera cesta', type: 'Tipo de descuento', type_percent: 'Porcentaje', type_fixed: 'Importe fijo', percent: 'Porcentaje de descuento', amount: 'Importe de descuento', min: 'Cesta mínima', cap: 'Descuento máximo', optional: 'Opcional', limit: 'Usos totales', unlimited: 'Ilimitado', per_customer: 'Usos por cliente', starts: 'Empieza', ends: 'Termina', delete_title: '¿Eliminar :code?', delete_body: 'Un cupón ya usado se pausa en lugar de borrarse, para conservar el historial de pedidos.' },
     coupon: { invalid: 'Ese código no sirve para este puesto.', expired: 'Este código no está activo ahora.', minimum: 'Tu cesta de este puesto no llega al mínimo del código.', used_up: 'Este código ya se ha agotado.', already_used: 'Ya has usado este código.' },
 };
+
+export const additions = {
+    "status": {
+        "no_show": "No recogido"
+    },
+    "order": {
+        "no_show_note": "No se recogió en su franja: los productos volvieron a la venta.",
+        "history": "Historial de estados",
+        "qr_title": "Tu pase de recogida",
+        "qr_hint": "Muéstralo en el puesto. El agricultor lo escanea y encuentra tu pedido al instante, o simplemente di el código.",
+        "qr_save": "Guardar pase",
+        "qr_alt": "Código QR del pedido :code",
+        "contact_farmer": "Contactar al agricultor",
+        "call": "Llamar",
+        "email": "Correo"
+    },
+    "forders": {
+        "no_show": "Marcar no presentado",
+        "no_show_title": "¿Marcar como no recogido?",
+        "no_show_body": "El stock vuelve a la venta y se avisa al cliente. Las ausencias repetidas pausan sus reservas.",
+        "no_show_count": ":count recogida(s) perdida(s) recientemente"
+    },
+    "flash": {
+        "order_no_show": "Marcado como no recogido.",
+        "order_not_found": "No hay ningún pedido con ese código en tu puesto.",
+        "no_shows_reset": "Ausencias restablecidas.",
+        "settings_saved": "Ajustes guardados.",
+        "account_deleted": "Tu cuenta se ha eliminado. Gracias por comprar local.",
+        "admin_cannot_delete": "Las cuentas de administrador no pueden eliminarse a sí mismas.",
+        "demo_cannot_delete": "Las cuentas de demostración son compartidas y no se pueden eliminar."
+    },
+    "notify": {
+        "pickup_reminder": {
+            "title": "Recogida mañana: :code",
+            "body": ":date, :time en :market. Muestra tu pase en el puesto."
+        },
+        "order_no_show": {
+            "title": "El pedido :code no se recogió",
+            "body": "Los productos volvieron a la venta. Las ausencias repetidas pausan las reservas."
+        }
+    },
+    "dash": {
+        "scan": "Escanear pase",
+        "audit": "Registro de auditoría",
+        "settings": "Ajustes"
+    },
+    "scan": {
+        "title": "Escanear un pase de recogida",
+        "subtitle": "Apunta la cámara al código QR del cliente o escribe el código del pedido.",
+        "start": "Activar cámara",
+        "stop": "Detener",
+        "manual": "Escribir el código",
+        "manual_hint": "Los códigos son como GG-7K2M9Q.",
+        "code": "Código del pedido",
+        "open": "Abrir pedido",
+        "unsupported": "Este navegador no puede escanear QR. Usa la cámara del móvil o escribe el código.",
+        "camera_error": "No se pudo abrir la cámara. Permite el acceso o escribe el código abajo.",
+        "preview": "Vista de la cámara"
+    },
+    "audit": {
+        "eyebrow": "Responsabilidad",
+        "title": "Registro de auditoría",
+        "subtitle": "Cada aprobación, suspensión, decisión de moderación y cambio de ajustes: quién, cuándo y desde dónde.",
+        "empty": "Aún no hay registros",
+        "empty_body": "Las acciones administrativas aparecerán aquí.",
+        "system": "Sistema",
+        "note": "Los registros solo se añaden: la aplicación nunca los edita ni borra.",
+        "area": {
+            "farmer": "Puestos",
+            "customer": "Clientes",
+            "review": "Reseñas",
+            "listing": "Productos",
+            "order": "Pedidos",
+            "settings": "Ajustes",
+            "account": "Cuentas",
+            "market": "Mercados",
+            "category": "Categorías",
+            "announcement": "Avisos",
+            "coupon": "Cupones",
+            "message": "Mensajes"
+        }
+    },
+    "settings": {
+        "eyebrow": "Plataforma",
+        "title": "Ajustes",
+        "subtitle": "Reglas para todo GleanGrid.",
+        "updated": "Último cambio de :who :when",
+        "orders_60": "Pedidos (±30 días)",
+        "revenue_60": "Ingresos completados",
+        "no_shows": "Recogidas perdidas",
+        "lost": "Rechazados / cancelados",
+        "proc": "Cifras en vivo del procedimiento almacenado sp_platform_summary.",
+        "no_show_title": "Recogidas perdidas",
+        "no_show_hint": "Los clientes que alcancen este número en el periodo no podrán reservar hasta que un admin lo restablezca.",
+        "no_show_limit": "Pausar tras (ausencias)",
+        "no_show_window": "En (días)",
+        "max_open": "Máx. reservas abiertas por cliente",
+        "reminders": "Recordatorios de recogida",
+        "reminder_hour": "Enviar la víspera a las (hora, PKT)",
+        "reminder_hint": "El programador revisa cada hora; cada pedido se recuerda una vez.",
+        "signups": "Registros",
+        "customer_signups": "Nuevos clientes pueden registrarse",
+        "farmer_signups": "Nuevos puestos pueden registrarse",
+        "farmer_signups_hint": "Pausa mientras revisas aprobaciones pendientes."
+    },
+    "data": {
+        "title": "Tus datos",
+        "export_title": "Descargar una copia",
+        "export_body": "Tu perfil, pedidos, reseñas, favoritos, vínculos familiares, inicios de sesión recientes y notificaciones, en un archivo JSON.",
+        "export": "Descargar mis datos",
+        "delete_title": "Eliminar cuenta",
+        "delete_body": "Se cancelan las reservas abiertas, se borran tu perfil, favoritos y vínculos familiares, y los pedidos pasados se anonimizan. No se puede deshacer.",
+        "admin_note": "Las cuentas de administrador las elimina otro administrador.",
+        "delete": "Eliminar mi cuenta",
+        "type_delete": "Escribe DELETE para confirmar",
+        "delete_forever": "Eliminar para siempre"
+    },
+    "acustomers": {
+        "no_shows": "Ausencias",
+        "reset_no_shows": "Restablecer ausencias",
+        "reset": "Restablecer"
+    },
+    "aorders": {
+        "trigger_note": "Registrado automáticamente por un disparador de la base de datos.",
+        "override": "Cancelar como administrador",
+        "override_hint": "Para disputas o mercados cerrados. Se liberan stock y cupones y se avisa a ambas partes.",
+        "reason": "Motivo (visible para ambos)",
+        "cancel": "Cancelar pedido"
+    },
+    "auth": {
+        "signups_paused": "Los registros de este tipo de cuenta están pausados por ahora; vuelve pronto."
+    },
+    "ui": {
+        "show_full_path": "Mostrar ruta completa"
+    },
+    "fields": {
+        "eyebrow": "Desde el campo",
+        "title": "Tierra, sol y madrugadas.",
+        "body": "Cada cesta empieza mucho antes del día de mercado. Este es el trabajo detrás de lo que reservas.",
+        "planting": "Siembra",
+        "baking": "Horneado al alba",
+        "market": "Mañana de mercado",
+        "paddy": "Arrozales",
+        "flowers": "En flor",
+        "dairy": "De pasto"
+    }
+};

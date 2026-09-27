@@ -3,8 +3,9 @@ import { motion, useMotionValue, useScroll, useSpring, useTransform } from 'moti
 import { ArrowRight, ArrowUpRight, CalendarCheck2, HandCoins, MapPin, Search, ShoppingBasket, Star } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { FarmerCard, MarketCard, ProductCard } from '@/Components/Cards';
-import { MapView } from '@/Components/Map';
-import { CountUp, Magnetic, Marquee, Reveal, SplitWords } from '@/Components/motion';
+import { LazyMapView as MapView } from '@/Components/LazyMap';
+import { CountUp, HorizontalScroll, Magnetic, Marquee, Reveal, SplitWords } from '@/Components/motion';
+import FieldsReel from '@/Components/FieldsReel';
 import { openSearch } from '@/Components/chrome';
 import { buttonClass } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
@@ -51,43 +52,34 @@ function Hero({ stats, openToday }) {
             ))}
 
             <motion.div style={{ y: titleY, opacity: fade }} className="relative mx-auto w-full max-w-6xl text-center">
-                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="inline-flex items-center gap-2 rounded-full border border-line-strong bg-elev/70 px-3.5 py-1.5 text-sm backdrop-blur">
+                <div style={{ '--d': '0.1s' }} className="gg-rise inline-flex items-center gap-2 rounded-full border border-line-strong bg-elev/70 px-3.5 py-1.5 text-sm backdrop-blur">
                     <span className="relative flex size-2">
                         <span className="absolute inset-0 animate-ping rounded-full bg-success opacity-70" />
                         <span className="relative size-2 rounded-full bg-success" />
                     </span>
                     {t('home.live', { count: openToday })}
-                </motion.div>
+                </div>
 
                 <h1 className="font-display font-display-tight mt-7 text-[15vw] font-light sm:text-[11vw] lg:text-[9.4rem]">
                     <SplitWords text={t('home.hero_1')} immediate delay={0.15} className="block" />
                     <span className="block">
                         <SplitWords text={t('home.hero_2')} immediate delay={0.3} className="font-normal italic" />{' '}
-                        <motion.img
-                            src={produceImage('basket')}
-                            alt=""
-                            initial={{ scale: 0, rotate: -40 }}
-                            animate={{ scale: 1, rotate: 0 }}
-                            transition={{ delay: 0.9, type: 'spring', stiffness: 160, damping: 12 }}
-                            className="-mt-[0.2em] inline-block h-[0.8em] align-middle"
-                        />
+                        <img src={produceImage('basket')} alt="" style={{ '--d': '0.9s' }} className="gg-pop -mt-[0.2em] inline-block h-[0.8em] align-middle" />
                     </span>
                     <SplitWords text={t('home.hero_3')} immediate delay={0.45} className="block text-accent" />
                 </h1>
 
-                <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.8 }} className="mx-auto mt-8 max-w-xl text-lg text-ink-soft md:text-xl">
+                <p style={{ '--d': '0.5s' }} className="gg-rise mx-auto mt-8 max-w-xl text-lg text-ink-soft md:text-xl">
                     {t('home.hero_sub', { farmers: stats.farmers, markets: stats.markets })}
-                </motion.p>
+                </p>
 
-                <motion.form
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.95, duration: 0.8 }}
+                <form
+                    style={{ '--d': '0.65s' }}
                     onSubmit={(e) => {
                         e.preventDefault();
                         router.get(route('products.index'), q.trim() ? { q: q.trim() } : {});
                     }}
-                    className="group/search relative z-10 mx-auto mt-9 flex max-w-xl items-center gap-2 rounded-full border border-line-strong bg-elev/90 p-1.5 shadow-soft backdrop-blur-xl transition focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/15"
+                    className="gg-rise group/search relative z-10 mx-auto mt-9 flex max-w-xl items-center gap-2 rounded-full border border-line-strong bg-elev/90 p-1.5 shadow-soft backdrop-blur-xl transition focus-within:border-brand focus-within:ring-1 focus-within:ring-brand"
                     role="search"
                 >
                     <Search className="ms-3.5 size-5 shrink-0 text-ink-faint transition group-focus-within/search:text-accent" />
@@ -100,16 +92,16 @@ function Hero({ stats, openToday }) {
                         aria-label={t('home.search_placeholder')}
                         enterKeyHint="search"
                     />
-                    <button type="button" onClick={() => openSearch(q)} className="hidden h-8 items-center rounded-full border border-line px-2.5 font-mono text-[11px] text-ink-faint transition hover:border-line-strong hover:text-ink sm:inline-flex" dir="ltr" aria-label={t('search.open')}>
+                    <button type="button" onClick={() => openSearch(q)} className="hidden h-8 items-center rounded-full border border-line px-2.5 font-mono text-[11px] text-ink-faint transition hover:border-line-strong hover:text-ink sm:inline-flex" dir="ltr" aria-label={`⌘K ${t('search.open')}`}>
                         ⌘K
                     </button>
                     <button className={buttonClass('accent', 'md', 'h-12 px-6')}>
                         {t('common.search')}
                         <ArrowRight className="rtl-flip size-4 transition-transform group-focus-within/search:translate-x-0.5" />
                     </button>
-                </motion.form>
+                </form>
 
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2 }} className="mt-6 flex flex-wrap items-center justify-center gap-3 text-sm">
+                <div style={{ '--d': '0.8s' }} className="gg-rise mt-6 flex flex-wrap items-center justify-center gap-3 text-sm">
                     <Link href={route('markets.index')} className="inline-flex items-center gap-1.5 font-medium underline decoration-line-strong underline-offset-4 hover:decoration-ink">
                         <MapPin className="size-4" /> {t('home.find_market')}
                     </Link>
@@ -117,7 +109,7 @@ function Hero({ stats, openToday }) {
                     <Link href={route('register', { as: 'farmer' })} className="font-medium underline decoration-line-strong underline-offset-4 hover:decoration-ink">
                         {t('home.are_you_farmer')}
                     </Link>
-                </motion.div>
+                </div>
             </motion.div>
 
         </section>
@@ -234,28 +226,28 @@ function HowItWorks() {
 
 function Categories({ categories }) {
     const t = useT();
-    const spans = ['md:col-span-2 md:row-span-2', '', '', 'md:col-span-2', '', '', '', ''];
+    const spans = ['col-span-2 md:row-span-2', '', '', 'col-span-2', '', '', '', ''];
     return (
         <section className="mx-auto mt-32 max-w-[1400px] px-5 sm:px-8">
             <SectionHead eyebrow={t('home.cat_eyebrow')} title={t('home.cat_title')} href={route('products.index')} cta={t('home.all_produce')} />
-            <div className="grid auto-rows-[180px] grid-cols-2 gap-4 md:auto-rows-[210px] md:grid-cols-4">
+            <div className="grid auto-rows-[150px] grid-cols-2 gap-3 sm:auto-rows-[180px] sm:gap-4 md:auto-rows-[210px] md:grid-cols-4">
                 {categories.map((c, i) => (
                     <Reveal key={c.id} delay={(i % 4) * 0.06} className={cn(spans[i] ?? '')}>
                         <Link
                             href={route('products.index', { category: c.slug })}
                             data-cursor={t('common.shop')}
-                            className="group relative flex h-full flex-col justify-between overflow-hidden rounded-[28px] p-6 transition duration-500 hover:rounded-[48px]"
+                            className="group relative flex h-full flex-col justify-between overflow-hidden rounded-[24px] p-4 transition duration-500 hover:rounded-[40px] sm:rounded-[28px] sm:p-6 sm:hover:rounded-[48px]"
                             style={{ background: `color-mix(in oklab, ${c.color} 30%, var(--bg-elev))` }}
                         >
                             <div className="relative z-10 flex items-start justify-between">
-                                <span className="rounded-full bg-bg/70 px-3 py-1 text-xs font-medium backdrop-blur">{t('home.cat_items', { count: c.products_count })}</span>
-                                <ArrowUpRight className="rtl-flip size-6 transition duration-500 group-hover:rotate-45" />
+                                <span className="rounded-full bg-bg/70 px-2.5 py-1 text-[11px] font-medium backdrop-blur sm:px-3 sm:text-xs">{t('home.cat_items', { count: c.products_count })}</span>
+                                <ArrowUpRight className="rtl-flip size-5 transition duration-500 group-hover:rotate-45 sm:size-6" />
                             </div>
-                            <h3 className={cn('font-display relative z-10 leading-none font-medium', i === 0 ? 'text-5xl md:text-6xl' : 'text-2xl md:text-3xl')}>{t(`categories.${c.slug}`, {}, c.name)}</h3>
+                            <h3 className={cn('font-display relative z-10 leading-none font-medium', i === 0 || i === 3 ? 'max-w-[65%] text-3xl sm:text-4xl md:max-w-none md:text-6xl' : 'max-w-[80%] text-lg sm:text-2xl md:max-w-none md:text-3xl', i === 3 && 'md:text-3xl')}>{t(`categories.${c.slug}`, {}, c.name)}</h3>
                             <img
                                 src={produceImage(c.icon)}
                                 alt=""
-                                className={cn('absolute -end-4 -bottom-4 object-contain drop-shadow-2xl transition duration-700 group-hover:scale-110 group-hover:-rotate-12', i === 0 ? 'size-56 md:size-72' : 'size-28 md:size-36')}
+                                className={cn('absolute -end-3 -bottom-3 object-contain drop-shadow-2xl transition duration-700 group-hover:scale-110 group-hover:-rotate-12 sm:-end-4 sm:-bottom-4', i === 0 ? 'size-32 sm:size-44 md:size-72' : i === 3 ? 'size-28 sm:size-32 md:size-36' : 'size-16 sm:size-24 md:size-36')}
                             />
                         </Link>
                     </Reveal>
@@ -303,7 +295,7 @@ function MarketsSection({ markets }) {
                             href: route('markets.show', m.slug),
                             cta: t('common.view'),
                             color: m.open_today ? '#E2552C' : '#1F4D36',
-                            image: '/images/produce/basket.png',
+                            image: '/images/produce/basket.webp',
                         }))}
                     />
                 </Reveal>
@@ -321,17 +313,19 @@ function MarketsSection({ markets }) {
 
 function Farmers({ farmers }) {
     const t = useT();
+    const head = (
+        <div className="mx-auto w-full max-w-[1400px] px-5 sm:px-8">
+            <SectionHead eyebrow={t('home.farmers_eyebrow')} title={t('home.farmers_title')} href={route('farmers.index')} cta={t('home.meet_all')} compact />
+        </div>
+    );
     return (
-        <section className="mt-32">
-            <div className="mx-auto max-w-[1400px] px-5 sm:px-8">
-                <SectionHead eyebrow={t('home.farmers_eyebrow')} title={t('home.farmers_title')} href={route('farmers.index')} cta={t('home.meet_all')} />
-            </div>
-            <div className="no-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-ps-5 px-5 pb-4 sm:scroll-ps-8 sm:px-8 xl:scroll-ps-[calc((100vw-1400px)/2+2rem)] xl:px-[calc((100vw-1400px)/2+2rem)]" data-lenis-prevent>
-                {farmers.map((f) => (
-                    <FarmerCard key={f.id} farmer={f} className="w-[300px] shrink-0 snap-start md:w-[340px]" />
-                ))}
-            </div>
-        </section>
+        <HorizontalScroll head={head} count={farmers.length} className="mt-20" label={t('home.farmers_title')} trackClassName="items-stretch gap-4 px-5 sm:gap-5 sm:px-8 xl:px-[calc((100vw-1400px)/2+2rem)]">
+            {farmers.map((f, i) => (
+                <li key={f.id} data-hs-item className={cn('flex w-[78vw] max-w-[340px] shrink-0 snap-start sm:w-[320px] md:w-[340px]', i % 2 && 'md:translate-y-6')}>
+                    <FarmerCard farmer={f} className="w-full" />
+                </li>
+            ))}
+        </HorizontalScroll>
     );
 }
 
@@ -394,9 +388,9 @@ function FarmerCta() {
     );
 }
 
-function SectionHead({ eyebrow, title, href, cta }) {
+function SectionHead({ eyebrow, title, href, cta, compact = false }) {
     return (
-        <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div className={cn(!compact && 'mb-10', 'flex flex-col gap-4 md:flex-row md:items-end md:justify-between')}>
             <div>
                 <p className="font-mono text-xs tracking-[0.2em] text-ink-faint uppercase">{eyebrow}</p>
                 <h2 className="font-display mt-3 max-w-3xl text-4xl leading-[1] font-light md:text-6xl">
@@ -431,6 +425,7 @@ export default function Home({ stats, categories, harvest, farmers, markets, rev
             <HowItWorks />
             <Categories categories={categories} />
             <Harvest products={harvest} />
+            <FieldsReel className="mt-16" />
             <MarketsSection markets={markets} />
             <Farmers farmers={farmers} />
             <Reviews reviews={reviews} />

@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Favorite extends Model
 {
-    /** URL-friendly aliases mapped to their morph classes. */
     public const TYPES = [
         'product' => Product::class,
         'farmer' => FarmerProfile::class,

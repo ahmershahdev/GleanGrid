@@ -14,6 +14,8 @@ class Market extends Model
         'map_provider', 'operating_days', 'opens_at', 'closes_at', 'cover_image', 'is_active',
     ];
 
+    protected $appends = ['cover_url'];
+
     protected function casts(): array
     {
         return [
@@ -24,7 +26,6 @@ class Market extends Model
         ];
     }
 
-    /** URLs use the slug, never the auto-increment id. */
     public function getRouteKeyName(): string
     {
         return 'slug';
@@ -50,13 +51,11 @@ class Market extends Model
         return $query->where('is_active', true);
     }
 
-    /** Markets that trade on the given day index (0 = Sunday). */
     public function scopeOpenOn(Builder $query, int $day): Builder
     {
         return $query->whereJsonContains('operating_days', $day);
     }
 
-    /** Adds a `distance_km` column using the haversine formula. */
     public function scopeWithDistance(Builder $query, float $lat, float $lng): Builder
     {
         return $query->select('markets.*')->selectRaw(
@@ -68,5 +67,10 @@ class Market extends Model
     public function isOpenToday(): bool
     {
         return in_array((int) now()->dayOfWeek, $this->operating_days ?? [], true);
+    }
+
+    public function getCoverUrlAttribute(): ?string
+    {
+        return Product::resolveImage($this->cover_image);
     }
 }

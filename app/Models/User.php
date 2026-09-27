@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Settings;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -31,6 +32,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'last_login_at' => 'datetime',
             'password_changed_at' => 'datetime',
+            'anonymized_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -50,9 +52,36 @@ class User extends Authenticatable
         return $this->role === self::ROLE_CUSTOMER;
     }
 
+    public function recentNoShows(): int
+    {
+        return $this->orders()->where('status', 'no_show')
+            ->where('no_show_at', '>=', now()->subDays(Settings::get('no_show_window_days')))
+            ->count();
+    }
+
+    public function preorderRestricted(): bool
+    {
+        return $this->isCustomer() && $this->recentNoShows() >= Settings::get('no_show_limit');
+    }
+
     public function isActive(): bool
     {
         return $this->status === 'active';
+    }
+
+    public function isDemo(): bool
+    {
+        return str_ends_with(strtolower((string) $this->email), '@'.config('gleangrid.demo_domain'));
+    }
+
+    public function hasVerifiedEmail(): bool
+    {
+        return $this->isDemo() || parent::hasVerifiedEmail();
+    }
+
+    public function routeNotificationForMail(): ?string
+    {
+        return $this->isDemo() ? null : $this->email;
     }
 
     public function loginEvents(): HasMany
@@ -85,22 +114,16 @@ class User extends Authenticatable
         return $this->hasMany(Announcement::class);
     }
 
-    /** Family links where this user is the account owner. */
     public function familyMembers(): HasMany
     {
         return $this->hasMany(FamilyLink::class, 'owner_id');
     }
 
-    /** Family links where this user was invited by someone else. */
     public function familyMemberships(): HasMany
     {
         return $this->hasMany(FamilyLink::class, 'member_id');
     }
 
-    /**
-     * IDs of every customer whose orders this user may see: themselves plus
-     * accepted family links in either direction.
-     */
     public function householdIds(): array
     {
         $owned = $this->familyMembers()->where('status', 'accepted')->pluck('member_id');

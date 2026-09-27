@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#1F4D36">
+    <title>You’re offline · GleanGrid</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <style>
+        :root { --bg: #f3eee3; --ink: #13201a; --soft: #5f5a50; --brand: #1f4d36; --lime: #c9e265; --accent: #e2552c; }
+        @media (prefers-color-scheme: dark) { :root { --bg: #0d130f; --ink: #f3eee3; --soft: #a39d90; --brand: #c9e265; } }
+        * { box-sizing: border-box; }
+        html, body { height: 100%; margin: 0; }
+        body {
+            display: grid; place-items: center; padding: 24px;
+            background: radial-gradient(1200px 600px at 80% -10%, color-mix(in srgb, var(--lime) 30%, transparent), transparent 60%), var(--bg);
+            color: var(--ink); font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+        }
+        main { max-width: 520px; text-align: center; }
+        img { width: 88px; height: 88px; animation: bob 4s ease-in-out infinite; }
+        h1 { font: 300 clamp(40px, 9vw, 72px)/0.95 Georgia, 'Times New Roman', serif; letter-spacing: -0.02em; margin: 28px 0 12px; }
+        h1 em { color: var(--accent); }
+        p { color: var(--soft); margin: 0 auto 28px; max-width: 40ch; }
+        a { display: inline-flex; align-items: center; gap: 8px; height: 48px; padding: 0 24px; border-radius: 999px; background: var(--brand); color: var(--bg); font-weight: 600; text-decoration: none; }
+        a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+        small { display: block; margin-top: 24px; color: var(--soft); font-size: 13px; }
+        @keyframes bob { 50% { transform: translateY(-8px) rotate(-4deg); } }
+        @media (prefers-reduced-motion: reduce) { img { animation: none; } }
+    </style>
+</head>
+<body>
+    <main>
+        <img src="/images/brand/gleangrid-mark.webp" alt="GleanGrid">
+        <h1>The signal went <em>to market.</em></h1>
+        <p>You’re offline right now. Your basket is saved on this device, so nothing is lost. Reconnect and carry on where you left off.</p>
+        <a href="/">Try again</a>
+        <small>Orders and prices always load live, so what you see is never out of date.</small>
+    </main>
+</body>
+</html>

@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { ArrowUpRight, Clock, MapPin, Star, Store } from 'lucide-react';
 import { AddToCart, FavoriteButton } from '@/Components/widgets';
 import { useFormat, useT } from '@/lib/i18n';
-import { cn } from '@/lib/utils';
+import { cn, photoProps } from '@/lib/utils';
 
 const tilt = {
     rest: { rotate: 0, y: 0 },
@@ -15,18 +15,30 @@ export function ProductCard({ product, className }) {
     const { money } = useFormat();
     const orderable = product.status === 'available' && product.stock_quantity > 0;
     const low = orderable && product.stock_quantity <= 5;
+    const illustration = product.image_url?.includes('/produce/') ? product.image_url : null;
+    const photo = product.photo_url && product.photo_url !== illustration ? product.photo_url : null;
 
     return (
         <motion.article initial="rest" whileHover="hover" animate="rest" className={cn('group relative flex flex-col rounded-[28px] border border-line bg-elev p-3 transition-shadow hover:shadow-soft', className)}>
             <Link href={route('products.show', product.slug)} data-cursor={t('common.view')} className="relative block aspect-[4/3.4] overflow-hidden rounded-[22px]" style={{ background: `color-mix(in oklab, ${product.category?.color ?? '#C9E265'} 22%, var(--bg-sunk))` }}>
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_60%,rgb(255_255_255/0.55),transparent_60%)] dark:bg-[radial-gradient(circle_at_50%_60%,rgb(255_255_255/0.08),transparent_60%)]" />
-                {product.image_url && (
+                {photo && (
+                    <>
+                        <img {...photoProps(photo, '(min-width: 1280px) 30vw, (min-width: 640px) 50vw, 100vw')} alt={illustration ? '' : product.name} loading="lazy" decoding="async" className={cn('absolute inset-0 size-full object-cover transition-transform duration-[1.2s] ease-out-expo group-hover:scale-110', !orderable && 'opacity-60 grayscale')} />
+                        <div className="absolute inset-0 bg-gradient-to-t from-soil/45 via-transparent to-transparent" />
+                    </>
+                )}
+                {illustration && (
                     <motion.img
                         variants={tilt}
                         src={product.image_url}
                         alt={product.name}
                         loading="lazy"
-                        className={cn('absolute inset-0 m-auto h-[68%] w-[68%] object-contain drop-shadow-[0_18px_18px_rgba(0,0,0,0.22)]', !product.image_url.includes('/produce/') && 'h-full w-full object-cover drop-shadow-none', !orderable && 'opacity-50 grayscale')}
+                        className={cn(
+                            'absolute object-contain drop-shadow-[0_18px_18px_rgba(0,0,0,0.3)]',
+                            photo ? 'end-3 bottom-3 size-[30%]' : 'inset-0 m-auto h-[68%] w-[68%]',
+                            !orderable && 'opacity-50 grayscale',
+                        )}
                     />
                 )}
                 <div className="absolute start-3 top-3 flex flex-col gap-1.5">
@@ -68,11 +80,20 @@ export function FarmerCard({ farmer, className }) {
     const t = useT();
     return (
         <motion.article initial="rest" whileHover="hover" animate="rest" className={cn('group relative flex flex-col overflow-hidden rounded-[28px] border border-line bg-elev', className)}>
-            <Link href={route('farmers.show', farmer.slug)} data-cursor={t('common.visit')} className="relative block h-40 overflow-hidden bg-brand-soft">
-                <div className="absolute inset-0 bg-[repeating-linear-gradient(135deg,transparent_0_14px,rgb(0_0_0/0.035)_14px_15px)]" />
-                <div className="absolute -end-6 -bottom-8 size-44 rounded-full bg-lime/50 blur-2xl transition group-hover:scale-125" />
-                {farmer.logo_url && <motion.img variants={tilt} src={farmer.logo_url} alt="" className="absolute start-6 bottom-4 size-24 object-contain drop-shadow-xl" />}
-                <ArrowUpRight className="rtl-flip absolute end-5 top-5 size-6 text-ink-soft transition group-hover:translate-x-1 group-hover:-translate-y-1" />
+            <Link href={route('farmers.show', farmer.slug)} data-cursor={t('common.visit')} tabIndex={-1} aria-hidden="true" className="relative block h-44 overflow-hidden bg-brand-soft">
+                {farmer.cover_url ? (
+                    <>
+                        <img {...photoProps(farmer.cover_url, '(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw')} alt="" loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover transition-transform duration-[1.2s] ease-out-expo group-hover:scale-110" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-soil/70 via-soil/10 to-transparent" />
+                    </>
+                ) : (
+                    <>
+                        <div className="absolute inset-0 bg-[repeating-linear-gradient(135deg,transparent_0_14px,rgb(0_0_0/0.035)_14px_15px)]" />
+                        <div className="absolute -end-6 -bottom-8 size-44 rounded-full bg-lime/50 blur-2xl transition group-hover:scale-125" />
+                    </>
+                )}
+                {farmer.logo_url && <motion.img variants={tilt} src={farmer.logo_url} alt="" className="absolute start-5 bottom-3 size-20 object-contain drop-shadow-[0_10px_18px_rgb(0_0_0/0.45)]" />}
+                <ArrowUpRight className={cn('rtl-flip absolute end-5 top-5 size-6 transition group-hover:translate-x-1 group-hover:-translate-y-1', farmer.cover_url ? 'text-white drop-shadow' : 'text-ink-soft')} />
             </Link>
             <FavoriteButton type="farmer" id={farmer.id} className="absolute end-4 top-14" size="size-9" />
             <div className="flex flex-1 flex-col p-5">
@@ -106,12 +127,18 @@ export function MarketCard({ market, active, onHover, className }) {
             href={route('markets.show', market.slug)}
             onMouseEnter={() => onHover?.(market.id)}
             onMouseLeave={() => onHover?.(null)}
-            className={cn('group block rounded-[24px] border bg-elev p-5 transition', active ? 'border-brand shadow-soft' : 'border-line hover:border-line-strong', className)}
+            className={cn('group block overflow-hidden rounded-[24px] border bg-elev transition', active ? 'border-brand shadow-soft' : 'border-line hover:border-line-strong', className)}
         >
-            <div className="flex items-start justify-between gap-3">
+            {market.cover_url && (
+                <div className="relative h-32 overflow-hidden">
+                    <img {...photoProps(market.cover_url, '(min-width: 1024px) 33vw, 100vw')} alt="" loading="lazy" decoding="async" className="size-full object-cover transition-transform duration-[1.2s] ease-out-expo group-hover:scale-110" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-elev via-transparent to-transparent" />
+                </div>
+            )}
+            <div className={cn('flex items-start justify-between gap-3 px-5', market.cover_url ? '-mt-6 relative' : 'pt-5')}>
                 <div>
                     <p className="font-mono text-[11px] tracking-[0.18em] text-ink-faint uppercase">{market.city}</p>
-                    <h3 className="font-display mt-1 text-xl leading-tight font-medium group-hover:underline">{market.name}</h3>
+                    <h2 className="font-display mt-1 text-xl leading-tight font-medium group-hover:underline">{market.name}</h2>
                 </div>
                 {market.open_today ? (
                     <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-lime/35 px-2.5 py-1 text-xs font-semibold text-forest dark:text-lime">
@@ -125,10 +152,10 @@ export function MarketCard({ market, active, onHover, className }) {
                     <span className="shrink-0 rounded-full bg-ink/5 px-2.5 py-1 text-xs text-ink-soft">{t('market.closed_today')}</span>
                 )}
             </div>
-            <p className="mt-3 flex items-start gap-1.5 text-sm text-ink-soft">
+            <p className="mt-3 flex items-start gap-1.5 px-5 text-sm text-ink-soft">
                 <MapPin className="mt-0.5 size-3.5 shrink-0" /> {market.address}
             </p>
-            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-line pt-3 text-xs text-ink-soft">
+            <div className="mx-5 mt-4 mb-5 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-line pt-3 text-xs text-ink-soft">
                 <span className="font-medium text-ink">{days(market.operating_days)}</span>
                 <span className="inline-flex items-center gap-1">
                     <Clock className="size-3.5" /> {time(market.opens_at)} – {time(market.closes_at)}

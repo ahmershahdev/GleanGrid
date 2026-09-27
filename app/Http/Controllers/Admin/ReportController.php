@@ -29,7 +29,6 @@ class ReportController extends Controller
         ]);
     }
 
-    /** CSV export (only on explicit click, per the "no unnecessary downloads" NFR). */
     public function export(Request $request, string $type): StreamedResponse
     {
         abort_unless(in_array($type, ['orders', 'markets', 'farmers'], true), 404);
@@ -63,7 +62,7 @@ class ReportController extends Controller
 
         return response()->streamDownload(function () use ($header, $rows) {
             $out = fopen('php://output', 'w');
-            fwrite($out, "\xEF\xBB\xBF"); // UTF-8 BOM so Excel shows Urdu/Arabic names correctly
+            fwrite($out, "\xEF\xBB\xBF");
             fputcsv($out, $header);
             foreach ($rows as $row) {
                 fputcsv($out, $row);

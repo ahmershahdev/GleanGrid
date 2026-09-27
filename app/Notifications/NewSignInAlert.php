@@ -14,7 +14,6 @@ class NewSignInAlert extends Notification implements ShouldQueue
 
     public function __construct(private string $device, private ?string $ip, private CarbonInterface $at)
     {
-        // Only send once the surrounding transaction commits, never for rolled-back work.
         $this->afterCommit();
     }
 
@@ -27,7 +26,7 @@ class NewSignInAlert extends Notification implements ShouldQueue
     {
         return (new MailMessage)
             ->subject('New sign-in to your GleanGrid account')
-            ->greeting('Hi '.strtok($notifiable->name, ' ').',')
+            ->greeting('Salaam '.strtok($notifiable->name, ' ').',')
             ->line("Your account was just used to sign in from **{$this->device}**.")
             ->line('Time: '.$this->at->timezone(config('app.timezone'))->format('D j M Y, g:i a').' (PKT) · IP: '.($this->ip ?? 'unknown'))
             ->line('If this was you, there’s nothing to do. If not, change your password now — that also signs out every other device.')

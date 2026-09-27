@@ -1,11 +1,11 @@
 import { Link, useForm } from '@inertiajs/react';
+import { useState } from 'react';
 import { ShieldCheck, Store, UserRound } from 'lucide-react';
 import { Button, Checkbox, Input, PasswordInput } from '@/Components/ui';
 import AuthLayout from '@/Layouts/AuthLayout';
 import { BotFields, useBotGuard } from '@/lib/botguard';
 import { useT } from '@/lib/i18n';
 
-// Seeded demo accounts (also listed in README) so evaluators can switch roles quickly.
 const DEMO = [
     { role: 'customer', login: 'customer@gleangrid.test', password: 'Customer@123', icon: UserRound },
     { role: 'farmer', login: 'farmer@gleangrid.test', password: 'Farmer@123', icon: Store },
@@ -20,6 +20,14 @@ export default function Login() {
     const submit = (e) => {
         e.preventDefault();
         guard.submit('post', route('login'), { onFinish: () => form.reset('password') });
+    };
+
+    const [demoBusy, setDemoBusy] = useState(null);
+    const demoLogin = (d) => {
+        setDemoBusy(d.role);
+        form.setData({ ...form.data, login: d.login, password: d.password });
+        form.transform((data) => ({ ...data, login: d.login, password: d.password, website: '' }));
+        form.post(route('login'), { onFinish: () => setDemoBusy(null) });
     };
 
     return (
@@ -48,15 +56,18 @@ export default function Login() {
 
             <div className="mt-10 rounded-3xl border border-dashed border-line-strong p-4">
                 <p className="text-xs font-semibold tracking-wider text-ink-faint uppercase">{t('auth.demo')}</p>
+                <p className="mt-1 text-xs text-ink-soft">{t('auth.demo_hint', {}, 'One tap signs you in — demo accounts need no e-mail step.')}</p>
                 <div className="mt-3 grid grid-cols-3 gap-2">
                     {DEMO.map((d) => (
                         <button
                             key={d.role}
                             type="button"
-                            onClick={() => form.setData({ ...form.data, login: d.login, password: d.password })}
-                            className="flex flex-col items-center gap-1.5 rounded-2xl bg-ink/[0.04] px-2 py-3 text-xs font-medium transition hover:bg-lime/40"
+                            onClick={() => demoLogin(d)}
+                            disabled={form.processing}
+                            aria-label={t('auth.demo_as', { role: t(`roles.${d.role}`) }, `Sign in as demo ${d.role}`)}
+                            className="flex flex-col items-center gap-1.5 rounded-2xl bg-ink/[0.04] px-2 py-3 text-xs font-medium transition hover:bg-lime/40 disabled:opacity-60"
                         >
-                            <d.icon className="size-5" />
+                            <d.icon className={`size-5 ${demoBusy === d.role ? 'animate-pulse' : ''}`} />
                             {t(`roles.${d.role}`)}
                         </button>
                     ))}

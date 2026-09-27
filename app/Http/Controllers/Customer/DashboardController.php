@@ -32,8 +32,9 @@ class DashboardController extends Controller
             'recent' => (clone $orders)->with('farmer:id,stall_name,slug')->latest()->limit(5)->get(),
             'toReview' => Order::where('customer_id', $user->id)->where('status', 'completed')
                 ->whereDoesntHave('reviews')->with('farmer:id,stall_name,slug')->latest('completed_at')->limit(3)->get(),
-            'suggestions' => Product::orderable()->whereIn('farmer_profile_id', $favoriteFarmerIds)
-                ->with('farmer:id,stall_name,slug')->inRandomOrder()->limit(4)->get(),
+            'suggestions' => $favoriteFarmerIds->isNotEmpty()
+                ? Product::orderable()->whereIn('farmer_profile_id', $favoriteFarmerIds)->with('farmer:id,stall_name,slug')->inRandomOrder()->limit(4)->get()
+                : Product::orderable()->with('farmer:id,stall_name,slug')->orderByDesc('rating_avg')->orderByDesc('sold_count')->limit(4)->get(),
         ]);
     }
 }

@@ -1,15 +1,6 @@
 import { prefersReducedMotion } from '@/lib/utils';
 
-/*
- * "Fly to basket / fly to favourites".
- *
- * A ghost of the product image lifts off the button that was pressed, arcs
- * across the screen and drops into the header target, which then bumps.
- * Runs outside React (a detached ghost node), so no re-renders during the flight.
- */
-
 function findTarget(name) {
-    // Prefer the copy that is actually laid out (desktop header vs mobile menu).
     return [...document.querySelectorAll(`[data-fly-target="${name}"]`)].find((el) => el.getClientRects().length > 0);
 }
 
@@ -22,17 +13,8 @@ function bump(el) {
 
 const resolve = (x) => (typeof x === 'string' ? findTarget(x) : x);
 
-/**
- * @param {Element|'cart'|'favorites'} fromArg  where the ghost lifts off
- * @param {Element|'cart'|'favorites'} toArg    where it lands (a named header target or any element)
- * @param {{ image?: string, icon?: string }} opts
- *
- * fly(button, 'cart')  — added to the basket
- * fly('cart', button)  — taken back out of the basket
- */
-export function fly(fromArg, toArg, { image, icon } = {}) {
+export function fly(fromArg, toArg, { image, icon, tone } = {}) {
     const involvesHeader = typeof fromArg === 'string' || typeof toArg === 'string';
-    // The header hides while scrolling down; ask it back so the ghost has somewhere to land/leave from.
     if (involvesHeader) window.dispatchEvent(new CustomEvent('gg:reveal-header'));
     const from = resolve(fromArg);
     const target = resolve(toArg);
@@ -56,7 +38,7 @@ export function fly(fromArg, toArg, { image, icon } = {}) {
         borderRadius: '999px',
         display: 'grid',
         placeItems: 'center',
-        background: toArg === 'favorites' ? 'var(--accent)' : 'var(--bg-elev)',
+        background: tone === 'favorites' || toArg === 'favorites' || fromArg === 'favorites' ? 'var(--accent)' : 'var(--bg-elev)',
         boxShadow: '0 18px 40px -12px rgb(0 0 0 / 0.35)',
         border: '1px solid var(--line)',
         willChange: 'transform, opacity',
@@ -77,8 +59,6 @@ export function fly(fromArg, toArg, { image, icon } = {}) {
     const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
     const t0 = performance.now();
 
-    // rAF rather than fixed keyframes: the target is re-measured every frame,
-    // so the ghost still lands exactly while the header slides back in.
     const frame = (now) => {
         const p = Math.min(1, (now - t0) / duration);
         const t = ease(p);

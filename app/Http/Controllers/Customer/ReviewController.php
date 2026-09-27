@@ -26,7 +26,6 @@ class ReviewController extends Controller
         ]);
     }
 
-    /** Review the farmer or one of the products from a completed order. */
     public function store(Request $request, Order $order): RedirectResponse
     {
         abort_unless($order->customer_id === $request->user()->id, 403);

@@ -28,7 +28,6 @@ class Coupon extends Model
         ];
     }
 
-    /** Codes are case-insensitive for shoppers and stored upper-case. */
     protected function setCodeAttribute(string $value): void
     {
         $this->attributes['code'] = strtoupper(trim($value));
@@ -51,7 +50,6 @@ class Coupon extends Model
             ->where(fn ($q) => $q->whereNull('ends_at')->orWhere('ends_at', '>', now()));
     }
 
-    /** Discount for a basket subtotal, never more than the subtotal itself. */
     public function discountFor(float $subtotal): float
     {
         $raw = $this->type === 'percent' ? $subtotal * $this->value / 100 : $this->value;

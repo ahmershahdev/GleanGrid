@@ -32,7 +32,7 @@ class OrderController extends Controller
                 ->orderByRaw("field(status, 'placed', 'accepted', 'ready', 'completed', 'declined', 'cancelled')")
                 ->orderBy('pickup_date')->paginate(15)->withQueryString(),
             'counts' => (clone $base)->selectRaw('status, count(*) as c')->groupBy('status')->pluck('c', 'status'),
-            'filters' => $filters,
+            'filters' => (object) $filters,
         ]);
     }
 
@@ -42,14 +42,32 @@ class OrderController extends Controller
 
         return Inertia::render('Farmer/Orders/Show', [
             'order' => $order->load('customer:id,name,phone,email', 'market', 'items'),
+            'history' => $order->statusHistory(),
+            'customerNoShows' => $order->customer->recentNoShows(),
         ]);
+    }
+
+    public function scan(): Response
+    {
+        return Inertia::render('Farmer/Scan');
+    }
+
+    public function lookup(Request $request): RedirectResponse
+    {
+        $raw = (string) $request->validate(['code' => 'required|string|max:300'])['code'];
+        preg_match('/GG-[A-Z0-9]{6}/i', $raw, $m);
+        $order = $m ? Order::where('code', strtoupper($m[0]))->where('farmer_profile_id', $request->user()->farmerProfile->id)->first() : null;
+
+        return $order
+            ? redirect()->route('farmer.orders.show', $order)
+            : back()->with('error', 'flash.order_not_found');
     }
 
     public function status(Request $request, Order $order, OrderService $service): RedirectResponse
     {
         $this->authorizeOrder($request, $order);
         $data = $request->validate([
-            'status' => 'required|in:accepted,declined,ready,completed',
+            'status' => 'required|in:accepted,declined,ready,completed,no_show',
             'note' => 'nullable|string|max:500',
         ]);
 

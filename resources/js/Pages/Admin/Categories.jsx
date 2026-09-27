@@ -1,9 +1,10 @@
-import { router, useForm } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Button, buttonClass, Card, Checkbox, Input, Modal, PageHeader, Select } from '@/Components/ui';
 import { useT } from '@/lib/i18n';
 import { produceImage } from '@/lib/utils';
+import { confirmDelete } from '@/lib/confirm';
 
 function CategoryForm({ category, illustrations, onDone }) {
     const t = useT();
@@ -76,7 +77,7 @@ export default function AdminCategories({ categories, illustrations }) {
                             <button onClick={() => setEditing(c)} className={buttonClass('soft', 'icon', 'size-9')} aria-label={t('common.edit')}>
                                 <Pencil className="size-4" />
                             </button>
-                            <button onClick={() => router.delete(route('admin.categories.destroy', c.id), { preserveScroll: true })} className={buttonClass('soft', 'icon', 'size-9 text-danger')} aria-label={t('common.delete')}>
+                            <button onClick={() => confirmDelete(route('admin.categories.destroy', c.id), { title: t('confirm.delete_category', {}, 'Delete this category?') })} className={buttonClass('soft', 'icon', 'size-9 text-danger')} aria-label={t('common.delete')}>
                                 <Trash2 className="size-4" />
                             </button>
                         </div>

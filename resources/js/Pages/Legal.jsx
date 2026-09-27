@@ -39,7 +39,6 @@ export default function Legal({ page, content, updated }) {
     const { scrollYProgress } = useScroll({ target: article, offset: ['start start', 'end end'] });
     const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 30 });
 
-    // Scroll-spy: highlight the section currently under the reading line.
     useEffect(() => {
         const heads = [...document.querySelectorAll('[data-legal-section]')];
         const io = new IntersectionObserver((entries) => entries.forEach((e) => e.isIntersecting && setActive(e.target.id)), { rootMargin: '-30% 0px -60% 0px' });

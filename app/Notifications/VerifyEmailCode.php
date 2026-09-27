@@ -13,7 +13,6 @@ class VerifyEmailCode extends Notification implements ShouldQueue
 
     public function __construct(private string $code, private int $minutes)
     {
-        // Only send once the surrounding transaction commits, never for rolled-back work.
         $this->afterCommit();
     }
 

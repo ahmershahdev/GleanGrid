@@ -6,7 +6,6 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-/** Actions that create records others will act on (orders, listings, reviews) need a proven e-mail. */
 class EnsureEmailVerified
 {
     public function handle(Request $request, Closure $next): Response

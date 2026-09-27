@@ -4,7 +4,6 @@ import { cn, prefersReducedMotion } from '@/lib/utils';
 
 const EASE = [0.16, 1, 0.3, 1];
 
-/** Fade + lift into view once. */
 export function Reveal({ children, delay = 0, y = 28, className, as = 'div' }) {
     const Tag = motion[as];
     return (
@@ -20,7 +19,6 @@ export function Reveal({ children, delay = 0, y = 28, className, as = 'div' }) {
     );
 }
 
-/** Headline reveal: each word slides up out of a clipping mask. */
 export function SplitWords({ text, className, delay = 0, stagger = 0.06, as = 'span', immediate = false }) {
     const ref = useRef(null);
     const inView = useInView(ref, { once: true, margin: '-40px' });
@@ -28,17 +26,24 @@ export function SplitWords({ text, className, delay = 0, stagger = 0.06, as = 's
     const Tag = as;
     const words = String(text).split(' ');
     return (
-        <Tag ref={ref} className={className} aria-label={text}>
+        <Tag ref={ref} className={className}>
+            <span className="sr-only">{text}</span>
             {words.map((word, i) => (
                 <span key={i} aria-hidden="true" className="inline-block overflow-hidden pb-[0.12em] align-top">
-                    <motion.span
-                        className="inline-block will-change-transform"
-                        initial={{ y: '110%', rotate: 4 }}
-                        animate={show ? { y: 0, rotate: 0 } : {}}
-                        transition={{ duration: 1, delay: delay + i * stagger, ease: EASE }}
-                    >
-                        {word}
-                    </motion.span>
+                    {immediate ? (
+                        <span className="gg-word inline-block" style={{ animationDelay: `${delay + i * stagger}s` }}>
+                            {word}
+                        </span>
+                    ) : (
+                        <motion.span
+                            className="inline-block will-change-transform"
+                            initial={{ y: '110%', rotate: 4 }}
+                            animate={show ? { y: 0, rotate: 0 } : {}}
+                            transition={{ duration: 1, delay: delay + i * stagger, ease: EASE }}
+                        >
+                            {word}
+                        </motion.span>
+                    )}
                     {i < words.length - 1 && ' '}
                 </span>
             ))}
@@ -46,7 +51,6 @@ export function SplitWords({ text, className, delay = 0, stagger = 0.06, as = 's
     );
 }
 
-/** Element drifts toward the cursor while hovered. */
 export function Magnetic({ children, strength = 0.35, className }) {
     const ref = useRef(null);
     const x = useSpring(0, { stiffness: 200, damping: 15 });
@@ -70,7 +74,6 @@ export function Magnetic({ children, strength = 0.35, className }) {
     );
 }
 
-/** Infinite ticker; content is duplicated so the loop is seamless. */
 export function Marquee({ children, duration = 40, reverse = false, className }) {
     return (
         <div className={cn('mask-fade-x flex overflow-hidden', className)}>
@@ -84,7 +87,6 @@ export function Marquee({ children, duration = 40, reverse = false, className })
     );
 }
 
-/** Counts up to `value` when scrolled into view. */
 export function CountUp({ value, format = (n) => Math.round(n).toLocaleString(), duration = 1.8, className }) {
     const ref = useRef(null);
     const inView = useInView(ref, { once: true });
@@ -103,7 +105,6 @@ export function CountUp({ value, format = (n) => Math.round(n).toLocaleString(),
     );
 }
 
-/** Scroll-linked vertical drift for decorative elements. */
 export function Parallax({ children, speed = 0.2, className, style }) {
     const ref = useRef(null);
     const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] });
@@ -115,16 +116,73 @@ export function Parallax({ children, speed = 0.2, className, style }) {
     );
 }
 
-/**
- * Two-part cursor: an instant dot and a spring-follow ring.
- *
- * - Over small buttons/links the ring snaps around the element (same size and
- *   radius) and the element is gently pulled toward the pointer.
- * - Over [data-cursor="Label"] it grows into a filled disc with the label.
- * - Over text fields it becomes a caret bar; over maps, the scrollbar and
- *   [data-native-cursor] it steps aside so native grab/text cursors show.
- * - Presses squish it; leaving the window hides it.
- */
+export function HorizontalScroll({ head, children, count, className, trackClassName, label }) {
+    const outer = useRef(null);
+    const track = useRef(null);
+    const [dist, setDist] = useState(0);
+    const [still, setStill] = useState(false);
+    const [rtl, setRtl] = useState(false);
+    const { scrollYProgress } = useScroll({ target: outer, offset: ['start start', 'end end'] });
+    const raw = useTransform(scrollYProgress, (v) => (rtl ? 1 : -1) * v * dist);
+    const x = useSpring(raw, { stiffness: 140, damping: 30, mass: 0.4 });
+    const bar = useTransform(scrollYProgress, [0, 1], [0, 1]);
+    const [index, setIndex] = useState(1);
+
+    useEffect(() => {
+        setStill(prefersReducedMotion());
+        setRtl(document.documentElement.dir === 'rtl');
+        const measure = () => track.current && setDist(Math.max(0, track.current.scrollWidth - window.innerWidth));
+        measure();
+        const ro = new ResizeObserver(measure);
+        if (track.current) ro.observe(track.current);
+        window.addEventListener('resize', measure);
+        return () => {
+            ro.disconnect();
+            window.removeEventListener('resize', measure);
+        };
+    }, []);
+
+    useEffect(() => scrollYProgress.on('change', (v) => setIndex(Math.min(count, Math.max(1, Math.round(v * (count - 1)) + 1)))), [scrollYProgress, count]);
+
+    const onFocus = (e) => {
+        const item = e.target.closest('[data-hs-item]');
+        if (!item || !outer.current || !dist) return;
+        const start = outer.current.getBoundingClientRect().top + window.scrollY;
+        const offset = rtl ? track.current.scrollWidth - item.offsetLeft - item.offsetWidth : item.offsetLeft;
+        const ratio = Math.min(1, Math.max(0, (offset - 24) / dist));
+        window.scrollTo({ top: start + ratio * (outer.current.offsetHeight - window.innerHeight), behavior: 'instant' });
+    };
+
+    if (still) {
+        return (
+            <section className={className} aria-label={label}>
+                {head}
+                <ul className={cn('no-scrollbar mt-10 flex snap-x snap-mandatory overflow-x-auto', trackClassName)} data-lenis-prevent>
+                    {children}
+                </ul>
+            </section>
+        );
+    }
+
+    return (
+        <section ref={outer} className={cn('relative', className)} style={{ height: `calc(100svh + ${dist}px)` }} aria-label={label}>
+            <div className="sticky top-0 flex h-[100svh] flex-col justify-center overflow-hidden py-[max(5rem,8svh)]">
+                {head}
+                <motion.ul ref={track} style={{ x }} onFocusCapture={onFocus} className={cn('mt-8 flex w-max will-change-transform md:mt-12', trackClassName)}>
+                    {children}
+                </motion.ul>
+                <div className="mx-auto mt-8 flex w-full max-w-[1400px] items-center gap-4 px-5 sm:px-8" aria-hidden="true">
+                    <span className="font-mono text-xs tabular-nums text-ink-soft">{String(index).padStart(2, '0')}</span>
+                    <span className="relative h-px flex-1 overflow-hidden bg-line-strong">
+                        <motion.span style={{ scaleX: bar }} className="absolute inset-0 origin-left bg-ink rtl:origin-right" />
+                    </span>
+                    <span className="font-mono text-xs tabular-nums text-ink-faint">{String(count).padStart(2, '0')}</span>
+                </div>
+            </div>
+        </section>
+    );
+}
+
 export function Cursor() {
     const x = useMotionValue(-100);
     const y = useMotionValue(-100);
@@ -171,7 +229,6 @@ export function Cursor() {
             }
             if (target) {
                 const r = target.getBoundingClientRect();
-                // Only "stick" to compact controls; big cards just get the hover ring.
                 if (r.width < 260 && r.height < 90) {
                     const cx = r.left + r.width / 2;
                     const cy = r.top + r.height / 2;
@@ -179,8 +236,6 @@ export function Cursor() {
                     const dy = (e.clientY - cy) * 0.18;
                     x.set(cx + dx);
                     y.set(cy + dy);
-                    // The pull uses the standalone `translate` property so it never fights Motion's
-                    // `transform`; elements already translated by their own CSS are left alone.
                     const ownTranslate = stuck === target ? 'none' : getComputedStyle(target).translate;
                     if (!target.closest('[data-no-magnet]') && ownTranslate === 'none') {
                         target.style.transition = 'translate 0.25s cubic-bezier(0.16,1,0.3,1)';
@@ -201,7 +256,6 @@ export function Cursor() {
         const leave = () => setVisible(false);
         const press = () => setDown(true);
         const release = () => setDown(false);
-        // Scrolling moves content under a still pointer; drop any stuck state.
         const scroll = () => {
             if (stuck) {
                 stuck.style.translate = '';

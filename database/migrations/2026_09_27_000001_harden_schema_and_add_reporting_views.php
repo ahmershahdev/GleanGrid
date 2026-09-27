@@ -5,13 +5,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Integrity + performance pass over the marketplace schema:
- *  - composite indexes that match the real WHERE / ORDER BY shapes used by dashboards,
- *  - CHECK constraints so bad data is rejected by the database itself, not just PHP,
- *  - security tables (one-time codes, login audit trail),
- *  - read-only reporting views built on joins, used by the admin reports.
- */
 return new class extends Migration
 {
     private const CHECKS = [
@@ -96,27 +89,22 @@ return new class extends Migration
             $table->timestamp('password_changed_at')->nullable()->after('password');
         });
 
-        // Same MariaDB trap: reports.generated_at would silently change whenever a row was touched.
         Schema::table('reports', function (Blueprint $table) {
             $table->dateTime('generated_at')->change();
         });
 
-        // Short-lived hashed codes: e-mail verification, and anything else needing an OTP later.
         Schema::create('verification_codes', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('purpose', 30);
             $table->string('code_hash');
             $table->unsignedTinyInteger('attempts')->default(0);
-            // DATETIME, not TIMESTAMP: MariaDB gives the first non-null TIMESTAMP in a table
-            // an implicit ON UPDATE CURRENT_TIMESTAMP, which would reset the expiry on every guess.
             $table->dateTime('expires_at');
             $table->dateTime('consumed_at')->nullable();
             $table->timestamps();
             $table->index(['user_id', 'purpose', 'consumed_at']);
         });
 
-        // Audit trail for sign-ins; also drives "new device" alert e-mails.
         Schema::create('login_events', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
@@ -159,9 +147,6 @@ return new class extends Migration
         Schema::dropIfExists('verification_codes');
         Schema::table('reports', fn (Blueprint $t) => $t->timestamp('generated_at')->change());
 
-        // DDL is not transactional in MySQL, so every step is guarded to make a re-run safe.
-        // MariaDB folds a foreign key's own index into any composite that starts with the
-        // same column, so ensureFkIndexes() restores it before a composite is dropped.
         $this->dropColumns('users', ['password_changed_at']);
         $this->dropColumns('contact_messages', ['ip_address']);
         $this->dropIndexes('contact_messages', ['contact_messages_is_read_created_at_index']);
@@ -209,7 +194,6 @@ return new class extends Migration
 
     private function createViews(): void
     {
-        // Revenue and order mix per market (completed orders count as revenue).
         DB::statement(<<<'SQL'
             CREATE OR REPLACE VIEW v_market_revenue AS
             SELECT m.id AS market_id, m.name AS market_name, m.city,
@@ -222,7 +206,6 @@ return new class extends Migration
             GROUP BY m.id, m.name, m.city
         SQL);
 
-        // One row per stall: sales, cancellation behaviour and reputation.
         DB::statement(<<<'SQL'
             CREATE OR REPLACE VIEW v_farmer_performance AS
             SELECT f.id AS farmer_profile_id, f.stall_name, f.status, u.email, f.rating_avg, f.rating_count,
@@ -237,7 +220,6 @@ return new class extends Migration
             GROUP BY f.id, f.stall_name, f.status, u.email, f.rating_avg, f.rating_count
         SQL);
 
-        // Public catalogue: only what a shopper can actually order right now.
         DB::statement(<<<'SQL'
             CREATE OR REPLACE VIEW v_product_catalog AS
             SELECT p.id AS product_id, p.name, p.slug, p.price, p.unit, p.stock_quantity, p.status,

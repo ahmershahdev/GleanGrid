@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Product;
 use App\Models\Review;
 use Illuminate\Http\RedirectResponse;
@@ -21,21 +22,22 @@ class ModerationController extends Controller
                 ->when($filters['q'] ?? null, fn ($q, $t) => $q->where('name', 'like', "%{$t}%"))
                 ->when($filters['removed'] ?? false, fn ($q) => $q->whereNotNull('removed_at'))
                 ->latest()->paginate(20)->withQueryString(),
-            'filters' => $filters,
+            'filters' => (object) $filters,
         ]);
     }
 
-    /** Remove a listing from the public catalogue (or restore it). */
     public function toggleProduct(Request $request, Product $product): RedirectResponse
     {
         if ($product->removed_at) {
             $product->update(['removed_at' => null, 'removed_reason' => null]);
+            AuditLog::record('listing.restored', "Restored listing {$product->name}", $product);
 
             return back()->with('success', 'flash.listing_restored');
         }
 
         $data = $request->validate(['reason' => 'required|string|max:255']);
         $product->update(['removed_at' => now(), 'removed_reason' => $data['reason']]);
+        AuditLog::record('listing.removed', "Removed listing {$product->name} — {$data['reason']}", $product);
 
         return back()->with('success', 'flash.listing_removed');
     }
@@ -50,7 +52,7 @@ class ModerationController extends Controller
                 ->when($filters['max_rating'] ?? null, fn ($q, $r) => $q->where('rating', '<=', $r))
                 ->latest()->paginate(20)->withQueryString()
                 ->through(fn (Review $r) => [...$r->toArray(), 'subject' => $r->reviewable?->stall_name ?? $r->reviewable?->name]),
-            'filters' => $filters,
+            'filters' => (object) $filters,
         ]);
     }
 
@@ -62,11 +64,14 @@ class ModerationController extends Controller
             'hidden_reason' => $hide ? $request->validate(['reason' => 'required|string|max:255'])['reason'] : null,
         ]);
 
+        AuditLog::record($hide ? 'review.hidden' : 'review.restored', ($hide ? 'Hid' : 'Restored')." a {$review->rating}★ review".($hide ? " — {$review->hidden_reason}" : ''), $review);
+
         return back()->with('success', $hide ? 'flash.review_hidden' : 'flash.review_restored');
     }
 
     public function destroyReview(Review $review): RedirectResponse
     {
+        AuditLog::record('review.deleted', "Deleted a {$review->rating}★ review", null, ['id' => $review->id, 'comment' => mb_strimwidth((string) $review->comment, 0, 120, '…')]);
         $review->delete();
 
         return back()->with('success', 'flash.review_deleted');

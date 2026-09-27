@@ -1,9 +1,5 @@
 import { Head, usePage } from '@inertiajs/react';
 
-/**
- * Renders the `seo` prop resolved by App\Support\Seo. Keys match the
- * server-rendered tags in app.blade.php so each visit swaps them in place.
- */
 export default function Seo() {
     const { seo, app } = usePage().props;
     if (!seo) return null;
@@ -21,6 +17,8 @@ export default function Seo() {
             <meta head-key="og:description" property="og:description" content={seo.description} />
             <meta head-key="og:url" property="og:url" content={seo.url} />
             <meta head-key="og:image" property="og:image" content={seo.image} />
+            <meta head-key="og:image:secure_url" property="og:image:secure_url" content={seo.image} />
+            <meta head-key="og:image:type" property="og:image:type" content="image/jpeg" />
             <meta head-key="og:image:width" property="og:image:width" content="1200" />
             <meta head-key="og:image:height" property="og:image:height" content="1200" />
             <meta head-key="og:image:alt" property="og:image:alt" content={seo.image_alt} />
@@ -28,6 +26,7 @@ export default function Seo() {
             <meta head-key="twitter:title" name="twitter:title" content={seo.title} />
             <meta head-key="twitter:description" name="twitter:description" content={seo.description} />
             <meta head-key="twitter:image" name="twitter:image" content={seo.image} />
+            <meta head-key="twitter:image:alt" name="twitter:image:alt" content={seo.image_alt} />
         </Head>
     );
 }

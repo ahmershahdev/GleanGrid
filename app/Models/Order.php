@@ -6,25 +6,25 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class Order extends Model
 {
-    public const STATUSES = ['placed', 'accepted', 'ready', 'completed', 'declined', 'cancelled'];
+    public const STATUSES = ['placed', 'accepted', 'ready', 'completed', 'declined', 'cancelled', 'no_show'];
 
-    /** Farmer-driven status transitions. */
     public const TRANSITIONS = [
         'placed' => ['accepted', 'declined'],
-        'accepted' => ['ready', 'declined'],
-        'ready' => ['completed'],
+        'accepted' => ['ready', 'declined', 'no_show'],
+        'ready' => ['completed', 'no_show'],
     ];
 
-    /** Orders in these states still hold stock and count as revenue-in-progress. */
     public const OPEN = ['placed', 'accepted', 'ready'];
 
     protected $fillable = [
         'code', 'customer_id', 'farmer_profile_id', 'market_id', 'pickup_slot_id', 'pickup_date',
         'pickup_starts_at', 'pickup_ends_at', 'cutoff_at', 'status', 'subtotal', 'discount_amount', 'coupon_code', 'total_amount', 'items_count',
-        'customer_note', 'farmer_note', 'accepted_at', 'ready_at', 'completed_at', 'cancelled_at', 'declined_at',
+        'customer_note', 'farmer_note', 'accepted_at', 'ready_at', 'completed_at', 'cancelled_at', 'declined_at', 'no_show_at', 'reminder_sent_at',
     ];
 
     protected function casts(): array
@@ -32,6 +32,8 @@ class Order extends Model
         return [
             'pickup_date' => 'date:Y-m-d',
             'cutoff_at' => 'datetime',
+            'no_show_at' => 'datetime',
+            'reminder_sent_at' => 'datetime',
             'accepted_at' => 'datetime',
             'ready_at' => 'datetime',
             'completed_at' => 'datetime',
@@ -43,7 +45,6 @@ class Order extends Model
         ];
     }
 
-    /** URLs use the order code (GG-7K2M9Q), never the auto-increment id. */
     public function getRouteKeyName(): string
     {
         return 'code';
@@ -84,7 +85,6 @@ class Order extends Model
         return $this->hasMany(Review::class);
     }
 
-    /** Customers may modify or cancel only while the order is open and before the farmer's cut-off. */
     public function isEditableByCustomer(): bool
     {
         return in_array($this->status, ['placed', 'accepted'], true) && $this->cutoff_at->isFuture();
@@ -93,5 +93,13 @@ class Order extends Model
     public function canTransitionTo(string $status): bool
     {
         return in_array($status, self::TRANSITIONS[$this->status] ?? [], true);
+    }
+
+    public function statusHistory(): array
+    {
+        return DB::table('order_status_history')->where('order_id', $this->id)
+            ->orderBy('changed_at')->orderBy('id')->get(['from_status', 'to_status', 'changed_at'])
+            ->map(fn ($h) => ['from' => $h->from_status, 'to' => $h->to_status, 'at' => Carbon::parse($h->changed_at)->toIso8601String()])
+            ->all();
     }
 }

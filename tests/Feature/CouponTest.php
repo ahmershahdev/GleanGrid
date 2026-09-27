@@ -49,7 +49,7 @@ class CouponTest extends TestCase
     public function test_a_coupon_discounts_the_order_and_is_recorded(): void
     {
         $coupon = $this->coupon();
-        $order = $this->orders->place($this->customer, [$this->group('test10')])->first(); // case-insensitive
+        $order = $this->orders->place($this->customer, [$this->group('test10')])->first();
 
         $this->assertEqualsWithDelta($order->subtotal * 0.10, $order->discount_amount, 0.01);
         $this->assertEqualsWithDelta($order->subtotal - $order->discount_amount, $order->total_amount, 0.01);
@@ -113,6 +113,6 @@ class CouponTest extends TestCase
 
         $this->actingAs($this->farmer->user)->post(route('farmer.coupons.store'), [
             'code' => 'bread-lovers', 'type' => 'percent', 'value' => 150, 'per_customer_limit' => 1,
-        ])->assertSessionHasErrors('value'); // percent capped at 100
+        ])->assertSessionHasErrors('value');
     }
 }

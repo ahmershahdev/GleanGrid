@@ -1,12 +1,12 @@
 import { Link } from '@inertiajs/react';
 import { ArrowRight, Globe, UserRound } from 'lucide-react';
 import { GithubIcon, LinkedinIcon } from '@/Components/icons';
+import FieldsReel from '@/Components/FieldsReel';
 import { CountUp, Parallax, Reveal, SplitWords } from '@/Components/motion';
 import { buttonClass } from '@/Components/ui';
 import { useT } from '@/lib/i18n';
 import { produceImage } from '@/lib/utils';
 
-// Set `photo` to a /images/team/*.webp path to replace the guest portrait.
 const TEAM = [
     {
         name: 'Syed Ahmer Shah',
@@ -22,7 +22,6 @@ const TEAM = [
     { name: 'Syed Hassan', role: 'about.role_hassan', work: null, photo: null, links: [] },
 ];
 
-/** Stand-in portrait until a real photo is shared: monogram over a soft field pattern. */
 function GuestPortrait({ name }) {
     const initials = name.split(' ').map((p) => p[0]).slice(-2).join('');
     return (
@@ -91,6 +90,8 @@ export default function About({ stats }) {
                     </Parallax>
                 </div>
             </section>
+
+            <FieldsReel className="mt-12" />
 
             <section className="mx-auto mt-28 max-w-[1400px] px-5 sm:px-8">
                 <h2 className="font-display max-w-3xl text-4xl font-light md:text-6xl">

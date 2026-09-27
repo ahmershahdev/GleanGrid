@@ -2,13 +2,11 @@ import { Link } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ChevronLeft, ChevronRight, Eye, EyeOff, Loader2, Star, X } from 'lucide-react';
 import { forwardRef, useEffect, useId, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import Dropdown, { optionsFromChildren } from '@/Components/Dropdown';
 import { useT } from '@/lib/i18n';
 import { lockScroll } from '@/lib/scroll';
-import { cn, FARMER_STATUS_STYLE, initials, ORDER_STATUS_STYLE, PRODUCT_STATUS_STYLE } from '@/lib/utils';
+import { clientPortal, cn, FARMER_STATUS_STYLE, initials, ORDER_STATUS_STYLE, PRODUCT_STATUS_STYLE } from '@/lib/utils';
 
-/* ---------------------------------------------------------------- Buttons */
 const VARIANTS = {
     primary: 'bg-brand text-brand-ink hover:brightness-110 shadow-[inset_0_-2px_0_rgb(0_0_0/0.15)]',
     accent: 'bg-accent text-accent-ink hover:brightness-105 shadow-[inset_0_-2px_0_rgb(0_0_0/0.15)]',
@@ -51,9 +49,8 @@ export function LinkButton({ variant, size, className, children, ...props }) {
     );
 }
 
-/* ----------------------------------------------------------------- Fields */
 const fieldBase =
-    'w-full rounded-2xl border border-line-strong bg-elev px-4 text-[15px] text-ink placeholder:text-ink-faint/80 placeholder:transition-opacity focus:placeholder:opacity-50 hover:border-ink/40 transition focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15 disabled:opacity-60';
+    'w-full rounded-2xl border border-line-strong bg-elev px-4 text-[15px] text-ink placeholder:text-ink-faint/80 placeholder:transition-opacity focus:placeholder:opacity-50 hover:border-ink/40 transition focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand disabled:opacity-60';
 
 export function Field({ label, error, hint, children, className, id, required }) {
     const t = useT();
@@ -86,8 +83,6 @@ export const Input = forwardRef(function Input({ label, error, hint, className, 
     );
 });
 
-/** Password field with an animated eye toggle; the caret position survives the type swap. */
-/** The same rules the server enforces (Password::defaults()), checked live. */
 export const PASSWORD_RULES = [
     ['len', (v) => v.length >= 8],
     ['lower', (v) => /[a-z]/.test(v)],
@@ -209,7 +204,6 @@ export function Select({ label, error, hint, className, wrapperClass, children, 
     const options = optionsFromChildren(children).map((o) => ({ ...o, label: Array.isArray(o.label) ? o.label.join('') : o.label }));
     return (
         <Field label={label} error={error} hint={hint} id={id} className={wrapperClass} required={required}>
-            {/* Same API as a native <select>: onChange receives { target: { value } }. */}
             <Dropdown id={id} value={value} options={options} placeholder={placeholder} disabled={disabled} invalid={!!error} buttonClassName={cn('rounded-2xl', className)} onChange={(v) => onChange?.({ target: { value: v } })} />
         </Field>
     );
@@ -224,7 +218,6 @@ export function Checkbox({ label, className, ...props }) {
     );
 }
 
-/** Toggle chips, e.g. operating days. */
 export function ChipToggle({ active, onClick, children, className }) {
     return (
         <button
@@ -238,7 +231,6 @@ export function ChipToggle({ active, onClick, children, className }) {
     );
 }
 
-/* ------------------------------------------------------------ Containers */
 export function Card({ className, children, as: Tag = 'div', ...props }) {
     return (
         <Tag className={cn('min-w-0 rounded-3xl border border-line bg-elev', className)} {...props}>
@@ -272,7 +264,7 @@ export function Avatar({ name, src, size = 'size-10', className }) {
 
 export function Stars({ value = 0, size = 'size-4', className }) {
     return (
-        <span className={cn('inline-flex items-center gap-0.5', className)} aria-label={`${value} / 5`}>
+        <span role="img" className={cn('inline-flex items-center gap-0.5', className)} aria-label={`${value} / 5`}>
             {[1, 2, 3, 4, 5].map((i) => (
                 <Star key={i} className={cn(size, i <= Math.round(value) ? 'fill-sun text-sun' : 'fill-transparent text-ink-faint/50')} />
             ))}
@@ -314,7 +306,7 @@ export function Stat({ label, value, hint, icon: Icon, tone = 'default', classNa
 export function EmptyState({ icon = 'basket', title, body, action, className }) {
     return (
         <div className={cn('flex flex-col items-center justify-center rounded-3xl border border-dashed border-line-strong px-6 py-16 text-center', className)}>
-            <img src={`/images/produce/${icon}.png`} alt="" className="size-20 animate-float" />
+            <img src={`/images/produce/${icon}.webp`} alt="" className="size-20 animate-float" />
             <h3 className="font-display mt-5 text-2xl">{title}</h3>
             {body && <p className="mt-2 max-w-sm text-ink-soft">{body}</p>}
             {action && <div className="mt-6">{action}</div>}
@@ -353,7 +345,6 @@ export function Tabs({ tabs, active, className }) {
     );
 }
 
-/** Laravel paginator links → compact pager. */
 export function Pagination({ meta, className }) {
     const t = useT();
     if (!meta || meta.last_page <= 1) return null;
@@ -361,14 +352,24 @@ export function Pagination({ meta, className }) {
         <nav className={cn('flex items-center justify-between gap-4', className)} aria-label="Pagination">
             <p className="text-sm text-ink-faint">{t('common.page_of', { page: meta.current_page, total: meta.last_page })}</p>
             <div className="flex gap-2">
-                <LinkButton variant="outline" size="sm" href={meta.prev_page_url ?? '#'} preserveScroll={false} className={cn(!meta.prev_page_url && 'pointer-events-none opacity-40')} aria-label={t('common.previous')}>
-                    <ChevronLeft className="rtl-flip size-4" />
-                    {t('common.previous')}
-                </LinkButton>
-                <LinkButton variant="outline" size="sm" href={meta.next_page_url ?? '#'} className={cn(!meta.next_page_url && 'pointer-events-none opacity-40')} aria-label={t('common.next')}>
-                    {t('common.next')}
-                    <ChevronRight className="rtl-flip size-4" />
-                </LinkButton>
+                {[
+                    [meta.prev_page_url, 'common.previous', <ChevronLeft key="i" className="rtl-flip size-4" />, true],
+                    [meta.next_page_url, 'common.next', <ChevronRight key="i" className="rtl-flip size-4" />, false],
+                ].map(([href, label, icon, before]) =>
+                    href ? (
+                        <LinkButton key={label} variant="outline" size="sm" href={href}>
+                            {before && icon}
+                            {t(label)}
+                            {!before && icon}
+                        </LinkButton>
+                    ) : (
+                        <span key={label} aria-disabled="true" className={buttonClass('outline', 'sm', 'cursor-not-allowed opacity-40')}>
+                            {before && icon}
+                            {t(label)}
+                            {!before && icon}
+                        </span>
+                    ),
+                )}
             </div>
         </nav>
     );
@@ -386,7 +387,7 @@ export function Modal({ open, onClose, title, children, className, wide }) {
         };
     }, [open, onClose]);
 
-    return createPortal(
+    return clientPortal(
         <AnimatePresence>
             {open && (
                 <motion.div className="fixed inset-0 z-[80] flex items-end justify-center p-0 sm:items-center sm:p-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -412,7 +413,6 @@ export function Modal({ open, onClose, title, children, className, wide }) {
                 </motion.div>
             )}
         </AnimatePresence>,
-        document.body,
     );
 }
 

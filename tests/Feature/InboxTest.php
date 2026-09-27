@@ -36,7 +36,7 @@ class InboxTest extends TestCase
 
         [$body, $headers] = $this->signed($payload);
         $this->call('POST', route('webhooks.resend'), [], [], [], $this->transformHeadersToServerVars($headers), $body)->assertOk();
-        [$body, $headers] = $this->signed($payload); // Resend retry
+        [$body, $headers] = $this->signed($payload);
         $this->call('POST', route('webhooks.resend'), [], [], [], $this->transformHeadersToServerVars($headers), $body)->assertOk();
 
         $this->assertSame(1, ContactMessage::where('external_id', 'em_123')->count());

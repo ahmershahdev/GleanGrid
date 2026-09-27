@@ -7,6 +7,7 @@ use App\Support\BotGuard;
 use App\Support\Seo;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use Tighten\Ziggy\Ziggy;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -19,6 +20,7 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'seo' => fn () => Seo::forRequest($request),
+            'ziggy' => fn () => $request->header('X-Inertia') ? null : [...(new Ziggy)->toArray(), 'location' => $request->url()],
             'captcha' => fn () => BotGuard::clientConfig(),
             'contact' => fn () => config('gleangrid.contact'),
             'social' => fn () => config('gleangrid.social'),
@@ -46,7 +48,6 @@ class HandleInertiaRequests extends Middleware
                 'latest' => $user->notifications()->latest()->limit(6)->get()
                     ->map(fn ($n) => ['id' => $n->id, 'data' => $n->data, 'read' => (bool) $n->read_at, 'created_at' => $n->created_at]),
             ] : null,
-            // Favourited IDs by type, so hearts render filled anywhere on the site.
             'favorites' => fn () => $user?->isCustomer()
                 ? $user->favorites()->get(['favoritable_type', 'favoritable_id'])
                     ->groupBy('favoritable_type')->map(fn ($g) => $g->pluck('favoritable_id'))

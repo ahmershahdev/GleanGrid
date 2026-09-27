@@ -28,7 +28,6 @@ class PasswordResetController extends Controller
         $request->validate(['email' => 'required|email|max:100']);
         BotGuard::check($request, 'forgot');
 
-        // Always answer the same way so the form can't be used to discover accounts.
         Password::sendResetLink($request->only('email'));
 
         return back()->with('success', 'flash.reset_link_sent');
@@ -46,12 +45,12 @@ class PasswordResetController extends Controller
             'email' => 'required|email',
             'password' => ['required', 'confirmed', PasswordRule::defaults()],
         ]);
+        BotGuard::check($request, 'reset');
 
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function (User $user, string $password) use ($request, $security) {
                 $user->forceFill(['password' => Hash::make($password)])->save();
-                // Proving inbox access by reset link also proves the address.
                 $user->email_verified_at ??= now();
                 $security->passwordChanged($request, $user);
                 event(new PasswordReset($user));

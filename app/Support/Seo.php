@@ -8,18 +8,10 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
-/**
- * Per-route <title>, description and share image.
- *
- * Titles aim for 40–60 characters and descriptions for ~150–160 so search
- * results show them untruncated. Shared with Inertia as the `seo` prop and
- * rendered server-side in app.blade.php, so crawlers see it without JS.
- */
 class Seo
 {
     public const IMAGE = 'images/brand/gleangrid-og.jpg';
 
-    /** Private areas — never worth indexing. */
     private const NOINDEX = ['customer.', 'farmer.', 'admin.', 'profile.', 'notifications.', 'password.', 'verification.', 'dashboard', 'cart', 'login', 'register'];
 
     private const PAGES = [
@@ -93,7 +85,6 @@ class Seo
         ],
     ];
 
-    /** Dashboard areas share a title shape: "<Section> · <Area> | GleanGrid". */
     private const AREAS = [
         'customer.dashboard' => 'Your Market Week at a Glance',
         'customer.checkout' => 'Choose Pickup Windows & Confirm',
@@ -128,6 +119,10 @@ class Seo
         'admin.reports.index' => 'Sales & Activity Reports',
         'admin.announcements.index' => 'Site-Wide Announcements',
         'admin.messages.index' => 'Messages From the Contact Form',
+        'admin.audit.index' => 'Audit Log of Administrative Actions',
+        'admin.settings.edit' => 'Platform Settings & Rules',
+        'admin.orders.show' => 'Order Details, History & Override',
+        'farmer.scan' => 'Scan a Customer’s Pickup Pass',
         'profile.edit' => 'Your Profile, Language & Password',
         'notifications.index' => 'Your Order Notifications & Alerts',
     ];
@@ -245,7 +240,6 @@ class Seo
         ];
     }
 
-    /** JSON-LD is only needed in the first HTML response (crawlers), not in every Inertia visit. */
     public static function jsonLd(Request $request): array
     {
         $route = $request->route();
@@ -253,10 +247,6 @@ class Seo
         return self::schema($route?->getName() ?? '', $route);
     }
 
-    /**
-     * schema.org JSON-LD for rich results: the organisation and site search
-     * everywhere, plus Product / Place / FAQPage where they apply.
-     */
     private static function schema(string $name, $route): array
     {
         $social = array_values(config('gleangrid.social', []));
@@ -290,7 +280,6 @@ class Seo
 
         $model = fn (string $key) => $route?->parameter($key);
 
-        // Every page is a WebPage in the site graph; public ones also carry their trail.
         [$title, $description] = match ($name) {
             'markets.show' => self::market($model('market')),
             'farmers.show' => self::farmer($model('farmer')),
@@ -300,7 +289,12 @@ class Seo
         $trail = Breadcrumbs::for($route);
         $isPublic = $trail && $trail[0]['key'] === 'nav.home';
         $graph[] = array_filter([
-            '@type' => ($name === 'contact' ? 'ContactPage' : ($name === 'about' ? 'AboutPage' : 'WebPage')),
+            '@type' => match ($name) {
+                'contact' => 'ContactPage',
+                'about' => 'AboutPage',
+                'markets.index', 'farmers.index', 'products.index' => 'CollectionPage',
+                default => 'WebPage',
+            },
             '@id' => request()->url().'#webpage',
             'url' => request()->url(),
             'name' => $title,
@@ -309,6 +303,8 @@ class Seo
             'isPartOf' => ['@id' => url('/#website')],
             'primaryImageOfPage' => ['@type' => 'ImageObject', 'url' => asset(self::IMAGE), 'width' => 1200, 'height' => 1200],
             'breadcrumb' => $isPublic ? ['@id' => request()->url().'#breadcrumb'] : null,
+            'dateModified' => in_array($name, ['terms', 'privacy', 'returns', 'pickup-policy', 'faq'], true) ? LegalContent::UPDATED : null,
+            'about' => $name === 'home' ? ['@type' => 'Thing', 'name' => 'Farmers markets in Hyderabad, Sindh'] : null,
         ]);
         if ($isPublic) {
             $graph[] = [
@@ -329,7 +325,7 @@ class Seo
                 '@type' => 'Product',
                 'name' => $p->name,
                 'description' => $p->description,
-                'image' => $p->image_url,
+                'image' => $p->photo_url ?? $p->image_url,
                 'category' => $p->category?->name,
                 'brand' => ['@type' => 'Brand', 'name' => $p->farmer?->stall_name],
                 'offers' => [
@@ -388,7 +384,6 @@ class Seo
         return ['@context' => 'https://schema.org', '@graph' => $graph];
     }
 
-    /** Add the brand suffix only when the title still fits in 60 characters. */
     private static function fit(string $title, string $suffix): string
     {
         $title = Str::limit($title, 60, '…');
@@ -396,10 +391,6 @@ class Seo
         return mb_strlen($title.$suffix) <= 60 ? $title.$suffix : $title;
     }
 
-    /**
-     * Join whole sentences in priority order, skipping any that would push
-     * past the limit — so descriptions never end on a clipped word.
-     */
     private static function sentences(array $parts, int $max = 160): string
     {
         $out = '';

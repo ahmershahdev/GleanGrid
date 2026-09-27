@@ -36,7 +36,7 @@ class FarmerController extends Controller
         return Inertia::render('Farmers/Index', [
             'farmers' => $farmers,
             'markets' => Market::active()->orderBy('name')->get(['id', 'name', 'slug']),
-            'filters' => $filters,
+            'filters' => (object) $filters,
         ]);
     }
 

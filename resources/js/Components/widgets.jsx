@@ -1,14 +1,13 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Bell, Check, CheckCheck, Heart, Languages, Minus, Monitor, Moon, Plus, ShoppingBasket, Sun, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { Bell, Check, CheckCheck, Heart, Languages, Minus, Plus, ShoppingBasket, X } from 'lucide-react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { cart, useCart } from '@/lib/cart';
 import { fly, HEART_SVG } from '@/lib/fly';
-import { applyLocale, useFormat, useT } from '@/lib/i18n';
+import { applyLocale, loadLocale, useFormat, useT } from '@/lib/i18n';
 import { useTheme } from '@/lib/theme';
 import { cn } from '@/lib/utils';
 
-/* ----------------------------------------------------------------- Toasts */
 let pushToast = () => {};
 export const toast = (message, tone = 'success') => pushToast({ message, tone });
 
@@ -25,7 +24,6 @@ export function Toaster() {
         };
     }, []);
 
-    // Flash messages arrive with every Inertia response.
     useEffect(() => {
         if (flash?.success) toast(flash.success, 'success');
         if (flash?.error) toast(flash.error, 'error');
@@ -57,7 +55,6 @@ export function Toaster() {
     );
 }
 
-/* ---------------------------------------------------------------- Popover */
 export function Popover({ trigger, children, align = 'end', className }) {
     const [open, setOpen] = useState(false);
     const ref = useRef(null);
@@ -96,19 +93,18 @@ export function Popover({ trigger, children, align = 'end', className }) {
     );
 }
 
-/* ------------------------------------------------------ Language + theme */
 export function LanguageSwitcher({ compact }) {
     const { locale, locales } = usePage().props.app;
     const t = useT();
 
     useEffect(() => applyLocale(locale, locales), [locale, locales]);
 
-    const change = (code) => router.post(route('preferences.locale'), { locale: code }, { preserveScroll: true, preserveState: false });
+    const change = (code) => loadLocale(code).then(() => router.post(route('preferences.locale'), { locale: code }, { preserveScroll: true, preserveState: false }));
 
     return (
         <Popover
             trigger={({ toggle, open }) => (
-                <button onClick={toggle} aria-expanded={open} aria-label={t('common.language')} className="inline-flex h-10 items-center gap-2 rounded-full px-3 text-sm font-medium text-ink-soft transition hover:bg-ink/5 hover:text-ink">
+                <button onClick={toggle} aria-expanded={open} aria-label={compact ? t('common.language') : `${locale.toUpperCase()} · ${t('common.language')}`} className="inline-flex h-10 items-center gap-2 rounded-full px-3 text-sm font-medium text-ink-soft transition hover:bg-ink/5 hover:text-ink">
                     <Languages className="size-4" />
                     {!compact && <span className="uppercase">{locale}</span>}
                 </button>
@@ -119,6 +115,7 @@ export function LanguageSwitcher({ compact }) {
                     {Object.entries(locales).map(([code, l]) => (
                         <li key={code}>
                             <button
+                                onPointerEnter={() => loadLocale(code)}
                                 onClick={() => {
                                     close();
                                     change(code);
@@ -139,27 +136,41 @@ export function LanguageSwitcher({ compact }) {
 }
 
 export function ThemeToggle() {
-    const { theme, setTheme } = useTheme();
+    const { isDark, toggle } = useTheme();
     const t = useT();
-    const next = { light: 'dark', dark: 'system', system: 'light' }[theme];
-    const Icon = { light: Sun, dark: Moon, system: Monitor }[theme];
+    const next = isDark ? 'light' : 'dark';
+    const spring = { type: 'spring', stiffness: 260, damping: 22 };
+    const maskId = `gg-moon-${useId().replace(/[^a-z0-9]/gi, '')}`;
+
     return (
         <button
-            onClick={() => setTheme(next)}
+            type="button"
+            onClick={(e) => {
+                const r = e.currentTarget.getBoundingClientRect();
+                toggle({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
+            }}
             aria-label={t('common.theme_to', { theme: t(`common.theme_${next}`) })}
-            title={t(`common.theme_${theme}`)}
-            className="inline-flex size-10 items-center justify-center rounded-full text-ink-soft transition hover:bg-ink/5 hover:text-ink"
+            aria-pressed={isDark}
+            title={t('common.theme_to', { theme: t(`common.theme_${next}`) })}
+            className="group relative inline-flex size-10 items-center justify-center overflow-hidden rounded-full text-ink-soft transition hover:bg-ink/5 hover:text-ink"
         >
-            <AnimatePresence mode="wait" initial={false}>
-                <motion.span key={theme} initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.2 }}>
-                    <Icon className="size-[18px]" />
-                </motion.span>
-            </AnimatePresence>
+            <motion.svg viewBox="0 0 24 24" className="size-[19px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" animate={{ rotate: isDark ? 40 : 90 }} transition={spring} aria-hidden="true">
+                <mask id={maskId}>
+                    <rect x="0" y="0" width="24" height="24" fill="white" />
+                    <motion.circle r="9" fill="black" initial={false} animate={isDark ? { cx: 17, cy: 5 } : { cx: 30, cy: -6 }} transition={spring} />
+                </mask>
+                <motion.circle cx="12" cy="12" fill="currentColor" stroke="none" mask={`url(#${maskId})`} initial={false} animate={{ r: isDark ? 9 : 5 }} transition={spring} />
+                <motion.g initial={false} animate={{ opacity: isDark ? 0 : 1, scale: isDark ? 0.4 : 1 }} transition={spring} style={{ transformOrigin: '12px 12px' }}>
+                    {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => (
+                        <line key={deg} x1="12" y1="1.8" x2="12" y2="3.6" transform={`rotate(${deg} 12 12)`} />
+                    ))}
+                </motion.g>
+            </motion.svg>
+            <span className="pointer-events-none absolute inset-0 scale-0 rounded-full bg-lime/25 opacity-0 transition duration-500 ease-out-expo group-active:scale-100 group-active:opacity-100" aria-hidden="true" />
         </button>
     );
 }
 
-/* ---------------------------------------------------------- Notifications */
 export function notificationText(t, data) {
     return {
         title: t(`notify.${data.key}.title`, data.params ?? {}),
@@ -172,7 +183,6 @@ export function NotificationBell() {
     const t = useT();
     const { relative } = useFormat();
 
-    // Light polling so new orders/alerts show up without a refresh.
     useEffect(() => {
         const id = setInterval(() => document.visibilityState === 'visible' && router.reload({ only: ['notifications'] }), 45000);
         return () => clearInterval(id);
@@ -237,7 +247,6 @@ export function NotificationBell() {
     );
 }
 
-/* ----------------------------------------------------- Favourite (heart) */
 export function FavoriteButton({ type, id, className, size = 'size-10' }) {
     const { auth, favorites } = usePage().props;
     const t = useT();
@@ -250,10 +259,22 @@ export function FavoriteButton({ type, id, className, size = 'size-10' }) {
         e.preventDefault();
         e.stopPropagation();
         if (!auth.user) return router.visit(route('login'));
-        setPop((p) => p + 1);
-        // Only adding flies; removing just deflates the heart in place.
-        if (!active) fly(e.currentTarget, 'favorites', { icon: HEART_SVG });
-        router.post(route('customer.favorites.toggle', { type, id }), {}, { preserveScroll: true, preserveState: true, only: ['favorites', 'flash'] });
+        setPop((p) => (active ? -Math.abs(p) - 1 : Math.abs(p) + 1));
+        if (active) fly('favorites', e.currentTarget, { icon: HEART_SVG, tone: 'favorites' });
+        else fly(e.currentTarget, 'favorites', { icon: HEART_SVG });
+        router.post(
+            route('customer.favorites.toggle', { type, id }),
+            {},
+            {
+                preserveScroll: true,
+                preserveState: true,
+                only: ['favorites', 'flash'],
+                optimistic: (props) => {
+                    const list = props.favorites?.[type] ?? [];
+                    return { favorites: { ...props.favorites, [type]: active ? list.filter((x) => x !== id) : [...list, id] } };
+                },
+            },
+        );
     };
 
     return (
@@ -263,14 +284,28 @@ export function FavoriteButton({ type, id, className, size = 'size-10' }) {
             aria-label={active ? t('favorites.remove') : t('favorites.add')}
             className={cn('inline-flex items-center justify-center rounded-full bg-elev/90 backdrop-blur transition hover:scale-105', size, className)}
         >
-            <motion.span key={pop} initial={pop ? { scale: 0.6 } : false} animate={{ scale: [0.6, 1.25, 1] }} transition={{ duration: 0.4 }}>
-                <Heart className={cn('size-[18px] transition', active ? 'fill-accent text-accent' : 'text-ink-soft')} />
+            <motion.span
+                key={pop}
+                initial={false}
+                animate={pop > 0 ? { scale: [0.6, 1.3, 1] } : pop < 0 ? { scale: [1, 0.55, 1.1, 1], rotate: [0, -12, 6, 0] } : {}}
+                transition={{ duration: pop < 0 ? 0.55 : 0.4, ease: [0.16, 1, 0.3, 1] }}
+                className="relative"
+            >
+                <Heart className={cn('size-[18px] transition-colors duration-300', active ? 'fill-accent text-accent' : 'text-ink-soft')} />
+                {pop > 0 && (
+                    <motion.span
+                        aria-hidden="true"
+                        initial={{ scale: 0.4, opacity: 0.7 }}
+                        animate={{ scale: 2.4, opacity: 0 }}
+                        transition={{ duration: 0.6, ease: 'easeOut' }}
+                        className="absolute inset-0 rounded-full border-2 border-accent"
+                    />
+                )}
             </motion.span>
         </button>
     );
 }
 
-/* ------------------------------------------------------ Quantity stepper */
 export function QtyStepper({ value, onChange, max = 999, min = 0, size = 'md', image }) {
     const t = useT();
     const s = size === 'sm' ? 'h-9 text-sm' : 'h-11';
@@ -279,7 +314,6 @@ export function QtyStepper({ value, onChange, max = 999, min = 0, size = 'md', i
             <button
                 type="button"
                 onClick={(e) => {
-                    // With an image, the stepper is editing the basket: show the item leaving it.
                     if (image && value > min) fly('cart', e.currentTarget, { image });
                     onChange(Math.max(min, value - 1));
                 }}
@@ -302,7 +336,6 @@ export function QtyStepper({ value, onChange, max = 999, min = 0, size = 'md', i
     );
 }
 
-/** Add-to-basket that morphs into a stepper once the item is in the basket. */
 export function AddToCart({ product, className, size = 'md' }) {
     const t = useT();
     const { auth } = usePage().props;

@@ -6,7 +6,6 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-/** Farmers can only list products and handle orders once an admin has approved their stall. */
 class EnsureFarmerApproved
 {
     public function handle(Request $request, Closure $next): Response

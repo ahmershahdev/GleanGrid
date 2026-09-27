@@ -2,6 +2,7 @@ import { router, useForm } from '@inertiajs/react';
 import { Check, UserMinus, UserPlus } from 'lucide-react';
 import { Avatar, Badge, Button, Card, Input, PageHeader } from '@/Components/ui';
 import { useT } from '@/lib/i18n';
+import { confirmDelete } from '@/lib/confirm';
 
 function Row({ person, status, actions }) {
     const t = useT();
@@ -21,7 +22,7 @@ function Row({ person, status, actions }) {
 export default function Family({ members, memberships }) {
     const t = useT();
     const form = useForm({ email: '' });
-    const remove = (id) => router.delete(route('customer.family.destroy', id), { preserveScroll: true });
+    const remove = (id) => confirmDelete(route('customer.family.destroy', id), { title: t('confirm.remove_family', {}, 'Remove this household link?'), body: t('confirm.remove_family_body', {}, 'They will stop seeing shared orders and favourites.') });
 
     return (
         <>
@@ -35,7 +36,7 @@ export default function Family({ members, memberships }) {
                     }}
                     className="h-fit space-y-4 p-6"
                 >
-                    <img src="/images/produce/shallow_pan_of_food.png" alt="" className="size-14" />
+                    <img src="/images/produce/shallow_pan_of_food.webp" alt="" className="size-14" />
                     <h2 className="font-display text-2xl">{t('family.invite_title')}</h2>
                     <p className="text-sm text-ink-soft">{t('family.invite_body')}</p>
                     <Input type="email" placeholder="name@example.com" value={form.data.email} onChange={(e) => form.setData('email', e.target.value)} error={form.errors.email} required aria-label={t('fields.email')} />

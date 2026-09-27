@@ -53,7 +53,7 @@ export default function Faq({ groups }) {
                     </h1>
                     <p className="mt-6 max-w-md text-lg text-ink-soft">{t('faq.subtitle')}</p>
 
-                    <label className="mt-8 flex h-14 items-center gap-3 rounded-full border border-line-strong bg-elev px-5 transition focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/15">
+                    <label className="mt-8 flex h-14 items-center gap-3 rounded-full border border-line-strong bg-elev px-5 transition focus-within:border-brand focus-within:ring-1 focus-within:ring-brand">
                         <Search className="size-5 text-ink-faint" />
                         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('faq.search')} aria-label={t('faq.search')} className="h-full flex-1 bg-transparent focus:outline-none" />
                     </label>

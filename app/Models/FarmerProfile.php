@@ -18,7 +18,7 @@ class FarmerProfile extends Model
         'logo', 'cover_image', 'status', 'approved_at', 'status_reason',
     ];
 
-    protected $appends = ['logo_url'];
+    protected $appends = ['logo_url', 'cover_url'];
 
     protected function casts(): array
     {
@@ -31,7 +31,6 @@ class FarmerProfile extends Model
         ];
     }
 
-    /** URLs use the slug, never the auto-increment id. */
     public function getRouteKeyName(): string
     {
         return 'slug';
@@ -83,10 +82,6 @@ class FarmerProfile extends Model
         return Product::resolveImage($this->logo);
     }
 
-    /**
-     * Recalculate in one UPDATE ... SELECT so concurrent reviews can never
-     * leave a stale average behind (no read-modify-write in PHP).
-     */
     public function refreshRating(): void
     {
         $sub = Review::query()->where('reviewable_type', 'farmer')->whereColumn('reviewable_id', 'farmer_profiles.id')->where('is_hidden', false);
@@ -96,5 +91,10 @@ class FarmerProfile extends Model
             'rating_count' => DB::raw('('.(clone $sub)->selectRaw('COUNT(*)')->toRawSql().')'),
         ]);
         $this->refresh();
+    }
+
+    public function getCoverUrlAttribute(): ?string
+    {
+        return Product::resolveImage($this->cover_image);
     }
 }

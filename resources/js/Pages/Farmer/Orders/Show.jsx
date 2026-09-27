@@ -1,15 +1,23 @@
 import { Link, useForm } from '@inertiajs/react';
-import { Mail, MapPin, Phone, Printer } from 'lucide-react';
-import { OrderTimeline } from '@/Components/OrderBits';
+import { History, Mail, MapPin, Phone, Printer, UserX } from 'lucide-react';
+import { OrderTimeline, StatusHistory } from '@/Components/OrderBits';
 import { Button, Card, StatusBadge, Textarea } from '@/Components/ui';
+import { confirmDialog } from '@/lib/confirm';
 import { QuickActions } from '@/Pages/Farmer/Orders/Index';
 import { useFormat, useT } from '@/lib/i18n';
 
-export default function FarmerOrderShow({ order }) {
+export default function FarmerOrderShow({ order, history = [], customerNoShows = 0 }) {
     const t = useT();
     const { money, date, time } = useFormat();
     const decline = useForm({ status: 'declined', note: '' });
+    const noShow = useForm({ status: 'no_show', note: '' });
     const canDecline = ['placed', 'accepted'].includes(order.status);
+    const windowOver = new Date(`${order.pickup_date}T${order.pickup_ends_at}`) < new Date();
+    const canNoShow = ['accepted', 'ready'].includes(order.status) && windowOver;
+    const markNoShow = async () => {
+        const ok = await confirmDialog({ title: t('forders.no_show_title', {}, 'Mark as not collected?'), body: t('forders.no_show_body', {}, 'The stock goes back on sale and the customer is told. Repeated no-shows pause their pre-ordering.'), confirmLabel: t('forders.no_show', {}, 'Mark no-show'), tone: 'danger' });
+        if (ok) noShow.patch(route('farmer.orders.status', order.code), { preserveScroll: true });
+    };
 
     return (
         <>
@@ -89,7 +97,25 @@ export default function FarmerOrderShow({ order }) {
                         <p className="mt-1 flex items-center gap-2 text-sm text-ink-soft">
                             <Mail className="size-4" /> {order.customer.email}
                         </p>
+                        {customerNoShows > 0 && (
+                            <p className="mt-3 rounded-xl bg-sun/15 px-3 py-2 text-xs text-ink-soft">{t('forders.no_show_count', { count: customerNoShows }, `${customerNoShows} missed pickup(s) recently`)}</p>
+                        )}
+                        {canNoShow && (
+                            <Button variant="outline" size="sm" className="mt-4 w-full print:hidden" onClick={markNoShow} disabled={noShow.processing}>
+                                <UserX className="size-4" /> {t('forders.no_show', {}, 'Mark no-show')}
+                            </Button>
+                        )}
                     </Card>
+                    {history.length > 0 && (
+                        <Card className="p-6 print:hidden">
+                            <h2 className="font-display flex items-center gap-2 text-xl">
+                                <History className="size-5" /> {t('order.history', {}, 'Status history')}
+                            </h2>
+                            <div className="mt-4">
+                                <StatusHistory history={history} />
+                            </div>
+                        </Card>
+                    )}
                     <Card className="p-6">
                         <h2 className="font-display text-xl">{t('order.pickup')}</h2>
                         <p className="font-display mt-3 text-2xl">{date(order.pickup_date, { weekday: 'long', day: 'numeric', month: 'long' })}</p>

@@ -1,12 +1,12 @@
 import { Link } from '@inertiajs/react';
 import { CalendarDays, Clock, MapPin, Store } from 'lucide-react';
 import { FarmerCard, ProductCard } from '@/Components/Cards';
-import { DirectionsMap } from '@/Components/Map';
+import { LazyDirectionsMap as DirectionsMap } from '@/Components/LazyMap';
 import { Reveal, SplitWords } from '@/Components/motion';
 import { EmptyState } from '@/Components/ui';
 import { FavoriteButton } from '@/Components/widgets';
 import { useFormat, useT } from '@/lib/i18n';
-import { cn } from '@/lib/utils';
+import { cn, photoProps } from '@/lib/utils';
 
 export default function MarketShow({ market, farmers, products }) {
     const t = useT();
@@ -18,6 +18,15 @@ export default function MarketShow({ market, farmers, products }) {
                 <Link href={route('markets.index')} className="text-sm text-ink-soft hover:text-ink">
                     ← {t('nav.markets')}
                 </Link>
+                {market.cover_url && (
+                    <figure className="relative mt-6 h-[34vh] min-h-56 overflow-hidden rounded-[36px] md:h-[46vh]">
+                        <img {...photoProps(market.cover_url, '(min-width: 1400px) 1400px, 100vw')} alt="" fetchPriority="high" className="gg-unveil size-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-soil/55 via-transparent to-transparent" />
+                        <figcaption className="absolute start-6 bottom-5 font-mono text-[11px] tracking-[0.2em] text-paper/85 uppercase">
+                            {market.city} · {day(new Date().getDay(), 'long')}
+                        </figcaption>
+                    </figure>
+                )}
                 <div className="mt-6 grid gap-10 lg:grid-cols-[1.1fr_1fr]">
                     <div>
                         <div className="flex flex-wrap items-center gap-3">
@@ -62,7 +71,7 @@ export default function MarketShow({ market, farmers, products }) {
                         </dl>
                     </div>
                     <Reveal>
-                        <DirectionsMap lat={market.latitude} lng={market.longitude} title={market.name} subtitle={market.address} color="#E2552C" image="/images/produce/basket.png" />
+                        <DirectionsMap lat={market.latitude} lng={market.longitude} title={market.name} subtitle={market.address} color="#E2552C" image="/images/produce/basket.webp" />
                     </Reveal>
                 </div>
             </section>

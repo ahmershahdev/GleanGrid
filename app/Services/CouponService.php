@@ -8,17 +8,8 @@ use App\Models\Order;
 use App\Models\User;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Validates and redeems stall coupons.
- *
- * `preview()` answers the checkout UI without locking anything; `redeem()` runs
- * inside the order transaction with the coupon row locked FOR UPDATE, so the
- * usage limit and per-customer limit hold even when many shoppers apply the
- * same code at the same moment.
- */
 class CouponService
 {
-    /** @return array{coupon: Coupon, discount: float} */
     public function preview(string $code, int $farmerProfileId, float $subtotal, ?User $user): array
     {
         $coupon = Coupon::where('code', strtoupper(trim($code)))->first();
@@ -27,7 +18,6 @@ class CouponService
         return ['coupon' => $coupon, 'discount' => $coupon->discountFor($subtotal)];
     }
 
-    /** Lock, re-check and record the redemption. Must be called inside a transaction. */
     public function redeem(string $code, Order $order, User $user, float $subtotal): float
     {
         $coupon = Coupon::where('code', strtoupper(trim($code)))->lockForUpdate()->first();
@@ -40,7 +30,6 @@ class CouponService
         return $discount;
     }
 
-    /** Give the use back (order cancelled, declined, or coupon dropped on modify). */
     public function release(Order $order): void
     {
         $redemption = CouponRedemption::where('order_id', $order->id)->first();
@@ -53,7 +42,6 @@ class CouponService
 
     private function assertUsable(?Coupon $coupon, int $farmerProfileId, float $subtotal, ?User $user, ?int $ignoreOrderId = null): void
     {
-        // Messages are translation keys; the React side renders them in the shopper's language.
         $fail = fn (string $key) => throw ValidationException::withMessages(['coupon' => $key]);
 
         if (! $coupon || $coupon->farmer_profile_id !== $farmerProfileId) {

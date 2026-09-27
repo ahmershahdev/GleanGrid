@@ -18,11 +18,11 @@ class Product extends Model
 
     protected $fillable = [
         'farmer_profile_id', 'category_id', 'name', 'slug', 'description', 'price', 'unit',
-        'stock_quantity', 'weekly_quantity', 'image', 'status', 'is_featured',
+        'stock_quantity', 'weekly_quantity', 'image', 'photo', 'status', 'is_featured',
         'removed_at', 'removed_reason',
     ];
 
-    protected $appends = ['image_url'];
+    protected $appends = ['image_url', 'photo_url'];
 
     protected function casts(): array
     {
@@ -34,7 +34,6 @@ class Product extends Model
         ];
     }
 
-    /** URLs use the slug, never the auto-increment id. */
     public function getRouteKeyName(): string
     {
         return 'slug';
@@ -50,8 +49,6 @@ class Product extends Model
 
             if ($backInStock) {
                 $product->loadMissing('farmer');
-                // Only e-mail once the stock change is committed; a rolled-back
-                // order must not announce a restock that never happened.
                 DB::afterCommit(fn () => Favorite::with('user')->where('favoritable_type', 'product')
                     ->where('favoritable_id', $product->id)->where('notify_restock', true)->get()
                     ->each(fn (Favorite $fav) => $fav->user->notify(new PlatformNotification(
@@ -79,7 +76,6 @@ class Product extends Model
         return $this->morphMany(Review::class, 'reviewable');
     }
 
-    /** Visible in the public catalogue: not moderated away and from an approved, active farmer. */
     public function scopeListed(Builder $query): Builder
     {
         return $query->whereNull('removed_at')
@@ -101,23 +97,26 @@ class Product extends Model
         return self::resolveImage($this->image);
     }
 
-    /** Images are either an uploaded file on the public disk or a bundled illustration ("produce:carrot"). */
+    public function getPhotoUrlAttribute(): ?string
+    {
+        return self::resolveImage($this->image && ! str_starts_with($this->image, 'produce:') ? $this->image : $this->photo);
+    }
+
     public static function resolveImage(?string $image): ?string
     {
         if (! $image) {
             return null;
         }
         if (str_starts_with($image, 'produce:')) {
-            return asset('images/produce/'.substr($image, 8).'.png');
+            return asset('images/produce/'.substr($image, 8).'.webp');
+        }
+        if (str_starts_with($image, 'photo:')) {
+            return asset('images/photos/'.substr($image, 6).'.webp');
         }
 
         return asset('storage/'.$image);
     }
 
-    /**
-     * Recalculate in one UPDATE ... SELECT so concurrent reviews can never
-     * leave a stale average behind (no read-modify-write in PHP).
-     */
     public function refreshRating(): void
     {
         $sub = Review::query()->where('reviewable_type', 'product')->whereColumn('reviewable_id', 'products.id')->where('is_hidden', false);

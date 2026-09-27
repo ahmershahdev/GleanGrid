@@ -1,9 +1,10 @@
-import { Link, router, useForm } from '@inertiajs/react';
+import { Link, useForm } from '@inertiajs/react';
 import { Pencil, Plus, Timer, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Button, buttonClass, Card, Checkbox, EmptyState, Input, Modal, PageHeader, Select } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+import { confirmDelete } from '@/lib/confirm';
 
 function SlotForm({ slot, markets, onDone }) {
     const t = useT();
@@ -102,7 +103,7 @@ export default function Slots({ slots, markets, cutoff }) {
                                                     <button onClick={() => setEditing(s)} className="rounded-full p-2 hover:bg-ink/5" aria-label={t('common.edit')}>
                                                         <Pencil className="size-4" />
                                                     </button>
-                                                    <button onClick={() => router.delete(route('farmer.slots.destroy', s.id), { preserveScroll: true })} className="rounded-full p-2 text-danger hover:bg-danger/10" aria-label={t('common.delete')}>
+                                                    <button onClick={() => confirmDelete(route('farmer.slots.destroy', s.id), { title: t('confirm.delete_slot', {}, 'Delete this pickup window?') })} className="rounded-full p-2 text-danger hover:bg-danger/10" aria-label={t('common.delete')}>
                                                         <Trash2 className="size-4" />
                                                     </button>
                                                 </li>

@@ -3,7 +3,12 @@
 return [
     'currency' => env('APP_CURRENCY', 'Rs'),
 
-    // Languages offered in the switcher. `dir` drives <html dir> for RTL scripts.
+    'demo_domain' => env('DEMO_EMAIL_DOMAIN', 'gleangrid.test'),
+
+    'security' => [
+        'coop' => (bool) env('SECURITY_COOP', false),
+    ],
+
     'locales' => [
         'en' => ['name' => 'English', 'native' => 'English', 'dir' => 'ltr'],
         'ur' => ['name' => 'Urdu', 'native' => 'اردو', 'dir' => 'rtl'],
@@ -23,7 +28,6 @@ return [
         'longitude' => 68.3578,
     ],
 
-    // Public profiles of the maker, used in the footer and structured data.
     'social' => [
         'website' => 'https://ahmershah.dev/',
         'github' => 'https://github.com/ahmershahdev',

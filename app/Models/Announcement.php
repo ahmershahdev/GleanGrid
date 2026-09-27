@@ -20,7 +20,6 @@ class Announcement extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    /** Published, unexpired announcements aimed at the given role (guests see "all" only). */
     public function scopeVisibleTo(Builder $query, ?string $role): Builder
     {
         $audiences = match ($role) {

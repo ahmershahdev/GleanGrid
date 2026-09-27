@@ -1,7 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { cn } from '@/lib/utils';
 
-/** The "GG" monogram from the brand logo, on a paper tile so it reads in both themes. */
 export function LogoMark({ className }) {
     return (
         <span className={cn('inline-flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-paper ring-1 ring-forest/10 dark:ring-paper/10', className)}>
@@ -10,7 +9,6 @@ export function LogoMark({ className }) {
     );
 }
 
-/** Full lockup (mark + wordmark) as shipped in the brand file. Dark text, so place on light surfaces. */
 export function LogoFull({ className }) {
     return <img src="/images/brand/gleangrid-logo.webp" alt="GleanGrid" width="520" height="368" decoding="async" loading="lazy" className={cn('h-auto', className ?? 'w-40')} />;
 }

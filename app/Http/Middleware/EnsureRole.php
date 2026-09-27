@@ -8,7 +8,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EnsureRole
 {
-    /** Usage: ->middleware('role:farmer') or 'role:admin,farmer'. */
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         $user = $request->user();

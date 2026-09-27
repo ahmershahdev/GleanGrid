@@ -14,7 +14,6 @@ class PasswordChangedAlert extends Notification implements ShouldQueue
 
     public function __construct(private ?string $ip, private CarbonInterface $at)
     {
-        // Only send once the surrounding transaction commits, never for rolled-back work.
         $this->afterCommit();
     }
 
@@ -27,7 +26,7 @@ class PasswordChangedAlert extends Notification implements ShouldQueue
     {
         return (new MailMessage)
             ->subject('Your GleanGrid password was changed')
-            ->greeting('Hi '.strtok($notifiable->name, ' ').',')
+            ->greeting('Salaam '.strtok($notifiable->name, ' ').',')
             ->line('The password on your account was changed on '.$this->at->timezone(config('app.timezone'))->format('D j M Y, g:i a').' (PKT) from IP '.($this->ip ?? 'unknown').'.')
             ->line('For your safety we signed out every other device.')
             ->line('Didn’t do this? Reset your password straight away and write to support@ahmershah.dev.')

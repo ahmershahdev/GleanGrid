@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 const BLANK = { farmer_profile_id: '', code: '', description: '', type: 'percent', value: 10, min_subtotal: '', max_discount: '', usage_limit: '', per_customer_limit: 1, starts_at: '', ends_at: '', is_active: true };
 
 function randomCode() {
-    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I confusion
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     return 'FRESH' + Array.from(crypto.getRandomValues(new Uint8Array(5)), (b) => alphabet[b % alphabet.length]).join('');
 }
 
@@ -33,7 +33,6 @@ function Ticket({ coupon, onDelete, admin }) {
 
     return (
         <motion.article layout initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.96 }} className={cn('group relative flex overflow-hidden rounded-[28px] border border-line bg-elev', status !== 'live' && 'opacity-80')}>
-            {/* Stub with the value, separated by a perforated edge like a paper ticket. */}
             <div className="relative flex w-32 shrink-0 flex-col items-center justify-center bg-brand px-3 py-6 text-center text-brand-ink sm:w-36">
                 <TicketPercent className="size-5 opacity-60" />
                 <p className="font-display mt-2 text-3xl leading-none">{coupon.type === 'percent' ? `${Number(coupon.value)}%` : money(coupon.value)}</p>
@@ -51,7 +50,6 @@ function Ticket({ coupon, onDelete, admin }) {
                                 setCopied(true);
                                 setTimeout(() => setCopied(false), 1500);
                             } catch {
-                                /* ignore */
                             }
                         }}
                         className="inline-flex min-w-0 items-center gap-2 rounded-xl bg-ink/[0.04] px-3 py-1.5 font-mono text-sm font-semibold tracking-wider transition hover:bg-ink/10"

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Market;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -28,7 +29,8 @@ class MarketController extends Controller
     {
         $data = $this->validated($request);
         $data['slug'] = Str::slug($data['name']).'-'.Str::lower(Str::random(3));
-        Market::create($data);
+        $market = Market::create($data);
+        AuditLog::record('market.created', "Added market {$market->name}", $market);
 
         return redirect()->route('admin.markets.index')->with('success', 'flash.market_saved');
     }
@@ -42,17 +44,20 @@ class MarketController extends Controller
     {
         $market->update($this->validated($request));
 
+        AuditLog::record('market.updated', "Edited market {$market->name}", $market);
+
         return redirect()->route('admin.markets.index')->with('success', 'flash.market_saved');
     }
 
     public function destroy(Market $market): RedirectResponse
     {
         if ($market->orders()->exists()) {
-            // Keep order history intact: retire the market instead of deleting it.
             $market->update(['is_active' => false]);
+            AuditLog::record('market.deactivated', "Retired market {$market->name} (it has order history)", $market);
 
             return back()->with('success', 'flash.market_deactivated');
         }
+        AuditLog::record('market.deleted', "Deleted market {$market->name}", null, ['id' => $market->id]);
         $market->delete();
 
         return back()->with('success', 'flash.market_deleted');

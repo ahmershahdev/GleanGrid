@@ -32,5 +32,10 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <!-- Tests never call Google; BotGuardTest fakes siteverify where it matters. -->
+        <env name="RECAPTCHA_V3_SITE_KEY" value=""/>
+        <env name="RECAPTCHA_V3_SECRET_KEY" value=""/>
+        <env name="RECAPTCHA_V2_SITE_KEY" value=""/>
+        <env name="RECAPTCHA_V2_SECRET_KEY" value=""/>
     </php>
 </phpunit>

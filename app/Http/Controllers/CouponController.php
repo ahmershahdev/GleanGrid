@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\Coupon;
 use App\Models\FarmerProfile;
 use App\Models\Product;
@@ -13,13 +14,8 @@ use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
-/**
- * Coupons: a customer-side preview for checkout, plus management shared by
- * farmers (their own stall only) and admins (any stall).
- */
 class CouponController extends Controller
 {
-    /** Checkout preview. The subtotal is recomputed from live prices, never trusted from the browser. */
     public function preview(Request $request, CouponService $coupons): JsonResponse
     {
         $data = $request->validate([
@@ -62,7 +58,10 @@ class CouponController extends Controller
     {
         $data = $this->validated($request);
         $data['farmer_profile_id'] = $request->user()->isAdmin() ? $data['farmer_profile_id'] : $request->user()->farmerProfile->id;
-        Coupon::create($data);
+        $coupon = Coupon::create($data);
+        if ($request->user()->isAdmin()) {
+            AuditLog::record('coupon.created', "Created coupon {$coupon->code}", $coupon);
+        }
 
         return back()->with('success', 'flash.coupon_saved');
     }
@@ -70,7 +69,6 @@ class CouponController extends Controller
     public function update(Request $request, Coupon $coupon): RedirectResponse
     {
         $this->authorizeCoupon($request, $coupon);
-        // Quick toggle from the list, or a full edit.
         if ($request->has('toggle')) {
             $coupon->update(['is_active' => ! $coupon->is_active]);
         } else {
@@ -79,13 +77,19 @@ class CouponController extends Controller
             $coupon->update($data);
         }
 
+        if ($request->user()->isAdmin()) {
+            AuditLog::record('coupon.updated', "Updated coupon {$coupon->code}", $coupon);
+        }
+
         return back()->with('success', 'flash.coupon_saved');
     }
 
     public function destroy(Request $request, Coupon $coupon): RedirectResponse
     {
         $this->authorizeCoupon($request, $coupon);
-        // Keep history intact: a coupon that was ever used is only switched off.
+        if ($request->user()->isAdmin()) {
+            AuditLog::record('coupon.deleted', "Removed coupon {$coupon->code}", null, ['id' => $coupon->id]);
+        }
         $coupon->redemptions()->exists() ? $coupon->update(['is_active' => false]) : $coupon->delete();
 
         return back()->with('success', 'flash.coupon_deleted');

@@ -1,18 +1,64 @@
 # GleanGrid — https://gleangrid.ahmershah.dev
-# Public marketplace pages are open to crawlers; account areas are private.
+# Pre-order marketplace for Hyderabad (Sindh) farmers markets.
+#
+# Public marketplace pages (markets, farmers, produce, help, policies) are open
+# to every crawler. Account areas, forms, APIs and filtered duplicates are not.
+# Filtered/sorted listings also carry <link rel="canonical"> to the clean URL.
 
 User-agent: *
 Allow: /
+Allow: /markets
+Allow: /farmers
+Allow: /products
+Allow: /llms.txt
+Allow: /llms-full.txt
+
+# Private dashboards and account pages
+Disallow: /account
 Disallow: /farmer/
 Disallow: /admin/
-Disallow: /account/
-Disallow: /cart
+Disallow: /dashboard
+
+# Auth and one-time flows
 Disallow: /login
 Disallow: /register
+Disallow: /logout
 Disallow: /forgot-password
 Disallow: /reset-password/
 Disallow: /verify-email
+
+# Personal basket and JSON endpoints
+Disallow: /cart
+Disallow: /search/suggest
 Disallow: /assistant
-# Filtered/sorted listings point to their canonical URL via <link rel="canonical">.
+Disallow: /preferences/
+Disallow: /webhooks/
+
+# Faceted duplicates (the canonical listing is already indexed)
+Disallow: /*?*sort=
+Disallow: /*?*page=
+Disallow: /*?*lat=
+
+# AI assistants and answer engines are welcome on public pages — a
+# condensed, always-current summary lives at /llms.txt and /llms-full.txt.
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-User
+User-agent: Claude-SearchBot
+User-agent: PerplexityBot
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /account
+Disallow: /farmer/
+Disallow: /admin/
+Disallow: /cart
+Disallow: /login
+Disallow: /register
+Disallow: /search/suggest
+Disallow: /assistant
+Disallow: /webhooks/
 
 Sitemap: https://gleangrid.ahmershah.dev/sitemap.xml

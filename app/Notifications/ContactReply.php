@@ -9,7 +9,6 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Str;
 
-/** An admin's reply to a contact-form message or received e-mail, sent to the original sender. */
 class ContactReply extends Notification implements ShouldQueue
 {
     use Queueable;

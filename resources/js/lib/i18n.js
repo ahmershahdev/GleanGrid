@@ -1,17 +1,55 @@
 import { usePage } from '@inertiajs/react';
-import { useCallback } from 'react';
-import en from '@/i18n/en';
-import ur from '@/i18n/ur';
-import ar from '@/i18n/ar';
-import hi from '@/i18n/hi';
-import ru from '@/i18n/ru';
-import zh from '@/i18n/zh';
-import es from '@/i18n/es';
-import fr from '@/i18n/fr';
+import { useCallback, useEffect, useSyncExternalStore } from 'react';
+import baseEn, { additions as enAdditions } from '@/i18n/en';
 
-const dictionaries = { en, ur, ar, hi, ru, zh, es, fr };
+const loaders = {
+    ur: () => import('@/i18n/ur'),
+    ar: () => import('@/i18n/ar'),
+    hi: () => import('@/i18n/hi'),
+    ru: () => import('@/i18n/ru'),
+    zh: () => import('@/i18n/zh'),
+    es: () => import('@/i18n/es'),
+    fr: () => import('@/i18n/fr'),
+};
+function deepMerge(base, extra = {}) {
+    const out = { ...base };
+    for (const [key, value] of Object.entries(extra)) {
+        out[key] = value && typeof value === 'object' && !Array.isArray(value) ? deepMerge(base?.[key] ?? {}, value) : value;
+    }
+    return out;
+}
 
-// Extra Google Fonts per script; loaded only when that language is picked.
+const en = deepMerge(baseEn, enAdditions);
+const dictionaries = { en };
+const pending = {};
+let version = 0;
+const listeners = new Set();
+
+export function loadLocale(locale) {
+    if (dictionaries[locale] || !loaders[locale]) return Promise.resolve();
+    pending[locale] ??= loaders[locale]()
+        .then((mod) => {
+            dictionaries[locale] = deepMerge(mod.default, mod.additions);
+            version += 1;
+            listeners.forEach((l) => l());
+        })
+        .catch(() => {
+            delete pending[locale];
+        });
+    return pending[locale];
+}
+
+function useDictionaryVersion(locale) {
+    useEffect(() => {
+        loadLocale(locale);
+    }, [locale]);
+    return useSyncExternalStore(
+        (l) => (listeners.add(l), () => listeners.delete(l)),
+        () => version,
+        () => version,
+    );
+}
+
 const localeFonts = {
     ur: 'family=Noto+Nastaliq+Urdu:wght@400..700&family=Noto+Naskh+Arabic:wght@400..700',
     ar: 'family=Reem+Kufi:wght@400..700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700',
@@ -41,10 +79,11 @@ export function useLocale() {
     return usePage().props.app?.locale ?? 'en';
 }
 
-/** `t('nav.markets')`, `t('orders.count', { count: 3 })`. Falls back to English, then the key. */
 export function useT() {
     const locale = useLocale();
-    return useCallback((key, params, fallback) => translate(locale, key, params, fallback), [locale]);
+    const loaded = useDictionaryVersion(locale);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return useCallback((key, params, fallback) => translate(locale, key, params, fallback), [locale, loaded]);
 }
 
 export function applyLocale(locale, locales) {
@@ -61,7 +100,6 @@ export function applyLocale(locale, locales) {
     }
 }
 
-/* ------------------------------------------------------------ Formatters */
 const intlLocale = (locale) => `${locale === 'zh' ? 'zh-CN' : locale}-u-nu-latn`;
 
 export function useFormat() {
@@ -77,7 +115,6 @@ export function useFormat() {
         const [h, m] = t.split(':');
         return new Intl.DateTimeFormat(loc, { hour: 'numeric', minute: '2-digit' }).format(new Date(2000, 0, 1, +h, +m));
     };
-    // 2026-01-04 was a Sunday, so day index 0..6 maps onto Jan 4..10.
     const day = (i, style = 'long') => new Intl.DateTimeFormat(loc, { weekday: style }).format(new Date(2026, 0, 4 + Number(i)));
     const days = (list, style = 'short') => (list ?? []).slice().sort().map((i) => day(i, style)).join(' · ');
     const relative = (d) => {

@@ -1,13 +1,28 @@
 {
-    "name": "GleanGrid — Karachi farmers markets",
+    "id": "/",
+    "name": "GleanGrid — Hyderabad farmers markets",
     "short_name": "GleanGrid",
-    "description": "Pre-order fresh produce from Karachi farmers and collect it at your market stall.",
-    "start_url": "/",
+    "description": "Pre-order fresh produce from Hyderabad farmers and collect it at your market stall.",
+    "lang": "en",
+    "dir": "auto",
+    "start_url": "/?source=pwa",
+    "scope": "/",
     "display": "standalone",
+    "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+    "orientation": "any",
     "background_color": "#F3EEE3",
     "theme_color": "#1F4D36",
+    "categories": ["shopping", "food", "lifestyle"],
     "icons": [
-        { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-        { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+        { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+        { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+        { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+        { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+    ],
+    "shortcuts": [
+        { "name": "Browse produce", "short_name": "Produce", "url": "/products?source=pwa", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+        { "name": "Find a market", "short_name": "Markets", "url": "/markets?source=pwa", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+        { "name": "My basket", "short_name": "Basket", "url": "/cart?source=pwa", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+        { "name": "My orders", "short_name": "Orders", "url": "/account/orders?source=pwa", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] }
     ]
 }

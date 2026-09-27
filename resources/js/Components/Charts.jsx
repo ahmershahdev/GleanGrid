@@ -16,10 +16,9 @@ function ChartTooltip({ active, payload, label, formatLabel, formatValue }) {
     );
 }
 
-/** Revenue/orders over time. */
 export function TrendChart({ data, x, series, height = 260, formatX, formatValue }) {
     return (
-        <ResponsiveContainer width="100%" height={height}>
+        <ResponsiveContainer width="100%" height={height} className="animate-chart-in">
             <AreaChart data={data} margin={{ top: 10, right: 8, left: -12, bottom: 0 }}>
                 <defs>
                     {series.map((s) => (
@@ -34,7 +33,7 @@ export function TrendChart({ data, x, series, height = 260, formatX, formatValue
                 <YAxis tickLine={false} axisLine={false} width={48} tickFormatter={(v) => (v >= 1000 ? `${+(v / 1000).toFixed(1)}k` : v)} />
                 <Tooltip content={<ChartTooltip formatLabel={formatX} formatValue={formatValue} />} cursor={{ stroke: 'var(--line-strong)' }} />
                 {series.map((s) => (
-                    <Area key={s.key} type="monotone" dataKey={s.key} name={s.name} stroke={s.color} strokeWidth={2.5} fill={`url(#g-${s.key})`} yAxisId={0} animationDuration={1200} />
+                    <Area key={s.key} type="monotone" dataKey={s.key} name={s.name} stroke={s.color} strokeWidth={2.5} fill={`url(#g-${s.key})`} yAxisId={0} isAnimationActive={false} />
                 ))}
             </AreaChart>
         </ResponsiveContainer>

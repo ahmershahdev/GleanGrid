@@ -1,6 +1,8 @@
 import { useForm, usePage } from '@inertiajs/react';
-import { Check, ExternalLink, ImagePlus } from 'lucide-react';
-import { LocationPicker } from '@/Components/Map';
+import { Check, ExternalLink } from 'lucide-react';
+import ImagePicker from '@/Components/ImagePicker';
+import { useUnsavedGuard } from '@/lib/confirm';
+import { LazyLocationPicker as LocationPicker } from '@/Components/LazyMap';
 import { Button, Card, ChipToggle, Input, PageHeader, Textarea } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -23,14 +25,23 @@ export default function Stall({ stall, markets }) {
         market_ids: stall.market_ids ?? [],
         stall_numbers: stall.stall_numbers ?? {},
         logo: null,
+        remove_logo: false,
     });
+    useUnsavedGuard(form.isDirty && !form.processing);
     const field = (name) => ({ value: form.data[name] ?? '', onChange: (e) => form.setData(name, e.target.value), error: form.errors[name] });
     const toggle = (key, value) => form.setData(key, form.data[key].includes(value) ? form.data[key].filter((v) => v !== value) : [...form.data[key], value]);
 
     const submit = (e) => {
         e.preventDefault();
-        form.transform((d) => ({ ...d, _method: 'put' }));
-        form.post(route('farmer.stall.update'), { forceFormData: true, preserveScroll: true });
+        form.transform((d) => ({ ...d, remove_logo: d.remove_logo ? 1 : 0, _method: 'put' }));
+        form.post(route('farmer.stall.update'), {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                form.setDefaults({ ...form.data, logo: null, remove_logo: false });
+                form.reset('logo', 'remove_logo');
+            },
+        });
     };
 
     return (
@@ -50,16 +61,17 @@ export default function Stall({ stall, markets }) {
                 <div className="space-y-6">
                     <Card className="space-y-5 p-6">
                         <h2 className="font-display text-2xl">{t('stall.business')}</h2>
-                        <div className="flex items-center gap-4">
-                            <div className="flex size-20 items-center justify-center overflow-hidden rounded-2xl bg-brand-soft">
-                                {form.data.logo ? <img src={URL.createObjectURL(form.data.logo)} alt="" className="size-full object-cover" /> : stall.logo_url ? <img src={stall.logo_url} alt="" className="size-14 object-contain" /> : <ImagePlus className="size-6 text-ink-faint" />}
-                            </div>
-                            <label className="cursor-pointer rounded-full border border-line-strong px-4 py-2 text-sm font-medium hover:bg-ink/5">
-                                {t('stall.upload_logo')}
-                                <input type="file" accept="image/*" className="sr-only" onChange={(e) => form.setData('logo', e.target.files[0])} />
-                            </label>
-                            {form.errors.logo && <p className="text-sm text-danger">{form.errors.logo}</p>}
-                        </div>
+                        <ImagePicker
+                            maxSide={640}
+                            label={t('stall.upload_logo')}
+                            file={form.data.logo}
+                            current={stall.logo_url}
+                            removed={form.data.remove_logo}
+                            onPick={(f) => form.setData((d) => ({ ...d, logo: f, remove_logo: f ? false : d.remove_logo }))}
+                            onRemove={() => form.setData('remove_logo', true)}
+                            onUndo={() => form.setData('remove_logo', false)}
+                            error={form.errors.logo}
+                        />
                         <div className="grid gap-5 sm:grid-cols-2">
                             <Input label={t('fields.stall_name')} placeholder={t('ph.stall_name')} {...field('stall_name')} required />
                             <Input label={t('fields.contact_person')} placeholder={t('ph.contact_person')} {...field('contact_person')} required />

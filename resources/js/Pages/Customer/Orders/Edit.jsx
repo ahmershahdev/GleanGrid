@@ -19,7 +19,6 @@ export default function EditOrder({ order, products, slots }) {
     const qty = (id) => form.data.items.find((i) => i.product_id === id)?.quantity ?? 0;
     const setQty = (id, q) => form.setData('items', form.data.items.map((i) => (i.product_id === id ? { ...i, quantity: q } : i)));
     const total = products.reduce((s, p) => s + p.price * qty(p.id), 0);
-    // The current window might no longer be listed (e.g. near cut-off) — keep it selectable.
     const currentListed = slots.some((s) => s.id === order.pickup_slot_id && s.dates.includes(order.pickup_date));
 
     return (

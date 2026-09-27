@@ -1,8 +1,9 @@
 import { Link, router, useForm } from '@inertiajs/react';
-import { CalendarClock, Pencil, RotateCcw, Timer, XCircle } from 'lucide-react';
+import { CalendarClock, Mail, MessageCircle, Pencil, Phone, RotateCcw, Timer, XCircle } from 'lucide-react';
 import { useState } from 'react';
-import { DirectionsMap } from '@/Components/Map';
-import { OrderTimeline } from '@/Components/OrderBits';
+import { LazyDirectionsMap as DirectionsMap } from '@/Components/LazyMap';
+import { OrderTimeline, StatusHistory } from '@/Components/OrderBits';
+import OrderQr from '@/Components/OrderQr';
 import { Button, buttonClass, Card, Modal, RatingInput, StatusBadge, Textarea } from '@/Components/ui';
 import { toast } from '@/Components/widgets';
 import { cart } from '@/lib/cart';
@@ -40,7 +41,7 @@ function ReviewForm({ order, type, id, label, image, done }) {
     );
 }
 
-export default function CustomerOrderShow({ order, isOwner, reviewed }) {
+export default function CustomerOrderShow({ order, isOwner, reviewed, history = [], scanUrl }) {
     const t = useT();
     const { money, date, time, relative } = useFormat();
     const [confirm, setConfirm] = useState(false);
@@ -92,6 +93,12 @@ export default function CustomerOrderShow({ order, isOwner, reviewed }) {
                     </p>
                 )}
             </Card>
+
+            {['placed', 'accepted', 'ready'].includes(order.status) && scanUrl && (
+                <Card className="mt-6 p-6 md:p-8">
+                    <OrderQr url={scanUrl} code={order.code} />
+                </Card>
+            )}
 
             <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_1fr]">
                 <Card className="p-6 md:p-8">
@@ -145,9 +152,42 @@ export default function CustomerOrderShow({ order, isOwner, reviewed }) {
                     <Link href={route('farmers.show', order.farmer.slug)} className="mt-3 inline-block text-sm font-medium text-brand">
                         {order.farmer.stall_name} →
                     </Link>
+                    {(order.farmer.phone || order.farmer.email) && (
+                        <div role="group" className="mt-4 flex flex-wrap gap-2" aria-label={t('order.contact_farmer', {}, 'Contact the farmer')}>
+                            {order.farmer.phone && (
+                                <>
+                                    <a href={`tel:${order.farmer.phone.replace(/[^0-9+]/g, '')}`} className="inline-flex h-9 items-center gap-1.5 rounded-full border border-line-strong px-3.5 text-sm font-medium transition hover:bg-ink/5">
+                                        <Phone className="size-3.5" /> {t('order.call', {}, 'Call')}
+                                    </a>
+                                    <a
+                                        href={`https://wa.me/${order.farmer.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Assalam o Alaikum! About my GleanGrid order ${order.code}`)}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex h-9 items-center gap-1.5 rounded-full border border-line-strong px-3.5 text-sm font-medium transition hover:bg-ink/5"
+                                    >
+                                        <MessageCircle className="size-3.5" /> WhatsApp
+                                    </a>
+                                </>
+                            )}
+                            {order.farmer.email && (
+                                <a href={`mailto:${order.farmer.email}?subject=${encodeURIComponent(`GleanGrid order ${order.code}`)}`} className="inline-flex h-9 items-center gap-1.5 rounded-full border border-line-strong px-3.5 text-sm font-medium transition hover:bg-ink/5">
+                                    <Mail className="size-3.5" /> {t('order.email', {}, 'E-mail')}
+                                </a>
+                            )}
+                        </div>
+                    )}
                     <DirectionsMap className="mt-5" lat={order.market.latitude} lng={order.market.longitude} title={order.market.name} subtitle={order.market.address} color="#E2552C" image={order.farmer.logo_url} />
                 </Card>
             </div>
+
+            {history.length > 1 && (
+                <Card className="mt-6 p-6 md:p-8">
+                    <h2 className="font-display text-2xl">{t('order.history', {}, 'Status history')}</h2>
+                    <div className="mt-5">
+                        <StatusHistory history={history} />
+                    </div>
+                </Card>
+            )}
 
             {order.status === 'completed' && isOwner && (
                 <Card className="mt-6 p-6 md:p-8">

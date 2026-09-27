@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { motion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import { Leaf, MapPin, Package, ShoppingBasket, Star, Store, Timer } from 'lucide-react';
 import { useState } from 'react';
 import { ProductCard } from '@/Components/Cards';
@@ -10,6 +10,7 @@ import { ReviewList } from '@/Pages/Farmers/Show';
 import { cart, useCart } from '@/lib/cart';
 import { fly } from '@/lib/fly';
 import { useFormat, useT } from '@/lib/i18n';
+import { cn, photoProps } from '@/lib/utils';
 
 export default function ProductShow({ product, reviews, related, moreFromFarmer }) {
     const t = useT();
@@ -21,6 +22,9 @@ export default function ProductShow({ product, reviews, related, moreFromFarmer 
     const orderable = product.status === 'available' && product.stock_quantity > 0;
     const canBuy = !auth.user || auth.user.role === 'customer';
     const color = product.category?.color ?? '#C9E265';
+    const illustration = product.image_url?.includes('/produce/') ? product.image_url : null;
+    const photo = product.photo_url && product.photo_url !== illustration ? product.photo_url : null;
+    const [view, setView] = useState(photo ? 'photo' : 'art');
 
     const add = (e) => {
         fly(e.currentTarget, 'cart', { image: product.image_url });
@@ -44,14 +48,47 @@ export default function ProductShow({ product, reviews, related, moreFromFarmer 
                         <div className="font-display absolute start-6 top-4 text-[9rem] leading-none font-light text-ink/[0.06] select-none md:text-[12rem]" aria-hidden="true">
                             {product.name.split(' ').pop()}
                         </div>
-                        <motion.img
-                            src={product.image_url}
-                            alt={product.name}
-                            initial={{ scale: 0.6, rotate: -20, opacity: 0 }}
-                            animate={{ scale: 1, rotate: 0, opacity: 1 }}
-                            transition={{ delay: 0.3, type: 'spring', stiffness: 80, damping: 12 }}
-                            className={product.image_url?.includes('/produce/') ? 'relative w-3/5 animate-float drop-shadow-[0_40px_40px_rgba(0,0,0,0.25)]' : 'relative h-full w-full object-cover'}
-                        />
+                        <AnimatePresence mode="popLayout" initial={false}>
+                            {view === 'photo' && photo ? (
+                                <motion.img
+                                    key="photo"
+                                    {...photoProps(photo, '(min-width: 1024px) 50vw, 100vw')}
+                                    alt={product.name}
+                                    initial={{ opacity: 0, scale: 1.08 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                                    className={cn('absolute inset-0 size-full object-cover', !orderable && 'grayscale')}
+                                />
+                            ) : (
+                                <motion.img
+                                    key="art"
+                                    src={illustration ?? product.image_url}
+                                    alt={product.name}
+                                    initial={{ scale: 0.6, rotate: -20, opacity: 0 }}
+                                    animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                                    exit={{ scale: 0.8, opacity: 0 }}
+                                    transition={{ type: 'spring', stiffness: 80, damping: 12 }}
+                                    className={illustration ? 'relative w-3/5 animate-float drop-shadow-[0_40px_40px_rgba(0,0,0,0.25)]' : 'relative h-full w-full object-cover'}
+                                />
+                            )}
+                        </AnimatePresence>
+                        {view === 'photo' && illustration && (
+                            <motion.img src={illustration} alt="" initial={{ scale: 0, rotate: -30 }} animate={{ scale: 1, rotate: -8 }} transition={{ delay: 0.4, type: 'spring', stiffness: 140, damping: 12 }} className="absolute start-6 bottom-6 w-24 drop-shadow-[0_18px_22px_rgba(0,0,0,0.45)] md:w-32" />
+                        )}
+                        {photo && illustration && (
+                            <div role="radiogroup" aria-label={t('product.view', {}, 'View')} className="absolute end-5 bottom-5 flex rounded-full bg-bg/80 p-1 text-xs font-semibold backdrop-blur">
+                                {[
+                                    ['photo', t('product.view_photo', {}, 'Photo')],
+                                    ['art', t('product.view_art', {}, '3D')],
+                                ].map(([key, label]) => (
+                                    <button key={key} type="button" role="radio" aria-checked={view === key} onClick={() => setView(key)} className={cn('relative h-8 rounded-full px-3.5 transition', view === key ? 'text-bg' : 'text-ink-soft hover:text-ink')}>
+                                        {view === key && <motion.span layoutId="view-pill" className="absolute inset-0 rounded-full bg-ink" transition={{ type: 'spring', stiffness: 420, damping: 34 }} />}
+                                        <span className="relative">{label}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                         <FavoriteButton type="product" id={product.id} className="absolute end-5 top-5" />
                     </motion.div>
 

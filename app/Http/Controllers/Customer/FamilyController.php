@@ -12,10 +12,6 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
-/**
- * Optional family sharing from the SRS: linked customers see each other's
- * orders (and can reorder them) while keeping separate logins.
- */
 class FamilyController extends Controller
 {
     public function index(Request $request): Response

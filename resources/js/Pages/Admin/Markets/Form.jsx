@@ -1,5 +1,5 @@
 import { Link, useForm } from '@inertiajs/react';
-import { LocationPicker } from '@/Components/Map';
+import { LazyLocationPicker as LocationPicker } from '@/Components/LazyMap';
 import { Button, Card, Checkbox, ChipToggle, Field, Input, PageHeader, Select, Textarea } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
 

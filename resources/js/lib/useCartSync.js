@@ -1,8 +1,7 @@
-import axios from 'axios';
+import { postJson } from '@/lib/http';
 import { useEffect, useRef, useState } from 'react';
 import { useCart } from '@/lib/cart';
 
-/** Re-validates the local basket against live stock and fetches pickup windows per farmer. */
 export function useCartSync() {
     const { items } = useCart();
     const [state, setState] = useState({ groups: [], missing: [], loading: true });
@@ -18,7 +17,7 @@ export function useCartSync() {
         setState((s) => ({ ...s, loading: s.groups.length === 0 }));
         timer.current = setTimeout(async () => {
             try {
-                const { data } = await axios.post(route('cart.sync'), { items: items.map((i) => ({ product_id: i.id, quantity: i.quantity })) });
+                const { data } = await postJson(route('cart.sync'), { items: items.map((i) => ({ product_id: i.id, quantity: i.quantity })) });
                 setState({ groups: data.groups, missing: data.missing, loading: false });
             } catch {
                 setState((s) => ({ ...s, loading: false }));

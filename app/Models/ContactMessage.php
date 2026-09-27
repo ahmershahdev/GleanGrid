@@ -7,7 +7,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ContactMessage extends Model
 {
-    protected $fillable = ['name', 'email', 'subject', 'message', 'ip_address', 'source', 'external_id', 'is_read', 'reply_body', 'replied_at', 'replied_by'];
+    public const TOPICS = [
+        'order' => 'Order help',
+        'sell' => 'Selling on GleanGrid',
+        'partner' => 'Partnership',
+        'feedback' => 'Feedback',
+        'other' => 'General enquiry',
+    ];
+
+    protected $fillable = ['name', 'email', 'topic', 'subject', 'message', 'ip_address', 'source', 'external_id', 'is_read', 'reply_body', 'replied_at', 'replied_by'];
 
     protected function casts(): array
     {

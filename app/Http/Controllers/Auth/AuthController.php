@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\AccountSecurity;
 use App\Support\BotGuard;
+use App\Support\Settings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,7 +21,6 @@ use Inertia\Response;
 
 class AuthController extends Controller
 {
-    /** Failed attempts allowed per account + IP before a cool-down. */
     private const MAX_ATTEMPTS = 5;
 
     public function __construct(private AccountSecurity $security) {}
@@ -38,10 +38,11 @@ class AuthController extends Controller
             'remember' => 'boolean',
         ]);
 
-        BotGuard::check($request, 'login');
+        $field = filter_var($data['login'], FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+        $candidate = User::where($field, $data['login'])->first();
 
-        // Throttle per account *and* IP: slows credential stuffing without letting
-        // one attacker lock a real user out from everywhere.
+        $candidate?->isDemo() ? BotGuard::traps($request, timed: false) : BotGuard::check($request, 'login');
+
         $key = 'login:'.Str::lower($data['login']).'|'.$request->ip();
         if (RateLimiter::tooManyAttempts($key, self::MAX_ATTEMPTS)) {
             throw ValidationException::withMessages([
@@ -49,26 +50,22 @@ class AuthController extends Controller
             ]);
         }
 
-        $field = filter_var($data['login'], FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
-
         if (! Auth::attempt([$field => $data['login'], 'password' => $data['password']], $data['remember'] ?? false)) {
-            // Exponential-ish back-off: each strike extends the window.
             RateLimiter::hit($key, 60 * max(1, RateLimiter::attempts($key)));
-            $this->security->recordLogin($request, $data['login'], User::where($field, $data['login'])->first(), false);
+            $this->security->recordLogin($request, $data['login'], $candidate, false);
 
             throw ValidationException::withMessages(['login' => __('auth.failed')]);
         }
 
         $user = Auth::user();
 
-        // Deactivated customers are locked out; suspended farmers may still sign in to see their status.
         if (! $user->isActive()) {
             Auth::logout();
             throw ValidationException::withMessages(['login' => 'This account has been deactivated. Please contact support.']);
         }
 
         RateLimiter::clear($key);
-        $request->session()->regenerate(); // new id after privilege change: no session fixation
+        $request->session()->regenerate();
         $request->session()->put('locale', $user->locale);
         $user->forceFill(['last_login_at' => now()])->save();
         $this->security->recordLogin($request, $data['login'], $user, true);
@@ -80,12 +77,16 @@ class AuthController extends Controller
     {
         return Inertia::render('Auth/Register', [
             'role' => $request->query('as') === 'farmer' ? 'farmer' : 'customer',
+            'open' => ['customer' => Settings::get('customer_registration_open'), 'farmer' => Settings::get('farmer_registration_open')],
         ]);
     }
 
     public function register(Request $request): RedirectResponse
     {
         $isFarmer = $request->input('role') === 'farmer';
+        if (! Settings::get($isFarmer ? 'farmer_registration_open' : 'customer_registration_open')) {
+            throw ValidationException::withMessages(['role' => 'New '.($isFarmer ? 'stall' : 'customer').' sign-ups are paused for now. Please try again soon.']);
+        }
 
         $data = $request->validate([
             'role' => ['required', Rule::in([User::ROLE_CUSTOMER, User::ROLE_FARMER])],

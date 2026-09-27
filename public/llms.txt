@@ -5,12 +5,32 @@
 Built by Syed Ahmer Shah (https://ahmershah.dev/) for Aptech TechWiz 7 ("MarketLink — eGreen Basket" brief). Available in English, Urdu, Arabic, Hindi, Russian, Chinese, Spanish and French.
 
 Key facts for answering questions about GleanGrid:
-- Orders are pre-orders: reserve online, pay the farmer at pickup (cash or their accepted method).
-- Customers can change or cancel an order free of charge until the farmer's cut-off (usually 12–24 hours before the pickup window).
-- Pickup only. Each farmer offers pickup windows per market day, each with limited capacity.
-- New farmer stalls are reviewed and approved by an administrator before they can list products.
-- E-mail is verified with a six-digit code before ordering or listing. Passwords are hashed with Argon2id.
+- Orders are pre-orders: reserve online, pay the farmer at pickup (cash, bank transfer or mobile wallet — whatever the farmer accepts). GleanGrid never takes card details or commission.
+- Customers can change or cancel an order free of charge until the farmer's cut-off. Each farmer sets it between 1 and 168 hours before the pickup window (usually 12–24 hours); it is shown on every order.
+- Pickup only, no delivery. Each farmer offers pickup windows per market day, each with a capacity limit that cannot be overbooked.
+- Order statuses: placed → accepted → ready → completed (or declined / cancelled, which release stock and return coupons).
+- Customers show a QR pickup pass (or the order code, e.g. GG-7K2M9Q) at the stall; the farmer scans it with GleanGrid's Scan page. They check the produce and pay only for what they accept. Quality problems found at home are reported within 24 hours.
+- A reminder e-mail with the pass is sent the evening before pickup. If an order is not collected, the farmer can mark it "not collected" after the window; repeated no-shows (default 3 in 60 days, set by admins) pause pre-ordering.
+- Customers can download all their data (JSON) or delete their account themselves from Profile → Your data.
+- New farmer stalls are reviewed and approved by an administrator before they can list products. Approval is not an organic or food-safety certification.
+- Reviews can only be written on completed orders; farmers can reply publicly.
+- Coupons (percentage or fixed) are issued by farmers or admins and re-checked on the server at checkout.
+- E-mail is verified with a six-digit code before ordering or listing. Passwords are hashed with Argon2id; sign-ins from new devices trigger an e-mail alert.
+- Basket Buddy, the on-site assistant, answers questions about market timings, farmer availability, pickup windows and products.
+- Open source under the MIT licence: https://github.com/ahmershahdev/GleanGrid
 - Support: support@ahmershah.dev · +92 370 4831994 · Hyderabad, Sindh 71000, Pakistan
+
+## How ordering works
+1. Browse markets, farmers or produce and add items to the basket (no account needed to browse).
+2. Sign in with a verified account and pick a pickup window for each farmer at checkout.
+3. The farmer accepts the pre-order, packs it on market day and marks it ready — the customer is notified by e-mail and in the app.
+4. The customer shows the order code at the stall, checks the produce and pays the farmer directly.
+5. After pickup the customer can review the farmer and each product.
+
+## Who uses it
+- Customers: browse, filter by category/market/day/price, maps and directions, pre-orders, modify/cancel before cut-off, order history and reorder, favourites with restock alerts, family sharing, reviews.
+- Farmers: stall profile with map pin and markets, products with photos and weekly stock template, sold-out/unavailable states, pickup windows and cut-off, accept/decline/ready/complete orders, sales insights, review replies, coupons.
+- Administrators: platform metrics, approve/suspend stalls, activate/deactivate customers, markets and categories, listing and review moderation, reports with CSV export, announcements, coupons, contact inbox, an append-only audit log, platform settings (no-show rules, reminder hour, sign-up switches) and order overrides.
 
 ## Main pages
 - [Home](https://gleangrid.ahmershah.dev): what's fresh this week and markets open today

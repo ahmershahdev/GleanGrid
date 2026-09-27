@@ -8,10 +8,12 @@ use App\Models\VerificationCode;
 use App\Notifications\NewSignInAlert;
 use App\Notifications\PasswordChangedAlert;
 use App\Notifications\VerifyEmailCode;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class SecurityTest extends TestCase
@@ -67,7 +69,6 @@ class SecurityTest extends TestCase
 
         $this->assertSame(VerificationCode::MAX_ATTEMPTS, VerificationCode::where('user_id', $user->id)->value('attempts'));
         $this->assertNull($user->fresh()->email_verified_at);
-        // The expiry must not move when attempts are recorded.
         $this->assertTrue(VerificationCode::where('user_id', $user->id)->value('expires_at') > now()->addMinutes(10));
     }
 
@@ -93,7 +94,6 @@ class SecurityTest extends TestCase
             $this->post(route('login'), ['login' => 'customer@gleangrid.test', 'password' => 'wrong-'.$i]);
         }
 
-        // Even the right password is refused while the cool-down runs.
         $this->post(route('login'), ['login' => 'customer@gleangrid.test', 'password' => 'Customer@123'])->assertSessionHasErrors('login');
         $this->assertGuest();
         $this->assertSame(5, LoginEvent::where('login', 'customer@gleangrid.test')->where('successful', false)->count());
@@ -106,7 +106,7 @@ class SecurityTest extends TestCase
 
         $this->withHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0) Chrome/130.0')
             ->post(route('login'), ['login' => $user->email, 'password' => 'Customer@123']);
-        Notification::assertNothingSent(); // first ever sign-in establishes the baseline
+        Notification::assertNothingSent();
 
         $this->post(route('logout'));
         $this->withHeader('User-Agent', 'Mozilla/5.0 (Linux; Android 14) Firefox/131.0')
@@ -117,7 +117,6 @@ class SecurityTest extends TestCase
     public function test_bcrypt_hashes_are_upgraded_to_argon2id_on_sign_in(): void
     {
         $user = User::where('email', 'customer@gleangrid.test')->first();
-        // Written straight to the table, like rows created before the Argon2id switch.
         DB::table('users')->where('id', $user->id)->update(['password' => Hash::driver('bcrypt')->make('Customer@123')]);
         $this->assertStringStartsWith('$2y$', $user->fresh()->password);
 
@@ -163,5 +162,26 @@ class SecurityTest extends TestCase
             ->assertHeader('Content-Type', 'application/xml; charset=UTF-8')
             ->assertSee('<urlset', false)
             ->assertSee(route('faq'), false);
+    }
+
+    public function test_a_duplicate_value_race_becomes_a_friendly_form_error(): void
+    {
+        Route::middleware('web')->post('/__duplicate', function () {
+            throw new UniqueConstraintViolationException('mysql', 'insert into users', [], new \Exception("Duplicate entry 'a@b.c' for key 'users_email_unique'"));
+        });
+
+        $this->from('/register')->post('/__duplicate')->assertRedirect('/register')->assertSessionHasErrors('email');
+    }
+
+    public function test_writes_are_rate_limited_but_page_views_are_not(): void
+    {
+        $user = User::where('email', 'customer@gleangrid.test')->firstOrFail();
+        for ($i = 0; $i < 70; $i++) {
+            $this->actingAs($user)->get(route('customer.orders.index'))->assertOk();
+        }
+        for ($i = 0; $i < 60; $i++) {
+            $this->actingAs($user)->post(route('notifications.read-all'));
+        }
+        $this->actingAs($user)->post(route('notifications.read-all'))->assertStatus(429);
     }
 }

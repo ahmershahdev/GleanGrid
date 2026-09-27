@@ -211,3 +211,150 @@ export default {
     coupons: { eyebrow: 'Votre étal', eyebrow_admin: 'Tous les étals', title: 'Coupons', subtitle: 'Récompensez vos habitués avec un code saisi au paiement. La remise réduit ce qu’ils vous paient au retrait.', add: 'Nouveau coupon', off: 'de remise', copy: 'Copier le code', status_live: 'Actif', status_scheduled: 'Programmé', status_expired: 'Expiré', status_used_up: 'Épuisé', status_off: 'En pause', min_short: 'Min. :amount', cap_short: 'Jusqu’à :amount', per_customer_short: ':count par client', until: 'Jusqu’au :date', used: ':count / :limit utilisés', pause: 'Mettre en pause', resume: 'Reprendre', empty_title: 'Aucun coupon pour l’instant', empty_body: 'Créez un code comme FRESH10 et partagez-le avec vos habitués.', stall: 'Étal', pick_stall: 'Choisir un étal', code: 'Code', generate: 'Générer un code', description: 'Description', description_ph: 'ex. 10 % sur votre premier panier', type: 'Type de remise', type_percent: 'Pourcentage', type_fixed: 'Montant fixe', percent: 'Pourcentage de remise', amount: 'Montant de la remise', min: 'Panier minimum', cap: 'Remise maximale', optional: 'Facultatif', limit: 'Utilisations totales', unlimited: 'Illimité', per_customer: 'Utilisations par client', starts: 'Début', ends: 'Fin', delete_title: 'Supprimer :code ?', delete_body: 'Un coupon déjà utilisé est mis en pause plutôt que supprimé, pour préserver l’historique des commandes.' },
     coupon: { invalid: 'Ce code n’est pas valable pour cet étal.', expired: 'Ce code n’est pas actif pour le moment.', minimum: 'Votre panier chez cet étal est sous le minimum du code.', used_up: 'Ce code a été entièrement utilisé.', already_used: 'Vous avez déjà utilisé ce code.' },
 };
+
+export const additions = {
+    "status": {
+        "no_show": "Non retiré"
+    },
+    "order": {
+        "no_show_note": "Non retiré pendant le créneau — les produits ont été remis en vente.",
+        "history": "Historique des statuts",
+        "qr_title": "Votre pass de retrait",
+        "qr_hint": "Montrez-le au stand. L’agriculteur le scanne et retrouve votre commande aussitôt — ou donnez simplement le code.",
+        "qr_save": "Enregistrer le pass",
+        "qr_alt": "Code QR de la commande :code",
+        "contact_farmer": "Contacter l’agriculteur",
+        "call": "Appeler",
+        "email": "E-mail"
+    },
+    "forders": {
+        "no_show": "Marquer absent",
+        "no_show_title": "Marquer comme non retiré ?",
+        "no_show_body": "Le stock est remis en vente et le client est prévenu. Des absences répétées suspendent ses précommandes.",
+        "no_show_count": ":count retrait(s) manqué(s) récemment"
+    },
+    "flash": {
+        "order_no_show": "Marqué comme non retiré.",
+        "order_not_found": "Aucune commande avec ce code à votre stand.",
+        "no_shows_reset": "Absences réinitialisées.",
+        "settings_saved": "Paramètres enregistrés.",
+        "account_deleted": "Votre compte a été supprimé. Merci d’avoir acheté local.",
+        "admin_cannot_delete": "Un compte administrateur ne peut pas se supprimer lui-même.",
+        "demo_cannot_delete": "Les comptes de démonstration sont partagés et ne peuvent pas être supprimés."
+    },
+    "notify": {
+        "pickup_reminder": {
+            "title": "Retrait demain : :code",
+            "body": ":date, :time à :market. Montrez votre pass au stand."
+        },
+        "order_no_show": {
+            "title": "La commande :code n’a pas été retirée",
+            "body": "Les produits ont été remis en vente. Des absences répétées suspendent les précommandes."
+        }
+    },
+    "dash": {
+        "scan": "Scanner un pass",
+        "audit": "Journal d’audit",
+        "settings": "Paramètres"
+    },
+    "scan": {
+        "title": "Scanner un pass de retrait",
+        "subtitle": "Pointez la caméra vers le code QR du client ou saisissez le code de commande.",
+        "start": "Activer la caméra",
+        "stop": "Arrêter",
+        "manual": "Saisir le code",
+        "manual_hint": "Les codes ressemblent à GG-7K2M9Q.",
+        "code": "Code de commande",
+        "open": "Ouvrir la commande",
+        "unsupported": "Ce navigateur ne lit pas les QR codes. Utilisez l’appareil photo du téléphone ou saisissez le code.",
+        "camera_error": "Impossible d’ouvrir la caméra. Autorisez l’accès ou saisissez le code ci-dessous.",
+        "preview": "Aperçu caméra"
+    },
+    "audit": {
+        "eyebrow": "Responsabilité",
+        "title": "Journal d’audit",
+        "subtitle": "Chaque validation, suspension, décision de modération et changement de paramètre — qui, quand et d’où.",
+        "empty": "Rien d’enregistré pour l’instant",
+        "empty_body": "Les actions d’administration apparaîtront ici.",
+        "system": "Système",
+        "note": "Les entrées sont en ajout seul : l’application ne les modifie ni ne les supprime jamais.",
+        "area": {
+            "farmer": "Stands",
+            "customer": "Clients",
+            "review": "Avis",
+            "listing": "Annonces",
+            "order": "Commandes",
+            "settings": "Paramètres",
+            "account": "Comptes",
+            "market": "Marchés",
+            "category": "Catégories",
+            "announcement": "Annonces du site",
+            "coupon": "Coupons",
+            "message": "Messages"
+        }
+    },
+    "settings": {
+        "eyebrow": "Plateforme",
+        "title": "Paramètres",
+        "subtitle": "Des règles pour tout GleanGrid.",
+        "updated": "Dernière modification par :who :when",
+        "orders_60": "Commandes (±30 jours)",
+        "revenue_60": "Chiffre d’affaires réalisé",
+        "no_shows": "Retraits manqués",
+        "lost": "Refusées / annulées",
+        "proc": "Chiffres en direct depuis la procédure stockée sp_platform_summary.",
+        "no_show_title": "Retraits manqués",
+        "no_show_hint": "Les clients qui atteignent ce nombre sur la période ne peuvent plus précommander jusqu’à réinitialisation.",
+        "no_show_limit": "Suspendre après (absences)",
+        "no_show_window": "Sur (jours)",
+        "max_open": "Précommandes ouvertes max. par client",
+        "reminders": "Rappels de retrait",
+        "reminder_hour": "Envoyer la veille à (heure, PKT)",
+        "reminder_hint": "Le planificateur vérifie chaque heure ; chaque commande est rappelée une fois.",
+        "signups": "Inscriptions",
+        "customer_signups": "Les nouveaux clients peuvent s’inscrire",
+        "farmer_signups": "Les nouveaux stands peuvent s’inscrire",
+        "farmer_signups_hint": "Suspendez le temps de traiter les validations en attente."
+    },
+    "data": {
+        "title": "Vos données",
+        "export_title": "Télécharger une copie",
+        "export_body": "Votre profil, commandes, avis, favoris, liens familiaux, connexions récentes et notifications, dans un fichier JSON.",
+        "export": "Télécharger mes données",
+        "delete_title": "Supprimer le compte",
+        "delete_body": "Les précommandes ouvertes sont annulées, votre profil, vos favoris et liens familiaux sont effacés, et les anciennes commandes sont anonymisées. Action irréversible.",
+        "admin_note": "Un compte administrateur est supprimé par un autre administrateur.",
+        "delete": "Supprimer mon compte",
+        "type_delete": "Tapez DELETE pour confirmer",
+        "delete_forever": "Supprimer définitivement"
+    },
+    "acustomers": {
+        "no_shows": "Absences",
+        "reset_no_shows": "Réinitialiser les absences",
+        "reset": "Réinitialiser"
+    },
+    "aorders": {
+        "trigger_note": "Enregistré automatiquement par un déclencheur de base de données.",
+        "override": "Annuler en tant qu’administrateur",
+        "override_hint": "Pour les litiges ou marchés fermés. Stock et coupons sont libérés, les deux parties sont prévenues.",
+        "reason": "Motif (visible par les deux)",
+        "cancel": "Annuler la commande"
+    },
+    "auth": {
+        "signups_paused": "Les inscriptions pour ce type de compte sont suspendues pour le moment — revenez bientôt."
+    },
+    "ui": {
+        "show_full_path": "Afficher le chemin complet"
+    },
+    "fields": {
+        "eyebrow": "Depuis les champs",
+        "title": "Terre, soleil et petits matins.",
+        "body": "Chaque panier commence bien avant le jour du marché. Voici le travail derrière les produits que vous réservez.",
+        "planting": "Semis",
+        "baking": "Cuit à l’aube",
+        "market": "Matin de marché",
+        "paddy": "Rizières",
+        "flowers": "En fleurs",
+        "dairy": "Nourri à l’herbe"
+    }
+};

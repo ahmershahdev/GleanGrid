@@ -10,11 +10,6 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
-/**
- * The cart itself lives in the browser (localStorage) so guests can fill it.
- * `sync` re-validates it against live stock and returns each farmer's
- * bookable pickup windows.
- */
 class CartController extends Controller
 {
     public function show(): Response
@@ -38,10 +33,10 @@ class CartController extends Controller
             $farmer = FarmerProfile::find($farmerId);
 
             return [
-                'farmer' => $farmer->only('id', 'stall_name', 'slug', 'order_cutoff_hours', 'logo_url'),
+                'farmer' => $farmer->only('id', 'stall_name', 'slug', 'order_cutoff_hours', 'logo_url', 'cover_url'),
                 'slots' => $orders->availableSlots($farmer),
                 'items' => $items->map(fn (Product $p) => [
-                    'product' => $p->only('id', 'name', 'slug', 'price', 'unit', 'image_url', 'stock_quantity', 'status'),
+                    'product' => $p->only('id', 'name', 'slug', 'price', 'unit', 'image_url', 'stock_quantity', 'status') + ['color' => $p->category?->color],
                     'quantity' => (int) $wanted[$p->id]['quantity'],
                     'orderable' => $p->isOrderable(),
                 ])->values(),

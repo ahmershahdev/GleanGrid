@@ -63,7 +63,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('farmer_profile_id')->constrained()->cascadeOnDelete();
             $table->foreignId('market_id')->constrained()->cascadeOnDelete();
-            $table->unsignedTinyInteger('day_of_week'); // 0 = Sunday … 6 = Saturday
+            $table->unsignedTinyInteger('day_of_week');
             $table->time('starts_at');
             $table->time('ends_at');
             $table->unsignedSmallInteger('capacity')->default(20);

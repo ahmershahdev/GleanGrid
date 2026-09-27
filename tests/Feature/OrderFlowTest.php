@@ -28,7 +28,6 @@ class OrderFlowTest extends TestCase
         $this->farmer = FarmerProfile::where('slug', 'hilltop-bakehouse')->first();
     }
 
-    /** First bookable [slot, date] for the farmer. */
     private function window(): array
     {
         $slot = app(OrderService::class)->availableSlots($this->farmer)->first();

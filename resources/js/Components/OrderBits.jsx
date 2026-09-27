@@ -11,7 +11,7 @@ export function OrderTimeline({ order }) {
     const t = useT();
     const { date, time } = useFormat();
     const stamps = { placed: order.created_at, accepted: order.accepted_at, ready: order.ready_at, completed: order.completed_at };
-    const terminal = ['declined', 'cancelled'].includes(order.status);
+    const terminal = ['declined', 'cancelled', 'no_show'].includes(order.status);
     const reached = terminal ? FLOW.filter((s) => stamps[s]) : FLOW.slice(0, FLOW.indexOf(order.status) + 1);
 
     return (
@@ -49,7 +49,6 @@ export function OrderTimeline({ order }) {
     );
 }
 
-/** Compact order row used in lists (customer & farmer). */
 export function OrderRow({ order, href, who }) {
     const t = useT();
     const { money, date, time } = useFormat();
@@ -78,5 +77,27 @@ export function OrderRow({ order, href, who }) {
                 <p className="text-xs text-ink-faint">{t('cart.items', { count: order.items_count })}</p>
             </div>
         </Link>
+    );
+}
+
+export function StatusHistory({ history = [] }) {
+    const t = useT();
+    const { date } = useFormat();
+    if (!history.length) return null;
+    return (
+        <ol className="relative space-y-4 border-s border-line ps-5">
+            {history.map((h, i) => (
+                <li key={i} className="relative">
+                    <span className="absolute -start-[1.6rem] top-1 size-2.5 rounded-full border-2 border-bg bg-brand" aria-hidden="true" />
+                    <p className="text-sm font-medium">
+                        {h.from ? `${t(`status.${h.from}`)} → ` : ''}
+                        {t(`status.${h.to}`)}
+                    </p>
+                    <p className="text-xs text-ink-faint">
+                        {date(h.at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                </li>
+            ))}
+        </ol>
     );
 }

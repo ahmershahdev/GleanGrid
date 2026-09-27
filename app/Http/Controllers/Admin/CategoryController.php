@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Category;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,7 +28,8 @@ class CategoryController extends Controller
     {
         $data = $this->validated($request);
         $data['slug'] = Str::slug($data['name']);
-        Category::create($data);
+        $category = Category::create($data);
+        AuditLog::record('category.created', "Added category {$category->name}", $category);
 
         return back()->with('success', 'flash.category_saved');
     }
@@ -44,6 +46,7 @@ class CategoryController extends Controller
         if ($category->products()->withTrashed()->exists()) {
             return back()->with('error', 'flash.category_in_use');
         }
+        AuditLog::record('category.deleted', "Deleted category {$category->name}", null, ['id' => $category->id]);
         $category->delete();
 
         return back()->with('success', 'flash.category_deleted');

@@ -4,7 +4,7 @@ import { AnimatePresence, motion, useMotionValueEvent, useScroll } from 'motion/
 import { ArrowUpRight, Globe, Heart, LayoutDashboard, LogOut, Mail, MapPin, Menu, Phone, ShoppingBasket, UserRound, X } from 'lucide-react';
 import { FacebookIcon, GithubIcon, LinkedinIcon, XIcon } from '@/Components/icons';
 import { useEffect, useState } from 'react';
-import Assistant from '@/Components/Assistant';
+import { AfterIdle, DeferredAssistant as Assistant } from '@/Components/Deferred';
 import { ScrollProgress, ScrollToTop, SearchPalette, SearchTrigger } from '@/Components/chrome';
 import Scrollbar from '@/Components/Scrollbar';
 import Breadcrumbs from '@/Components/Breadcrumbs';
@@ -35,7 +35,6 @@ function useSmoothScroll() {
             lenis.raf(time);
             id = requestAnimationFrame(raf);
         });
-        // Inertia resets window scroll on visits; keep Lenis' internal position in sync.
         const off = router.on('navigate', () =>
             requestAnimationFrame(() => {
                 lenis.resize();
@@ -69,13 +68,11 @@ function AnnouncementBar() {
         try {
             sessionStorage.setItem('gg-dismissed', JSON.stringify(next));
         } catch {
-            /* ignore */
         }
     };
 
     return (
         <div className={cn('relative z-50 py-2 ps-4 pe-10 text-sm sm:px-10 sm:text-center', item.level === 'warning' ? 'bg-sun text-forest' : 'bg-forest text-paper')}>
-            {/* One tidy line on phones (tap to read in full); the whole message on wider screens. */}
             <p className="truncate sm:whitespace-normal" title={`${item.title} — ${item.body}`}>
                 <strong className="font-semibold">{item.title}</strong> <span className="opacity-80">— {item.body}</span>
             </p>
@@ -142,7 +139,6 @@ function CartButton() {
     );
 }
 
-/** Heart in the header: quick link to favourites and the landing spot for fly-to-wishlist. */
 function FavoritesButton() {
     const { auth, favorites } = usePage().props;
     const t = useT();
@@ -153,6 +149,38 @@ function FavoritesButton() {
             <Heart className={cn('size-[19px]', count > 0 && 'fill-accent/15 text-accent')} />
             {count > 0 && <span className="absolute -top-0.5 -end-0.5 flex min-w-5 items-center justify-center rounded-full bg-ink px-1 text-[11px] font-bold text-bg tabular-nums">{count}</span>}
         </Link>
+    );
+}
+
+function DesktopNav() {
+    const t = useT();
+    const [hovered, setHovered] = useState(null);
+
+    return (
+        <nav className="ms-4 hidden items-center lg:flex" aria-label="Main" onPointerLeave={() => setHovered(null)}>
+            {NAV.map((item) => {
+                const current = route().current(item.match);
+                return (
+                    <Link
+                        key={item.key}
+                        href={route(item.route)}
+                        aria-current={current ? 'page' : undefined}
+                        onPointerEnter={() => setHovered(item.key)}
+                        onFocus={() => setHovered(item.key)}
+                        className={cn('group relative rounded-full px-3.5 py-2 text-[15px] font-medium transition-colors duration-300', current || hovered === item.key ? 'text-ink' : 'text-ink-soft')}
+                    >
+                        {hovered === item.key && <motion.span layoutId="nav-hover" className="absolute inset-0 -z-10 rounded-full bg-ink/[0.06]" transition={{ type: 'spring', stiffness: 420, damping: 34 }} />}
+                        <span className="relative block overflow-hidden">
+                            <span className="block transition-transform duration-500 ease-out-expo group-hover:-translate-y-full">{t(`nav.${item.key}`)}</span>
+                            <span className="absolute inset-0 block translate-y-full italic transition-transform duration-500 ease-out-expo group-hover:translate-y-0" aria-hidden="true">
+                                {t(`nav.${item.key}`)}
+                            </span>
+                        </span>
+                        {current && <motion.span layoutId="nav-dot" className="absolute -bottom-0.5 left-1/2 size-1 -translate-x-1/2 rounded-full bg-accent" transition={{ type: 'spring', stiffness: 380, damping: 30 }} />}
+                    </Link>
+                );
+            })}
+        </nav>
     );
 }
 
@@ -170,6 +198,10 @@ function Header() {
         setHidden(y > 240 && y > prev && !menu);
     });
 
+    useEffect(() => {
+        document.documentElement.dataset.header = hidden ? 'hidden' : 'shown';
+    }, [hidden]);
+
     useEffect(() => router.on('navigate', () => setMenu(false)), []);
     useEffect(() => {
         const reveal = () => setHidden(false);
@@ -178,7 +210,6 @@ function Header() {
     }, []);
     useEffect(() => {
         lockScroll(menu);
-        // Lets floating widgets (Basket Buddy, back-to-top) step aside while the menu is open.
         document.documentElement.classList.toggle('menu-open', menu);
     }, [menu]);
 
@@ -189,26 +220,24 @@ function Header() {
                 transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                 className="sticky top-0 z-[60] px-3 pt-3 sm:px-5"
             >
-                <div className={cn('mx-auto flex h-16 max-w-[1400px] items-center gap-4 rounded-full ps-4 pe-2.5 transition-all duration-500', scrolled || menu ? 'border border-line bg-elev/80 shadow-soft backdrop-blur-xl' : 'border border-transparent')}>
+                <div
+                    className={cn(
+                        'relative mx-auto flex items-center gap-4 rounded-full border ps-4 pe-2 transition-[max-width,height,background-color,border-color,box-shadow] duration-700 ease-out-expo',
+                        scrolled || menu
+                            ? 'h-14 max-w-[1300px] border-line bg-elev/75 shadow-[0_10px_40px_-18px_rgb(0_0_0/0.35)] backdrop-blur-2xl backdrop-saturate-150'
+                            : 'h-16 max-w-[1400px] border-transparent',
+                    )}
+                >
+                    <span aria-hidden="true" className={cn('pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-lime/60 to-transparent transition-opacity duration-700', scrolled && !menu ? 'opacity-100' : 'opacity-0')} />
                     <Logo />
-                    <nav className="ms-6 hidden items-center gap-1 lg:flex" aria-label="Main">
-                        {NAV.map((item) => (
-                            <Link
-                                key={item.key}
-                                href={route(item.route)}
-                                className={cn('relative rounded-full px-3.5 py-2 text-[15px] font-medium transition', route().current(item.match) ? 'text-ink' : 'text-ink-soft hover:text-ink')}
-                            >
-                                {route().current(item.match) && <motion.span layoutId="nav-pill" className="absolute inset-0 -z-10 rounded-full bg-ink/[0.06]" />}
-                                {t(`nav.${item.key}`)}
-                            </Link>
-                        ))}
-                    </nav>
+                    <DesktopNav />
                     <div className="ms-auto flex items-center gap-0.5">
                         <SearchTrigger className="me-1" />
                         <div className="hidden sm:flex sm:items-center sm:gap-0.5">
                             <LanguageSwitcher />
                             <ThemeToggle />
                         </div>
+                        <span className="mx-1 hidden h-5 w-px bg-line-strong sm:block" aria-hidden="true" />
                         <FavoritesButton />
                         <CartButton />
                         {auth.user ? (
@@ -220,7 +249,7 @@ function Header() {
                             </>
                         ) : (
                             <>
-                                <Link href={route('login')} className="hidden rounded-full px-4 py-2 text-[15px] font-medium text-ink-soft hover:text-ink xl:block">
+                                <Link href={route('login')} className="hidden rounded-full px-4 py-2 text-[15px] font-medium whitespace-nowrap text-ink-soft hover:text-ink xl:block">
                                     {t('nav.login')}
                                 </Link>
                                 <Magnetic className="hidden md:inline-block">
@@ -323,7 +352,6 @@ function Footer() {
     return (
         <footer className="relative mt-16 overflow-hidden bg-soil text-paper sm:mt-24">
             <div className="mx-auto max-w-[1400px] px-5 pt-14 sm:px-8 sm:pt-20">
-                {/* Phones: brand block, then link groups two-up, then support full width. */}
                 <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3 lg:grid-cols-[1.35fr_0.8fr_0.8fr_0.9fr_1.15fr] lg:gap-12">
                     <div className="col-span-2 md:col-span-3 lg:col-span-1">
                         <div className="flex items-center gap-5 lg:block">
@@ -382,7 +410,7 @@ function Footer() {
                 </div>
             </div>
             <div className="font-display pointer-events-none mt-10 px-3 text-center text-[21vw] leading-[0.8] font-semibold tracking-[-0.06em] select-none sm:mt-16" dir="ltr" aria-hidden="true">
-                <span className="text-outline [-webkit-text-stroke-color:rgb(243_238_227/0.35)]">Glean</span>
+                <span className="text-outline [--stroke-w:2px] [--stroke:rgb(243_238_227/0.9)]">Glean</span>
                 <span className="text-lime italic">Grid</span>
             </div>
             <div className="border-t border-paper/10 px-5 py-6 pb-24 text-center text-xs text-paper/55 sm:px-8 sm:pb-7 sm:text-sm">
@@ -399,7 +427,6 @@ function Footer() {
 }
 
 export default function PublicLayout({ children }) {
-    const { url } = usePage();
     useSmoothScroll();
 
     return (
@@ -411,18 +438,19 @@ export default function PublicLayout({ children }) {
             </a>
             <AnnouncementBar />
             <Header />
-            {/* The shell stays mounted; only the page content eases in, never blanking the screen. */}
-            <motion.main id="main" key={url.split('?')[0]} initial={{ opacity: 0.35, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}>
+            <main id="main">
                 <Breadcrumbs className="mx-auto max-w-[1400px] px-4 pt-6 sm:px-7" />
                 {children}
-            </motion.main>
+            </main>
             <Footer />
-            <Scrollbar />
-            <ScrollToTop />
-            <SearchPalette />
+            <AfterIdle>
+                <Scrollbar />
+                <ScrollToTop />
+                <SearchPalette />
+                <Toaster />
+                <Cursor />
+            </AfterIdle>
             <Assistant />
-            <Toaster />
-            <Cursor />
         </div>
     );
 }

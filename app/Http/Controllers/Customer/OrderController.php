@@ -29,7 +29,7 @@ class OrderController extends Controller
 
         return Inertia::render('Customer/Orders/Index', [
             'orders' => $orders,
-            'filters' => $filters,
+            'filters' => (object) $filters,
             'hasHousehold' => count($user->householdIds()) > 1,
             'placed' => session('placed'),
         ]);
@@ -44,6 +44,8 @@ class OrderController extends Controller
             'order' => [...$order->toArray(), 'editable' => $order->isEditableByCustomer()],
             'isOwner' => $order->customer_id === $request->user()->id,
             'reviewed' => $order->reviews->map(fn ($r) => $r->reviewable_type.':'.$r->reviewable_id),
+            'history' => $order->statusHistory(),
+            'scanUrl' => route('farmer.orders.show', $order),
         ]);
     }
 
@@ -55,7 +57,6 @@ class OrderController extends Controller
         }
 
         $order->load('items', 'farmer', 'market');
-        // Stock for items already in this order is "held" by it, so add it back for the editor.
         $held = $order->items->pluck('quantity', 'product_id');
 
         return Inertia::render('Customer/Orders/Edit', [

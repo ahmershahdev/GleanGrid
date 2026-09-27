@@ -1,5 +1,6 @@
 import { Link, useForm } from '@inertiajs/react';
-import { ImagePlus } from 'lucide-react';
+import ImagePicker from '@/Components/ImagePicker';
+import { useUnsavedGuard } from '@/lib/confirm';
 import { useState } from 'react';
 import { Button, Card, Input, PageHeader, Select, Textarea } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
@@ -21,14 +22,16 @@ export default function ProductForm({ product, categories, units, illustrations 
         status: product?.status ?? 'available',
         image: product?.image?.startsWith('produce:') ? product.image : product ? '' : 'produce:basket',
         upload: null,
+        remove_image: false,
     });
+    useUnsavedGuard(form.isDirty && !form.processing);
+    const savedPhoto = product?.image && !product.image.startsWith('produce:') ? product.image_url : null;
     const field = (name) => ({ value: form.data[name] ?? '', onChange: (e) => form.setData(name, e.target.value), error: form.errors[name] });
-    const preview = form.data.upload ? URL.createObjectURL(form.data.upload) : form.data.image ? produceImage(form.data.image.slice(8)) : product?.image_url;
 
     const submit = (e) => {
         e.preventDefault();
+        form.transform((d) => ({ ...d, remove_image: d.remove_image ? 1 : 0, ...(editing ? { _method: 'put' } : {}) }));
         if (editing) {
-            form.transform((d) => ({ ...d, _method: 'put' }));
             form.post(route('farmer.products.update', product.slug), { forceFormData: true });
         } else {
             form.post(route('farmer.products.store'), { forceFormData: true });
@@ -81,14 +84,17 @@ export default function ProductForm({ product, categories, units, illustrations 
 
                 <Card className="h-fit space-y-5 p-6 xl:sticky xl:top-24">
                     <h2 className="font-display text-2xl">{t('fproducts.image')}</h2>
-                    <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-3xl bg-sunk">
-                        {preview ? <img src={preview} alt="" className={cn(form.data.upload || !form.data.image ? 'size-full object-cover' : 'w-1/2 object-contain')} /> : <ImagePlus className="size-10 text-ink-faint" />}
-                    </div>
-                    <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-line-strong p-4 text-sm font-medium hover:bg-ink/[0.03]">
-                        <ImagePlus className="size-4" /> {t('fproducts.upload_photo')}
-                        <input type="file" accept="image/*" className="sr-only" onChange={(e) => form.setData({ ...form.data, upload: e.target.files[0], image: '' })} />
-                    </label>
-                    {form.errors.upload && <p className="text-sm text-danger">{form.errors.upload}</p>}
+                    <ImagePicker
+                        shape="wide"
+                        label={t('fproducts.upload_photo')}
+                        file={form.data.upload}
+                        current={form.data.image ? produceImage(form.data.image.slice(8)) : savedPhoto}
+                        removed={form.data.remove_image && !form.data.image}
+                        onPick={(f) => form.setData((d) => ({ ...d, upload: f, image: f ? '' : d.image, remove_image: f ? false : d.remove_image }))}
+                        onRemove={() => form.setData((d) => ({ ...d, image: '', remove_image: true }))}
+                        onUndo={() => form.setData((d) => ({ ...d, remove_image: false }))}
+                        error={form.errors.upload}
+                    />
                     <div>
                         <div className="mb-2 flex items-center justify-between gap-3">
                             <p className="text-sm text-ink-soft">{t('fproducts.or_pick')}</p>

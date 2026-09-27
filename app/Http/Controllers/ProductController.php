@@ -46,10 +46,11 @@ class ProductController extends Controller
 
         return Inertia::render('Products/Index', [
             'products' => $products,
-            'categories' => Category::where('is_active', true)->orderBy('sort_order')->get(['id', 'name', 'slug', 'icon', 'color']),
+            'categories' => Category::where('is_active', true)->orderBy('sort_order')->select('id', 'name', 'slug', 'icon', 'color')
+                ->withCount(['products as count' => fn ($q) => $q->listed()])->get(),
             'markets' => Market::active()->orderBy('name')->get(['id', 'name', 'slug']),
             'priceRange' => ['min' => (float) Product::listed()->min('price'), 'max' => (float) Product::listed()->max('price')],
-            'filters' => $filters,
+            'filters' => (object) $filters,
         ]);
     }
 

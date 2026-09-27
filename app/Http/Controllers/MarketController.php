@@ -38,7 +38,7 @@ class MarketController extends Controller
         return Inertia::render('Markets/Index', [
             'markets' => $markets,
             'cities' => Market::active()->distinct()->orderBy('city')->pluck('city'),
-            'filters' => $filters,
+            'filters' => (object) $filters,
         ]);
     }
 

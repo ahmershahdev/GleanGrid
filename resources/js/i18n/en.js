@@ -2,7 +2,7 @@ export default {
     nav: { home: 'Home', markets: 'Markets', farmers: 'Farmers', produce: 'Produce', about: 'About', contact: 'Contact', cart: 'Basket', login: 'Sign in', join: 'Join GleanGrid', logout: 'Sign out', dashboard: 'Dashboard', profile: 'Profile', account: 'Account', menu: 'Menu' },
     roles: { customer: 'Customer', farmer: 'Farmer', admin: 'Administrator' },
     common: {
-        all: 'All', search: 'Search', filters: 'Filters', sort: 'Sort', go: 'Go', view: 'View', visit: 'Visit', shop: 'Shop', save: 'Save', save_changes: 'Save changes', cancel: 'Cancel', delete: 'Delete', edit: 'Edit', remove: 'Remove', close: 'Close', details: 'Details', manage: 'Manage', view_all: 'View all', clear_all: 'Clear all', next: 'Next', previous: 'Previous', page_of: 'Page :page of :total', total: 'Total', language: 'Language',
+        all: 'All', search: 'Search', filters: 'Filters', sort: 'Sort', go: 'Go', view: 'View', visit: 'Visit', shop: 'Shop', save: 'Save', save_changes: 'Save changes', cancel: 'Cancel', delete: 'Delete', edit: 'Edit', remove: 'Remove', close: 'Close', details: 'Details', manage: 'Manage', view_all: 'View all', clear_all: 'Clear all', confirm: 'Confirm', next: 'Next', previous: 'Previous', page_of: 'Page :page of :total', total: 'Total', language: 'Language',
         theme_light: 'Light theme', theme_dark: 'Dark theme', theme_system: 'System theme', theme_to: 'Switch to :theme',
         no_results: 'Nothing matches that.',
     },
@@ -20,8 +20,8 @@ export default {
         tagline: 'e.g. Pesticide-free greens from Hatri since 1998', bio: 'Your farm, your people, how you grow — shoppers love the story.',
         code: '••••••',
     },
-    search: { open: 'Search', title: 'Search GleanGrid', placeholder: 'Search produce, farmers or markets…', hint: 'Press Enter to search all produce', go_produce: 'Browse all produce', go_farmers: 'Meet the farmers', go_markets: 'Find a market', quick: 'Jump to', popular: 'Popular right now', esc: 'Esc to close' },
-    ui: { back_to_top: 'Back to top' },
+    search: { open: 'Search', title: 'Search GleanGrid', placeholder: 'Search produce, farmers or markets…', hint: 'Press Enter to search all produce', go_produce: 'Browse all produce', go_farmers: 'Meet the farmers', go_markets: 'Find a market', quick: 'Jump to', popular: 'Popular right now', esc: 'Esc to close', scope: 'Search in', scope_all: 'Everything', scope_produce: 'Produce', scope_farmers: 'Farmers', scope_markets: 'Markets', recent: 'Recent searches', forget: 'Remove from recent', group_produce: 'Produce', group_farmers: 'Farmers', group_markets: 'Markets', did_you_mean: 'Did you mean', no_match: 'Nothing for “:q”', see_all: 'See every result for “:q”', open_today: 'Open today', closed_today: 'Closed today', none_title: 'Nothing at the stalls for that', none_body: 'Try a simpler word, another scope, or one of these favourites.', error: 'Search is taking a breather. Press Enter to search the full catalogue.', count_one: ':count match', count_other: ':count matches', k_move: 'move', k_open: 'open', k_all: 'all results' },
+    ui: { back_to_top: 'Back to top', show_full_path: 'Show full path' },
     fields: { name: 'Full name', username: 'Username', email: 'E-mail', phone: 'Contact number', address: 'Address', city: 'City', password: 'Password', password_confirm: 'Confirm password', stall_name: 'Stall / business name', contact_person: 'Contact person', latitude: 'Latitude', longitude: 'Longitude' },
 
     home: {
@@ -66,7 +66,7 @@ export default {
     products: {
         eyebrow: ':count items', title: 'All the produce.', search: 'Search produce…', category: 'Category', price: 'Price', min: 'Min', max: 'Max', market: 'Market', market_day: 'Market day', in_stock_only: 'In stock only', day_chip: 'Market day',
         sort_featured: 'Featured', sort_price_asc: 'Price: low to high', sort_price_desc: 'Price: high to low', sort_rating: 'Top rated', sort_popular: 'Most popular', sort_newest: 'Newest',
-        empty_title: 'Nothing matches that', empty_body: 'Try removing a filter or searching something else.',
+        empty_title: 'Nothing matches that', empty_body: 'Try removing a filter or searching something else.', reset: 'Reset', availability: 'Availability', apply: 'Show results',
     },
     reviews: { title: 'Reviews', count: ':count reviews', none: 'No reviews yet.', farmer_reply: 'Farmer replied', placeholder: 'What did you love? (optional)', submit: 'Post review', thanks: 'You reviewed :name', rate_order: 'Rate this order', rate_hint: 'Your review helps neighbours shop and farmers improve.', mine_title: 'My reviews', mine_sub: 'Everything you’ve rated.', mine_empty: 'You haven’t written any reviews yet.', hidden_by_admin: 'Hidden by a moderator', type_farmer: 'Stall', type_product: 'Product', rating: 'Rating' },
     favorites: { add: 'Save to favourites', remove: 'Remove from favourites', title: 'Favourites', subtitle: 'Your saved produce, stalls and markets.', empty_title: 'Nothing saved yet', empty_body: 'Tap the heart on any product, farmer or market.', products: 'Products (:count)', farmers: 'Farmers (:count)', markets: 'Markets (:count)', alert_on: 'Restock alerts on', alert_off: 'Restock alerts off' },
@@ -74,6 +74,7 @@ export default {
         title: 'Your basket', add: 'Add', added: 'Added to your basket', increase: 'Increase', decrease: 'Decrease', empty_title: 'Your basket is empty', empty_body: 'Fill it with something fresh from this week’s harvest.', browse: 'Browse produce',
         missing: ':count item(s) are no longer listed.', only_left: 'Only :count left — quantity will be adjusted', separate_order: 'Separate pre-order', no_slots: 'This farmer has no bookable pickup windows right now.',
         summary: 'Summary', items: ':count items', stalls: ':count stalls', pickup_free: 'Pickup · free', total: 'Total', pay_note: 'Pay in person when you collect.', checkout: 'Choose pickup windows', login_checkout: 'Sign in to pre-order', customers_only: 'Only customer accounts can place pre-orders.',
+        step_basket: 'Basket', step_pickup: 'Pickup window', step_done: 'Confirmed', eyebrow: 'Pre-order, then collect', order_of: 'Pre-order :n of :total', next_pickup: 'Next pickup', keep_shopping: 'Keep filling your basket', continue: 'Continue', removed: ':name removed', undo: 'Undo',
     },
     checkout: { title: 'Pickup & confirm', order_n: 'Order :n', choose_window: 'Choose a pickup window', note: 'Note for the farmer', note_placeholder: 'E.g. please pick the ripest ones', pickup_by: 'Picking up', place: 'Place :count pre-order(s)', terms: 'You can change or cancel until each farmer’s cut-off.',
         coupon: 'Have a coupon code?', apply: 'Apply', subtotal: 'Subtotal', discount: 'Discount', saved: 'You save :amount',
@@ -110,7 +111,7 @@ export default {
     },
     auth: {
         art_quote: 'Know what’s fresh before you leave home.', art_caption: 'GleanGrid connects Hyderabad’s farmers markets with the people they feed.',
-        login_title: 'Welcome back', login_sub: 'Sign in with your e-mail or username.', login_field: 'E-mail or username', remember: 'Keep me signed in', forgot: 'Forgot password?', login_button: 'Sign in', no_account: 'New here?', toggle_password: 'Show or hide password', demo: 'Demo accounts — one click',
+        login_title: 'Welcome back', login_sub: 'Sign in with your e-mail or username.', login_field: 'E-mail or username', remember: 'Keep me signed in', forgot: 'Forgot password?', login_button: 'Sign in', no_account: 'New here?', toggle_password: 'Show or hide password', demo: 'Demo accounts — one tap', demo_hint: 'One tap signs you in. Demo accounts skip the e-mail step.', demo_as: 'Sign in as demo :role',
         register_title: 'Create your account', register_sub: 'Pre-order from local farmers in minutes.', register_sub_farmer: 'Open a stall and start taking pre-orders.', as_customer: 'I’m shopping', as_farmer: 'I’m a farmer',
         password_hint: 'At least 8 characters, with upper- and lower-case letters, a number and a symbol.', terms: 'I agree to pick up and pay for what I reserve.', farmer_review_note: 'New stalls are reviewed by an admin before products go live.', register_button: 'Create account', register_farmer_button: 'Register my stall', have_account: 'Already have an account?',
         forgot_title: 'Reset your password', forgot_sub: 'We’ll e-mail you a reset link.', send_link: 'Send reset link', back_to_login: 'Back to sign in', reset_title: 'Choose a new password', reset_button: 'Reset password',
@@ -156,6 +157,7 @@ export default {
     slots: { title: 'Pickup windows & cut-off', subtitle: 'When customers can collect from you at each market.', add: 'Add window', edit: 'Edit window', market: 'Market', day: 'Day', market_days_hint: '✓ = market trades that day', from: 'From', to: 'To', capacity: 'Max orders', active: 'Accepting orders', cap: 'up to :count orders', empty: 'No pickup windows yet.', no_markets: 'Add the markets you sell at first.', cutoff_title: 'Order cut-off', cutoff_body: 'Customers can place, change or cancel orders until this many hours before a pickup window starts.', cutoff_hours: 'Hours before pickup' },
     freviews: { title: 'Customer reviews', subtitle: 'See what people say and reply publicly.', reply: 'Reply', placeholder: 'Write a public reply…', post: 'Post reply', unanswered: 'Unanswered', on_product: 'on :name', on_stall: 'on your stall' },
     admin: {
+        revenue: 'Revenue',
         eyebrow: 'Control room', title: 'Platform overview', stat_farmers: 'Approved farmers', stat_customers: 'Customers', stat_markets: 'Markets', stat_orders: 'Total orders', pending_hint: ':count awaiting approval', open_hint: ':count open right now',
         chart_eyebrow: 'Last 30 days', chart_title: 'Orders per day', revenue_total: 'Completed revenue', orders: 'Orders', status_eyebrow: 'All time', status_title: 'Orders by status',
         approvals_eyebrow: 'Action needed', approvals_title: 'Pending farmers', no_pending: 'No stalls waiting for approval.', approve: 'Approve', suspend: 'Suspend', unread_messages: ':count unread contact messages',
@@ -189,7 +191,7 @@ export default {
         contact_cta: 'Get in touch',
     },
     contact: { eyebrow: 'Contact us', title: 'Say salaam. We read everything.', email: 'E-mail', phone: 'Phone', visit: 'Visit', form_title: 'Send us a message', subject: 'Subject', message: 'Message', send: 'Send message', map_title: 'Our location on Google Maps',
-        copy: 'Copy', local_time: 'Hyderabad :time', online: 'we’re online', offline: 'back at 9 am', faq_first: 'Try the FAQ', sent_title: 'Message on its way', sent_body: 'Thanks — a real person will reply to your e-mail within one working day.', another: 'Send another', reply_time: 'We usually reply within one working day.', topic: 'What’s it about?', topic_order: 'Order help', topic_sell: 'Selling on GleanGrid', topic_partner: 'Partnership', topic_feedback: 'Feedback', topic_other: 'Something else', privacy_note: 'We only use your details to reply.',
+        copy: 'Copy', local_time: 'Hyderabad :time', online: 'we’re online', offline: 'back at 9 am', faq_first: 'Try the FAQ', sent_title: 'Message on its way', sent_body: 'Thanks — a real person will reply to your e-mail within one working day.', another: 'Send another', reply_time: 'We usually reply within one working day.', topic: 'What’s it about?', topic_order: 'Order help', topic_sell: 'Selling on GleanGrid', topic_partner: 'Partnership', topic_feedback: 'Feedback', topic_other: 'Something else', subject_default: 'Optional — leave blank to use “:topic”', subject_required: 'Tell us in a few words what it’s about.', suggest_topic: 'Sounds like “:topic” — switch topic?', privacy_note: 'We only use your details to reply.',
     },
     footer: { tagline: 'Farm fresh, just a click away.', cta: 'Sell with GleanGrid', explore: 'Explore', company: 'Company', account: 'Account', sell: 'Sell with us', rights: 'All rights reserved.', credits: 'Maps © OpenStreetMap contributors · Illustrations: Fluent Emoji (MIT)',
         help: 'Help', faq: 'FAQ', support: 'Support', crafted: 'Designed & built by',
@@ -212,11 +214,159 @@ export default {
         coupon_saved: 'Coupon saved.', coupon_deleted: 'Coupon removed.', reply_sent: 'Reply sent by e-mail.',
     },
     verify: { title: 'Check your inbox', subtitle: 'We sent a six-digit code to :email. Enter it below to confirm it’s really you.', digit: 'Digit :n', confirm: 'Confirm e-mail', no_code: 'Nothing yet? Check spam, or', resend: 'Send a new code', resend_in: 'New code in :s s', wrong_email: 'Used the wrong address?', expired: 'That code has expired or was used too many times. Send yourself a new one.', wrong: 'That code isn’t right. Check the latest e-mail and try again.' },
-    captcha: { failed: 'We couldn’t confirm you’re human. Please try again.', challenge: 'Quick check: tick the box below, then send the form again.' },
+    confirm: { delete_title: 'Delete this for good?', delete_body: 'This can’t be undone.', unsaved_title: 'Leave without saving?', unsaved_body: 'You have changes that haven’t been saved yet. They’ll be lost if you leave now.', leave: 'Leave page', stay: 'Keep editing' },
+    captcha: { failed: 'We couldn’t confirm you’re human. Please try again.', challenge: 'Quick check: tick the box below, then send the form again.', required: 'Please tick “I’m not a robot” first.', notice_pre: 'Protected by reCAPTCHA — Google’s', privacy: 'Privacy Policy', terms: 'Terms', notice_post: 'apply.' },
     security: { title: 'Sign-in & security', subtitle: 'Where you’re signed in, recent sign-ins and your e-mail status.', verified: 'E-mail verified', unverified: 'E-mail not verified', sessions: 'Active sessions', this_device: 'This device', confirm_password: 'Confirm with your password', logout_others: 'Sign out other devices', recent: 'Recent sign-ins', no_history: 'No sign-ins recorded yet.', password_changed: 'Password last changed :when.' },
     faq: { eyebrow: 'Help centre', title: 'Questions, answered.', subtitle: 'Everything about pre-ordering, pickup, selling and keeping your account safe.', search: 'Search the FAQ…', all: 'All', still: 'Still stuck?', contact: 'Talk to a human', none: 'No answer matches that yet.' },
     legal: { nav: 'Policies', terms: 'Terms', privacy: 'Privacy', returns: 'Returns & refunds', pickup: 'Pickup policy', updated: 'Last updated :date', english_only: 'Our policies are published in English, which is the governing version.' },
     validation: { required: 'This field is required.', username: 'Use 3–50 letters, numbers, - or _.', email: 'Enter a valid e-mail address.' },
     coupons: { eyebrow: 'Your stall', eyebrow_admin: 'All stalls', title: 'Coupons', subtitle: 'Reward regulars with a code they enter at checkout. The discount comes off what the customer pays at pickup.', add: 'New coupon', off: 'off', copy: 'Copy code', status_live: 'Live', status_scheduled: 'Scheduled', status_expired: 'Expired', status_used_up: 'Used up', status_off: 'Paused', min_short: 'Min :amount', cap_short: 'Up to :amount', per_customer_short: ':count per customer', until: 'Until :date', used: ':count / :limit used', pause: 'Pause', resume: 'Resume', empty_title: 'No coupons yet', empty_body: 'Create a code like FRESH10 and share it with your regulars.', stall: 'Stall', pick_stall: 'Choose a stall', code: 'Code', generate: 'Generate a code', description: 'Description', description_ph: 'e.g. 10% off your first basket', type: 'Discount type', type_percent: 'Percentage', type_fixed: 'Fixed amount', percent: 'Percent off', amount: 'Amount off', min: 'Minimum basket', cap: 'Maximum discount', optional: 'Optional', limit: 'Total uses', unlimited: 'Unlimited', per_customer: 'Uses per customer', starts: 'Starts', ends: 'Ends', delete_title: 'Delete :code?', delete_body: 'A coupon that was already used is paused instead, so order history stays intact.' },
     coupon: { invalid: 'That code doesn’t work for this stall.', expired: 'This code isn’t active right now.', minimum: 'Your basket from this stall is below this code’s minimum.', used_up: 'This code has been fully redeemed.', already_used: 'You’ve already used this code.' },
+};
+
+export const additions = {
+    "status": {
+        "no_show": "Not collected"
+    },
+    "order": {
+        "no_show_note": "Not collected in the pickup window — the produce went back on sale.",
+        "history": "Status history",
+        "qr_title": "Your pickup pass",
+        "qr_hint": "Show this at the stall. The farmer scans it to find your order instantly — or just read out the code.",
+        "qr_save": "Save pass",
+        "qr_alt": "QR code for order :code",
+        "contact_farmer": "Contact the farmer",
+        "call": "Call",
+        "email": "E-mail"
+    },
+    "forders": {
+        "no_show": "Mark no-show",
+        "no_show_title": "Mark as not collected?",
+        "no_show_body": "The stock goes back on sale and the customer is told. Repeated no-shows pause their pre-ordering.",
+        "no_show_count": ":count missed pickup(s) recently"
+    },
+    "flash": {
+        "order_no_show": "Marked as not collected.",
+        "order_not_found": "No order with that code at your stall.",
+        "no_shows_reset": "Missed pickups reset.",
+        "settings_saved": "Settings saved.",
+        "account_deleted": "Your account has been deleted. Thank you for shopping local.",
+        "admin_cannot_delete": "Administrator accounts can’t delete themselves.",
+        "demo_cannot_delete": "Demo accounts are shared and can’t be deleted."
+    },
+    "notify": {
+        "pickup_reminder": {
+            "title": "Pickup tomorrow: :code",
+            "body": ":date, :time at :market. Show your pass at the stall."
+        },
+        "order_no_show": {
+            "title": "Order :code wasn’t collected",
+            "body": "The produce went back on sale. Repeated missed pickups pause pre-ordering."
+        }
+    },
+    "dash": {
+        "scan": "Scan pass",
+        "audit": "Audit log",
+        "settings": "Settings"
+    },
+    "scan": {
+        "title": "Scan a pickup pass",
+        "subtitle": "Point your camera at the customer’s QR code, or type their order code.",
+        "start": "Start camera",
+        "stop": "Stop",
+        "manual": "Type the code",
+        "manual_hint": "Codes look like GG-7K2M9Q.",
+        "code": "Order code",
+        "open": "Open order",
+        "unsupported": "This browser can’t scan QR codes. Use your phone’s camera app on the pass, or type the code.",
+        "camera_error": "Couldn’t open the camera. Allow camera access, or type the code below.",
+        "preview": "Camera preview"
+    },
+    "audit": {
+        "eyebrow": "Accountability",
+        "title": "Audit log",
+        "subtitle": "Every approval, suspension, moderation decision, setting change and override — who did it, when, and from where.",
+        "empty": "Nothing recorded yet",
+        "empty_body": "Administrative actions will appear here as they happen.",
+        "system": "System",
+        "note": "Entries are append-only: the application never edits or deletes them.",
+        "area": {
+            "farmer": "Stalls",
+            "customer": "Customers",
+            "review": "Reviews",
+            "listing": "Listings",
+            "order": "Orders",
+            "settings": "Settings",
+            "account": "Accounts",
+            "market": "Markets",
+            "category": "Categories",
+            "announcement": "Announcements",
+            "coupon": "Coupons",
+            "message": "Messages"
+        }
+    },
+    "settings": {
+        "eyebrow": "Platform",
+        "title": "Settings",
+        "subtitle": "Rules that apply across GleanGrid.",
+        "updated": "Last changed by :who :when",
+        "orders_60": "Orders (±30 days)",
+        "revenue_60": "Completed revenue",
+        "no_shows": "Missed pickups",
+        "lost": "Declined / cancelled",
+        "proc": "Figures come live from the sp_platform_summary stored procedure.",
+        "no_show_title": "Missed pickups",
+        "no_show_hint": "Customers who miss this many pickups inside the window can’t pre-order until an admin resets them.",
+        "no_show_limit": "Pause after (no-shows)",
+        "no_show_window": "Within (days)",
+        "max_open": "Max open pre-orders per customer",
+        "reminders": "Pickup reminders",
+        "reminder_hour": "Send the evening before at (hour, PKT)",
+        "reminder_hint": "The scheduler checks every hour; each order is reminded once.",
+        "signups": "Sign-ups",
+        "customer_signups": "New customers can register",
+        "farmer_signups": "New farmer stalls can register",
+        "farmer_signups_hint": "Pause while you work through a backlog of stall approvals."
+    },
+    "data": {
+        "title": "Your data",
+        "export_title": "Download a copy",
+        "export_body": "Your profile, orders, reviews, favourites, family links, recent sign-ins and notifications, as a JSON file.",
+        "export": "Download my data",
+        "delete_title": "Delete account",
+        "delete_body": "Open pre-orders are cancelled, your profile, favourites and family links are erased, and past orders are anonymised so farmers’ records stay correct. This can’t be undone.",
+        "admin_note": "Administrator accounts are removed by another administrator.",
+        "delete": "Delete my account",
+        "type_delete": "Type DELETE to confirm",
+        "delete_forever": "Delete forever"
+    },
+    "acustomers": {
+        "no_shows": "Missed",
+        "reset_no_shows": "Reset missed pickups",
+        "reset": "Reset"
+    },
+    "aorders": {
+        "trigger_note": "Recorded automatically by a database trigger.",
+        "override": "Cancel as administrator",
+        "override_hint": "For disputes or closed markets. Stock and coupons are released and both sides are notified.",
+        "reason": "Reason (shared with both)",
+        "cancel": "Cancel order"
+    },
+    "auth": {
+        "signups_paused": "New sign-ups for this account type are paused for now — please check back soon."
+    },
+    "ui": {
+        "show_full_path": "Show full path"
+    },
+    "fields": {
+        "eyebrow": "From the fields",
+        "title": "Soil, sun and early mornings.",
+        "body": "Every basket starts long before market day. This is the work behind the produce you reserve.",
+        "planting": "Planting",
+        "baking": "Baked at dawn",
+        "market": "Market morning",
+        "paddy": "Paddy fields",
+        "flowers": "In bloom",
+        "dairy": "Grass-fed"
+    }
 };

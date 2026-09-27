@@ -7,14 +7,11 @@ import { useFormat, useT } from '@/lib/i18n';
 import { cn, googleDirections, osmDirections } from '@/lib/utils';
 import { Button } from '@/Components/ui';
 
-// Hyderabad (Sindh) city centre — used when nothing else is known.
 export const DEFAULT_CENTER = [25.396, 68.3578];
 
-// Standard OpenStreetMap tiles (no API key). Dark mode is produced with a CSS filter in app.css.
 const TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
-/** Teardrop pin rendered as HTML so it needs no image assets. */
 export function pinIcon({ color = '#1F4D36', image, label, active } = {}) {
     const inner = image
         ? `<img src="${image}" alt="" style="width:26px;height:26px;transform:rotate(45deg)"/>`
@@ -37,7 +34,7 @@ const youIcon = L.divIcon({
 });
 
 function Tiles() {
-    return <TileLayer url={TILES} attribution={ATTRIBUTION} maxZoom={19} />;
+    return <TileLayer url={TILES} attribution={ATTRIBUTION} maxZoom={19} detectRetina />;
 }
 
 function FitBounds({ points, route }) {
@@ -50,9 +47,6 @@ function FitBounds({ points, route }) {
     return null;
 }
 
-/**
- * markers: [{ id, lat, lng, title, subtitle, href, color, image, label }]
- */
 export function MapView({ markers = [], className, activeId, onMarkerClick, route, you, scrollWheel = false, children }) {
     const points = useMemo(() => markers.filter((m) => m.lat != null && m.lng != null).map((m) => [m.lat, m.lng]), [markers]);
 
@@ -63,7 +57,7 @@ export function MapView({ markers = [], className, activeId, onMarkerClick, rout
                 <FitBounds points={points} route={route} />
                 {markers.map((m) =>
                     m.lat == null ? null : (
-                        <Marker key={m.id} position={[m.lat, m.lng]} icon={pinIcon({ ...m, active: m.id === activeId })} eventHandlers={{ click: () => onMarkerClick?.(m) }}>
+                        <Marker key={m.id} position={[m.lat, m.lng]} title={m.title} alt={m.title} icon={pinIcon({ ...m, active: m.id === activeId })} eventHandlers={{ click: () => onMarkerClick?.(m) }}>
                             {m.title && (
                                 <Popup>
                                     <p className="font-display text-base leading-tight">{m.title}</p>
@@ -93,7 +87,6 @@ export function MapView({ markers = [], className, activeId, onMarkerClick, rout
     );
 }
 
-/** Map + "route from my location" using the public OSRM demo router, plus deep links. */
 export function DirectionsMap({ lat, lng, title, subtitle, className, color, image }) {
     const t = useT();
     const { number } = useFormat();
@@ -166,7 +159,6 @@ function Recenter({ position }) {
     return null;
 }
 
-/** Click or drag to set latitude/longitude (farmers' stall pin, admin markets). */
 export function LocationPicker({ lat, lng, onChange, className }) {
     const t = useT();
     const position = lat != null && lat !== '' ? [Number(lat), Number(lng)] : null;

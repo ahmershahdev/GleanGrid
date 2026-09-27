@@ -22,6 +22,62 @@ use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
+    public const PRODUCT_PHOTOS = [
+        'Heirloom Carrots' => 'carrots',
+        'Vine Tomatoes' => 'tomatoes',
+        'Baby Eggplant' => 'eggplant',
+        'Green Bell Peppers' => 'bell-peppers',
+        'Broccoli Crowns' => 'broccoli',
+        'Sweet Corn' => 'sweet-corn',
+        'Sindhri Mangoes' => 'sindhri-mangoes',
+        'Bananas' => 'bananas',
+        'Red Apples' => 'red-apples',
+        'Sweet Grapes' => 'grapes',
+        'Kinnow Tangerines' => 'tangerines',
+        'Pears' => 'pears',
+        'Fresh Cow Milk' => 'milk',
+        'Farmhouse Cheese' => 'cheese',
+        'Desi Butter (Makhan)' => 'butter',
+        'Free-range Eggs' => 'free-range-eggs',
+        'Country Sourdough' => 'sourdough',
+        'Baguette' => 'baguette',
+        'Butter Croissants' => 'croissants',
+        'Sesame Bagels' => 'bagels',
+        'Oat & Jaggery Cookies' => 'cookies',
+        'Seasonal Fruit Pie' => 'fruit-pie',
+        'Raw Beri Honey' => 'raw-honey',
+        'Wildflower Honey' => 'wildflower-honey',
+        'Mango Achar' => 'achar',
+        'Coriander Bunch' => 'coriander',
+        'Spinach (Palak)' => 'spinach',
+        'Microgreens Mix' => 'microgreens',
+        'Fresh Ginger' => 'ginger',
+        'Green Chillies' => 'green-chillies',
+        'Aged Basmati Rice' => 'basmati-rice',
+        'Red Kidney Beans' => 'kidney-beans',
+        'Roasted Peanuts' => 'peanuts',
+        'Fresh Green Peas' => 'green-peas',
+        'Desi Eggs' => 'desi-eggs',
+        'Farm Chicken (whole)' => 'chicken',
+        'Sunflower Stems' => 'sunflowers',
+        'Tulip Bunch' => 'tulips',
+        'Market Bouquet' => 'bouquet',
+        'Potatoes' => 'potatoes',
+        'Red Onions' => 'red-onions',
+        'Garlic' => 'garlic',
+        'Cucumbers' => 'cucumbers',
+        'Button Mushrooms' => 'mushrooms',
+        'Lemons' => 'lemons',
+        'Chaunsa Mangoes' => 'chaunsa-mangoes',
+        'Watermelon' => 'watermelon',
+        'Cantaloupe' => 'cantaloupe',
+        'Pineapple' => 'pineapple',
+        'Tender Coconut' => 'coconut',
+        'Strawberries' => 'strawberries',
+        'Blueberries' => 'blueberries',
+        'Mixed Vegetables Box' => 'veg-box',
+    ];
+
     public function run(): void
     {
         mt_srand(7);
@@ -40,9 +96,20 @@ class DatabaseSeeder extends Seeder
         $this->orders($customers, $farmers);
         $this->extras($admin, $customers, $farmers);
         $this->coupons($farmers);
+        $this->coverPhotos();
     }
 
-    /** Demo codes: live, capped, scheduled and expired, so every coupon state shows up. */
+    private function coverPhotos(): void
+    {
+        foreach ([Market::class, FarmerProfile::class] as $model) {
+            $model::query()->each(function ($row) {
+                if (is_file(public_path("images/photos/{$row->slug}.webp"))) {
+                    $row->update(['cover_image' => 'photo:'.$row->slug]);
+                }
+            });
+        }
+    }
+
     private function coupons(array $farmers): void
     {
         $by = collect($farmers)->keyBy('slug');
@@ -67,7 +134,6 @@ class DatabaseSeeder extends Seeder
 
     private function markets(): array
     {
-        // Real Hyderabad (Sindh) neighbourhoods; coordinates are approximate market spots.
         $rows = [
             ['Qasimabad Sunday Farmers Market', 'Qasimabad', 'Main Qasimabad Road, near Naseem Nagar Chowk', 25.4056, 68.3265, [0], '08:00', '14:00',
                 'Hyderabad’s best-loved Sunday market: seasonal produce, artisan bread and live cooking along Qasimabad’s main road.'],
@@ -112,7 +178,6 @@ class DatabaseSeeder extends Seeder
 
     private function farmers(array $markets, array $categories): array
     {
-        // [stall, contact, email, tagline, markets idx, status, lat, lng, products[name, category, price, unit, stock, image, description]]
         $rows = [
             ['Green Acres Organic Farm', 'Ali Raza', 'farmer@gleangrid.test', 'Chemical-free vegetables from the fields of Tando Jam since 2009.', [0, 3, 1], 'approved', 25.4312, 68.5205, [
                 ['Heirloom Carrots', 'Vegetables', 180, 'kg', 40, 'carrot', 'Sweet, crunchy desi carrots — perfect for gajar ka halwa.'],
@@ -223,7 +288,6 @@ class DatabaseSeeder extends Seeder
             foreach ($farmerMarkets as $k => $market) {
                 $farmer->markets()->attach($market->id, ['stall_number' => chr(65 + $k).'-'.mt_rand(1, 40)]);
                 foreach ($market->operating_days as $day) {
-                    // Two pickup windows per market day: the first and second half of trading hours.
                     $open = CarbonImmutable::parse($market->opens_at);
                     $close = CarbonImmutable::parse($market->closes_at);
                     $mid = $open->addMinutes((int) ($open->diffInMinutes($close) / 2));
@@ -241,7 +305,7 @@ class DatabaseSeeder extends Seeder
                     'farmer_profile_id' => $farmer->id, 'category_id' => $categoryByName[$p[1]]->id,
                     'name' => $p[0], 'slug' => Str::slug($p[0].' '.$r[0]), 'description' => $p[6],
                     'price' => $p[2], 'unit' => $p[3], 'stock_quantity' => $p[4],
-                    'weekly_quantity' => max($p[4], 20), 'image' => 'produce:'.$p[5],
+                    'weekly_quantity' => max($p[4], 20), 'image' => 'produce:'.$p[5], 'photo' => isset(self::PRODUCT_PHOTOS[$p[0]]) ? 'photo:products/'.self::PRODUCT_PHOTOS[$p[0]] : null,
                     'status' => $p[4] > 0 ? 'available' : 'sold_out', 'is_featured' => mt_rand(0, 3) === 0,
                 ]);
             }
@@ -290,7 +354,6 @@ class DatabaseSeeder extends Seeder
         ];
         $replies = ['Thank you so much! See you next week 🌱', 'Sorry about that — we\'ve added an extra check before packing.', 'Thanks for the kind words!'];
 
-        // ~150 historic orders over the last 60 days, plus upcoming ones.
         for ($n = 0; $n < 170; $n++) {
             $farmer = $approved->random();
             $slot = $farmer->pickupSlots->random();
@@ -343,7 +406,6 @@ class DatabaseSeeder extends Seeder
                 foreach ($lines as $line) {
                     Product::whereKey($line['product_id'])->increment('sold_count', $line['quantity']);
                 }
-                // Most completed orders get a review; the first few of the demo customer stay unreviewed.
                 if (mt_rand(1, 100) <= 70 && ! ($customer->id === $shoppers[0]->id && $n < 6)) {
                     $rating = [5, 5, 5, 4, 4, 4, 3, 2][mt_rand(0, 7)];
                     $review = Review::create([

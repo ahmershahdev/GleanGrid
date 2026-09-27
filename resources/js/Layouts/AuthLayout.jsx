@@ -54,7 +54,6 @@ export default function AuthLayout({ title, subtitle, children }) {
                     </div>
                 </div>
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }} className="mx-auto my-auto w-full max-w-md py-10 sm:py-12">
-                    {/* Phones don't get the art panel, so a small produce band keeps the brand feel. */}
                     <div className="mb-6 flex gap-2 lg:hidden" aria-hidden="true">
                         {ART.slice(0, 5).map((img, i) => (
                             <motion.img key={img} src={produceImage(img)} alt="" initial={{ opacity: 0, y: 12, rotate: -20 }} animate={{ opacity: 1, y: 0, rotate: 0 }} transition={{ delay: 0.05 * i, type: 'spring', stiffness: 160, damping: 14 }} className="size-10" />

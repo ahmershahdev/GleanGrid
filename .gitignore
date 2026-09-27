@@ -26,3 +26,10 @@ Thumbs.db
 # Source material kept locally, not published
 /syedahmershah.png
 /*.pdf
+
+# Playwright artefacts
+/storage/app/playwright-report
+/storage/app/playwright-results
+/test-results
+/bootstrap/ssr
+/*.docx

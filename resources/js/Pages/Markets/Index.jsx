@@ -2,7 +2,7 @@ import { router } from '@inertiajs/react';
 import { LocateFixed, Search, X } from 'lucide-react';
 import { useState } from 'react';
 import { MarketCard } from '@/Components/Cards';
-import { MapView } from '@/Components/Map';
+import { LazyMapView as MapView } from '@/Components/LazyMap';
 import { SplitWords } from '@/Components/motion';
 import { ChipToggle, EmptyState } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
@@ -45,7 +45,7 @@ export default function MarketsIndex({ markets, cities, filters }) {
                             e.preventDefault();
                             apply({ q });
                         }}
-                        className="flex h-12 shrink-0 items-center gap-2 rounded-full border border-line-strong bg-elev px-4 transition focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/15 lg:w-80"
+                        className="flex h-12 shrink-0 items-center gap-2 rounded-full border border-line-strong bg-elev px-4 transition focus-within:border-brand focus-within:ring-1 focus-within:ring-brand lg:w-80"
                     >
                         <Search className="size-4 text-ink-faint" />
                         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('markets.search')} className="h-full flex-1 bg-transparent focus:outline-none" aria-label={t('markets.search')} />
@@ -61,7 +61,7 @@ export default function MarketsIndex({ markets, cities, filters }) {
                         ))}
                     </div>
                     <div className="flex gap-2 lg:ms-auto">
-                        <SelectMenu value={filters.city ?? ''} onChange={(e) => apply({ city: e.target.value })} className="h-10 rounded-full border border-line-strong bg-elev px-4 text-sm" aria-label={t('markets.city')}>
+                        <SelectMenu value={filters.city ?? ''} onChange={(e) => apply({ city: e.target.value })} aria-label={t('markets.city')}>
                             <option value="">{t('markets.all_areas')}</option>
                             {cities.map((c) => (
                                 <option key={c}>{c}</option>
@@ -92,6 +92,7 @@ export default function MarketsIndex({ markets, cities, filters }) {
                     <div className="h-[380px] lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)]">
                         <MapView
                             className="h-full"
+                            preview="/images/brand/markets-map.webp"
                             activeId={active}
                             you={you}
                             scrollWheel
@@ -105,7 +106,7 @@ export default function MarketsIndex({ markets, cities, filters }) {
                                 href: route('markets.show', m.slug),
                                 cta: t('common.view'),
                                 color: m.open_today ? '#E2552C' : '#1F4D36',
-                                image: '/images/produce/basket.png',
+                                image: '/images/produce/basket.webp',
                             }))}
                         />
                     </div>

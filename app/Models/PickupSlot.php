@@ -36,10 +36,6 @@ class PickupSlot extends Model
         return CarbonImmutable::parse($date.' '.$this->starts_at);
     }
 
-    /**
-     * The concrete dates in the next $weeks on which this slot runs and whose
-     * order cut-off has not yet passed.
-     */
     public function upcomingDates(int $cutoffHours, int $weeks = 3): array
     {
         $dates = [];

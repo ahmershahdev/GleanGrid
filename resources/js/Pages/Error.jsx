@@ -8,7 +8,6 @@ import { cn, produceImage } from '@/lib/utils';
 
 const ART = { 403: 'chestnut', 404: 'tomato', 429: 'honeybee', 500: 'eggplant', 503: 'tractor' };
 
-/** One page for every error: the digits drift with the pointer, the middle one is produce. */
 export default function Error({ status }) {
     const t = useT();
     const key = [403, 404, 429, 503].includes(status) ? status : 500;
@@ -88,7 +87,7 @@ export default function Error({ status }) {
                         router.get(route('products.index'), q.trim() ? { q: q.trim() } : {});
                     }}
                     role="search"
-                    className="mt-8 flex w-full max-w-md items-center gap-2 rounded-full border border-line-strong bg-elev p-1.5 shadow-soft transition focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/15"
+                    className="mt-8 flex w-full max-w-md items-center gap-2 rounded-full border border-line-strong bg-elev p-1.5 shadow-soft transition focus-within:border-brand focus-within:ring-1 focus-within:ring-brand"
                 >
                     <Search className="ms-3 size-5 shrink-0 text-ink-faint" />
                     <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('errors.search')} aria-label={t('errors.search')} className="h-11 min-w-0 flex-1 bg-transparent focus:outline-none" />

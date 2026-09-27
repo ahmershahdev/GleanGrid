@@ -2,12 +2,12 @@ import { Link } from '@inertiajs/react';
 import { CalendarClock, Mail, MapPin, MessageCircleReply, Phone, Star, Timer } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ProductCard } from '@/Components/Cards';
-import { DirectionsMap } from '@/Components/Map';
+import { LazyDirectionsMap as DirectionsMap } from '@/Components/LazyMap';
 import { Reveal, SplitWords } from '@/Components/motion';
 import { Avatar, EmptyState, Stars } from '@/Components/ui';
 import { FavoriteButton } from '@/Components/widgets';
 import { useFormat, useT } from '@/lib/i18n';
-import { cn } from '@/lib/utils';
+import { cn, photoProps } from '@/lib/utils';
 
 export function ReviewList({ reviews }) {
     const t = useT();
@@ -53,7 +53,14 @@ export default function FarmerShow({ farmer, products, reviews, slots }) {
         <>
             <section className="relative mx-auto max-w-[1400px] px-5 pt-6 sm:px-8">
                 <div className="relative overflow-hidden rounded-[40px] bg-brand px-7 pt-12 pb-10 text-brand-ink md:px-14 md:pt-16">
-                    <div className="absolute inset-0 bg-[repeating-linear-gradient(135deg,transparent_0_22px,rgb(255_255_255/0.04)_22px_23px)]" />
+                    {farmer.cover_url ? (
+                        <>
+                            <img {...photoProps(farmer.cover_url, '(min-width: 1400px) 1400px, 100vw')} alt="" fetchPriority="high" className="gg-unveil absolute inset-0 size-full object-cover" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-brand via-brand/85 to-brand/25 rtl:bg-gradient-to-l" />
+                        </>
+                    ) : (
+                        <div className="absolute inset-0 bg-[repeating-linear-gradient(135deg,transparent_0_22px,rgb(255_255_255/0.04)_22px_23px)]" />
+                    )}
                     {farmer.logo_url && <img src={farmer.logo_url} alt="" className="absolute -end-4 -bottom-8 w-56 animate-float drop-shadow-2xl md:w-80" style={{ '--r': '-10deg' }} />}
                     <div className="relative max-w-3xl">
                         <Link href={route('farmers.index')} className="text-sm opacity-70 hover:opacity-100">

@@ -75,7 +75,7 @@ export default function FarmerProducts({ products, filters }) {
                                 />
                                 <span className="text-xs text-ink-faint">/ {p.weekly_quantity}</span>
                             </div>
-                            <SelectMenu value={p.status} onChange={(e) => setStatus(p, e.target.value)} className="h-9 rounded-full border border-line-strong bg-bg px-3 text-sm" aria-label={t('fproducts.status')}>
+                            <SelectMenu value={p.status} onChange={(e) => setStatus(p, e.target.value)} aria-label={t('fproducts.status')}>
                                 {['available', 'sold_out', 'unavailable'].map((s) => (
                                     <option key={s} value={s}>
                                         {t(`status.${s}`)}

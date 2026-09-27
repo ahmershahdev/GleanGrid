@@ -1,10 +1,5 @@
 import { useSyncExternalStore } from 'react';
 
-/*
- * The basket lives in localStorage so guests can fill it before signing in.
- * Shape: [{ id, name, price, unit, image_url, farmer: { id, stall_name, slug }, quantity }]
- * Server-side `/cart/sync` re-validates prices and stock before checkout.
- */
 const KEY = 'gg-cart';
 const listeners = new Set();
 let cache = read();
@@ -22,13 +17,11 @@ function write(items) {
     try {
         localStorage.setItem(KEY, JSON.stringify(items));
     } catch {
-        /* storage unavailable (private mode) — keep the in-memory copy */
     }
     listeners.forEach((l) => l());
 }
 
 if (typeof window !== 'undefined') {
-    // Keep multiple tabs in sync.
     window.addEventListener('storage', (e) => {
         if (e.key === KEY) {
             cache = read();
@@ -78,8 +71,11 @@ export const cart = {
     },
 };
 
+const NO_ITEMS = [];
+const serverItems = () => NO_ITEMS;
+
 export function useCart() {
-    const items = useSyncExternalStore(cart.subscribe, cart.items, () => []);
+    const items = useSyncExternalStore(cart.subscribe, cart.items, serverItems);
     return {
         items,
         count: items.reduce((sum, i) => sum + i.quantity, 0),

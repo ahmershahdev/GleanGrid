@@ -1,4 +1,3 @@
-// Shared handle to the active Lenis instance so any component can scroll smoothly.
 let lenis = null;
 
 export function setLenis(instance) {

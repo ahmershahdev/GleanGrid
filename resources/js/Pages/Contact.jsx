@@ -6,19 +6,32 @@ import { FacebookIcon, GithubIcon, LinkedinIcon, XIcon } from '@/Components/icon
 import { Reveal, SplitWords } from '@/Components/motion';
 import { Button, Input, Textarea, buttonClass } from '@/Components/ui';
 import { BotFields, useBotGuard } from '@/lib/botguard';
+import { useUnsavedGuard } from '@/lib/confirm';
 import { useT } from '@/lib/i18n';
 import { cn, produceImage } from '@/lib/utils';
 
 const TOPICS = ['order', 'sell', 'partner', 'feedback', 'other'];
+
+const TOPIC_HINTS = {
+    order: /\b(order|pickup|pick-up|cancel|refund|basket|slot|coupon|late|missing)\b/i,
+    sell: /\b(sell|stall|farmer|list(ing)?|vendor|approve|approval)\b/i,
+    partner: /\b(partner(ship)?|collab\w*|sponsor\w*|press|media|market owner)\b/i,
+    feedback: /\b(feedback|suggest\w*|bug|idea|love|improve|broken|issue)\b/i,
+};
+
+function suggestTopic(text, current) {
+    if (!text || text.length < 4) return null;
+    const hit = Object.entries(TOPIC_HINTS).find(([, re]) => re.test(text));
+    return hit && hit[0] !== current ? hit[0] : null;
+}
 const MAX = 3000;
 
-/** Live Hyderabad time + whether the team is likely online (Mon–Sat, 9:00–18:00 PKT). */
 function useLocalTime() {
     const make = () => {
         const now = new Date();
         const pk = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Karachi' }));
         const open = pk.getDay() !== 0 && pk.getHours() >= 9 && pk.getHours() < 18;
-        return { label: now.toLocaleTimeString([], { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit' }), open };
+        return { label: now.toLocaleTimeString('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit' }), open };
     };
     const [state, setState] = useState(make);
     useEffect(() => {
@@ -37,7 +50,6 @@ function CopyRow({ icon: Icon, label, value, href }) {
             setCopied(true);
             setTimeout(() => setCopied(false), 1600);
         } catch {
-            /* clipboard blocked — the link still works */
         }
     };
     return (
@@ -72,17 +84,13 @@ export default function Contact({ contact }) {
     const t = useT();
     const { social } = usePage().props;
     const clock = useLocalTime();
-    const [topic, setTopic] = useState('order');
     const [sent, setSent] = useState(false);
-    const form = useForm({ name: '', email: '', subject: t('contact.topic_order'), message: '', website: '', captcha_v2: '' });
-    const guard = useBotGuard(form, 'contact');
-
-    const pickTopic = (k) => {
-        setTopic(k);
-        // Pre-fill the subject unless the visitor already wrote their own.
-        const known = TOPICS.map((x) => t(`contact.topic_${x}`));
-        if (!form.data.subject || known.includes(form.data.subject)) form.setData('subject', t(`contact.topic_${k}`));
-    };
+    const form = useForm({ name: '', email: '', topic: 'order', subject: '', message: '', website: '', captcha_v2: '' });
+    const guard = useBotGuard(form, 'contact', 'checkbox');
+    const topic = form.data.topic;
+    const pickTopic = (k) => form.setData('topic', k);
+    const suggestion = suggestTopic(`${form.data.subject} ${form.data.message}`, topic);
+    useUnsavedGuard(form.isDirty && !sent && !form.processing);
 
     const submit = (e) => {
         e.preventDefault();
@@ -118,7 +126,7 @@ export default function Contact({ contact }) {
                             {clock.open && <span className="absolute inset-0 animate-ping rounded-full bg-success opacity-60" />}
                             <span className={cn('relative size-2.5 rounded-full', clock.open ? 'bg-success' : 'bg-ink-faint')} />
                         </span>
-                        <span>
+                        <span suppressHydrationWarning>
                             <Clock className="me-1 inline size-3.5 opacity-60" />
                             {t('contact.local_time', { time: clock.label })} · {t(clock.open ? 'contact.online' : 'contact.offline')}
                         </span>
@@ -131,7 +139,6 @@ export default function Contact({ contact }) {
                         <CopyRow icon={Phone} label={t('contact.phone')} value={contact.phone} href={`tel:${contact.phone.replace(/\s/g, '')}`} />
                         <CopyRow icon={MapPin} label={t('contact.visit')} value={contact.address} />
 
-                        {/* SRS: "static team contact information with Google Maps showing location" — keyless embed. */}
                         <div className="relative overflow-hidden rounded-3xl border border-line">
                             <iframe
                                 title={t('contact.map_title')}
@@ -184,7 +191,6 @@ export default function Contact({ contact }) {
                                     </motion.div>
                                 ) : (
                                     <motion.form key="form" onSubmit={submit} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -10 }} className="relative space-y-5">
-                                        <BotFields form={form} guard={guard} t={t} />
                                         <div>
                                             <h2 className="font-display text-3xl">{t('contact.form_title')}</h2>
                                             <p className="mt-1 text-sm text-ink-soft">{t('contact.reply_time')}</p>
@@ -206,15 +212,40 @@ export default function Contact({ contact }) {
                                             <Input label={t('fields.name')} placeholder={t('ph.name')} value={form.data.name} onChange={(e) => form.setData('name', e.target.value)} error={form.errors.name} autoComplete="name" required />
                                             <Input label={t('fields.email')} placeholder={t('ph.email')} type="email" value={form.data.email} onChange={(e) => form.setData('email', e.target.value)} error={form.errors.email} autoComplete="email" required />
                                         </div>
-                                        <Input label={t('contact.subject')} placeholder={t('ph.subject')} value={form.data.subject} onChange={(e) => form.setData('subject', e.target.value)} error={form.errors.subject} maxLength={150} required />
+                                        <div>
+                                            <Input
+                                                label={t('contact.subject')}
+                                                placeholder={topic === 'other' ? t('ph.subject') : t('contact.subject_default', { topic: t(`contact.topic_${topic}`) }, `Leave blank to use “${t(`contact.topic_${topic}`)}”`)}
+                                                value={form.data.subject}
+                                                onChange={(e) => form.setData('subject', e.target.value)}
+                                                error={form.errors.subject && t('contact.subject_required', {}, 'Tell us in a few words what it’s about.')}
+                                                maxLength={150}
+                                                required={topic === 'other'}
+                                            />
+                                            <AnimatePresence>
+                                                {suggestion && (
+                                                    <motion.button
+                                                        type="button"
+                                                        initial={{ opacity: 0, y: -4 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        exit={{ opacity: 0, y: -4 }}
+                                                        onClick={() => pickTopic(suggestion)}
+                                                        className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-lime/40 px-3 py-1 text-xs font-medium text-forest transition hover:bg-lime"
+                                                    >
+                                                        {t('contact.suggest_topic', { topic: t(`contact.topic_${suggestion}`) }, `Sounds like “${t(`contact.topic_${suggestion}`)}” — switch topic?`)}
+                                                    </motion.button>
+                                                )}
+                                            </AnimatePresence>
+                                        </div>
                                         <div>
                                             <Textarea label={t('contact.message')} placeholder={t('ph.message')} rows={6} maxLength={MAX} value={form.data.message} onChange={(e) => form.setData('message', e.target.value)} error={form.errors.message} required />
                                             <p className={cn('mt-1 text-end text-xs tabular-nums', form.data.message.length > MAX * 0.9 ? 'text-warning' : 'text-ink-faint')}>
                                                 {form.data.message.length} / {MAX}
                                             </p>
                                         </div>
+                                        <BotFields form={form} guard={guard} t={t} />
                                         <div className="flex flex-wrap items-center gap-4">
-                                            <Button type="submit" size="lg" loading={form.processing} disabled={form.data.message.trim().length < 10}>
+                                            <Button type="submit" size="lg" loading={form.processing} disabled={form.data.message.trim().length < 10 || (guard.needsBox && !form.data.captcha_v2)}>
                                                 <Send className="rtl-flip size-4" /> {t('contact.send')}
                                             </Button>
                                             <p className="text-xs text-ink-faint">{t('contact.privacy_note')}</p>

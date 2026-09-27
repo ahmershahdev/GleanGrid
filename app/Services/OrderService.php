@@ -8,6 +8,7 @@ use App\Models\PickupSlot;
 use App\Models\Product;
 use App\Models\User;
 use App\Notifications\PlatformNotification;
+use App\Support\Settings;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -18,22 +19,21 @@ class OrderService
 {
     public function __construct(private CouponService $coupons) {}
 
-    /**
-     * Place one pre-order per farmer in the cart. Each group is
-     * [farmer_profile_id, pickup_slot_id, pickup_date, note, items => [[product_id, quantity]]].
-     *
-     * @return Collection<int, Order>
-     */
     public function place(User $customer, array $groups): Collection
     {
-        // A double-clicked "Place order" (or two tabs) must not create two orders:
-        // only one checkout per customer may run at a time.
+        if ($customer->preorderRestricted()) {
+            throw ValidationException::withMessages(['checkout' => 'Pre-ordering is paused on your account after repeated missed pickups. Please contact support.']);
+        }
         $lock = Cache::lock("checkout:{$customer->id}", 15);
         if (! $lock->get()) {
             throw ValidationException::withMessages(['checkout' => 'Your previous checkout is still being processed. Please wait a moment.']);
         }
 
         try {
+            $open = $customer->orders()->whereIn('status', Order::OPEN)->count();
+            if ($open + count($groups) > Settings::get('max_open_orders_per_customer')) {
+                throw ValidationException::withMessages(['checkout' => 'You have reached the limit of open pre-orders. Collect or cancel some first.']);
+            }
             $orders = $this->placeLocked($customer, $groups);
         } finally {
             $lock->release();
@@ -51,7 +51,6 @@ class OrderService
 
     private function placeLocked(User $customer, array $groups): Collection
     {
-        // Lock stalls in id order so two carts spanning the same farmers cannot deadlock.
         $groups = collect($groups)->sortBy('farmer_profile_id')->values()->all();
 
         return DB::transaction(function () use ($customer, $groups) {
@@ -83,7 +82,6 @@ class OrderService
         }, attempts: 3);
     }
 
-    /** Price the order (subtotal − coupon) with the coupon row locked; totals are always server-side. */
     private function applyCoupon(Order $order, User $customer, ?string $code): void
     {
         $subtotal = (float) $order->items()->sum('line_total');
@@ -97,11 +95,9 @@ class OrderService
         ]);
     }
 
-    /** Replace an order's lines and/or pickup window before the cut-off. */
     public function modify(Order $order, array $data): Order
     {
         DB::transaction(function () use ($order, $data) {
-            // The farmer may accept or decline at the same moment: lock, reload, then decide.
             $order = $this->lockFresh($order);
             $this->ensureEditable($order);
             $farmer = $order->farmer;
@@ -122,12 +118,10 @@ class OrderService
                 'total_amount' => $lines->sum('line_total'),
                 'items_count' => $lines->sum('quantity'),
                 'customer_note' => $data['note'] ?? $order->customer_note,
-                // A changed order goes back to the farmer for confirmation.
                 'status' => 'placed',
                 'accepted_at' => null,
             ]);
 
-            // Keep the coupon if the new basket still qualifies; otherwise quietly drop it.
             $code = $order->coupon_code;
             $this->coupons->release($order);
             try {
@@ -157,17 +151,46 @@ class OrderService
         $order->farmer->user->notify(new PlatformNotification('order_cancelled', $this->params($order), route('farmer.orders.show', $order), true));
     }
 
-    /** Farmer-side status change: accept, decline, mark ready, complete. */
+    public function forceClose(Order $order, string $status, string $reason): bool
+    {
+        $closed = DB::transaction(function () use ($order, $status, $reason) {
+            $order = $this->lockFresh($order);
+            if (! in_array($order->status, Order::OPEN, true)) {
+                return false;
+            }
+            $this->releaseStock($order);
+            $this->coupons->release($order);
+            $order->update(['status' => $status, $status.'_at' => now(), 'farmer_note' => $reason]);
+
+            return true;
+        });
+
+        if ($closed) {
+            $order->refresh()->load('customer', 'farmer.user', 'market');
+            $params = $this->params($order);
+            $order->customer?->notify(new PlatformNotification('order_'.$status, $params, route('customer.orders.show', $order), true));
+            $order->farmer->user->notify(new PlatformNotification('order_cancelled', $params, route('farmer.orders.show', $order)));
+        }
+
+        return $closed;
+    }
+
     public function transition(Order $order, string $status, ?string $note = null): void
     {
         DB::transaction(function () use ($order, $status, $note) {
-            // Re-read under lock: the customer may be cancelling this very order.
             $order = $this->lockFresh($order);
             if (! $order->canTransitionTo($status)) {
                 throw ValidationException::withMessages(['status' => "Cannot move an order from {$order->status} to {$status}."]);
             }
 
-            if ($status === 'declined') {
+            if ($status === 'no_show') {
+                $windowEnd = $order->pickup_date->copy()->setTimeFromTimeString((string) $order->pickup_ends_at);
+                if ($windowEnd->isFuture()) {
+                    throw ValidationException::withMessages(['status' => 'You can mark a no-show once the pickup window has ended.']);
+                }
+                User::whereKey($order->customer_id)->increment('no_show_count');
+            }
+            if (in_array($status, ['declined', 'no_show'], true)) {
                 $this->releaseStock($order);
                 $this->coupons->release($order);
             }
@@ -188,11 +211,10 @@ class OrderService
             'order_'.$status,
             $this->params($order),
             route('customer.orders.show', $order),
-            in_array($status, ['accepted', 'ready', 'declined'], true),
+            in_array($status, ['accepted', 'ready', 'declined', 'no_show'], true),
         ));
     }
 
-    /** Available pickup windows for a farmer, grouped with their bookable dates. */
     public function availableSlots(FarmerProfile $farmer): Collection
     {
         return $farmer->pickupSlots()->where('is_active', true)->with('market:id,name,slug,address')
@@ -216,8 +238,6 @@ class OrderService
 
     private function resolveSlot(FarmerProfile $farmer, int $slotId, string $date, ?int $ignoreOrderId = null): PickupSlot
     {
-        // Locking the slot row serialises every booking for this window. Counting
-        // orders FOR UPDATE alone would not stop two inserts into an empty range.
         $slot = $farmer->pickupSlots()->where('is_active', true)->lockForUpdate()->find($slotId);
         if (! $slot || ! in_array($date, $slot->upcomingDates($farmer->order_cutoff_hours), true)) {
             throw ValidationException::withMessages(['pickup' => "The pickup window for {$farmer->stall_name} is no longer available. Please pick another one."]);
@@ -226,6 +246,7 @@ class OrderService
         $booked = Order::where('pickup_slot_id', $slot->id)->whereDate('pickup_date', $date)
             ->whereIn('status', Order::OPEN)
             ->when($ignoreOrderId, fn ($q) => $q->whereKeyNot($ignoreOrderId))
+            ->lockForUpdate()
             ->count();
         if ($booked >= $slot->capacity) {
             throw ValidationException::withMessages(['pickup' => "That pickup window at {$farmer->stall_name} is fully booked."]);
@@ -234,10 +255,8 @@ class OrderService
         return $slot;
     }
 
-    /** Lock and decrement stock for each line; returns order_items rows. */
     private function reserveStock(FarmerProfile $farmer, array $items): Collection
     {
-        // Merge duplicate lines for one product so the stock check sees the true total.
         $items = collect($items)->groupBy('product_id')
             ->map(fn ($lines, $id) => ['product_id' => (int) $id, 'quantity' => $lines->sum(fn ($l) => (int) $l['quantity'])])
             ->filter(fn ($i) => $i['quantity'] > 0)->values();

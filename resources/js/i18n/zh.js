@@ -211,3 +211,150 @@ export default {
     coupons: { eyebrow: '您的摊位', eyebrow_admin: '全部摊位', title: '优惠券', subtitle: '用结账时输入的代码回馈老顾客。折扣从取货时的付款中扣除。', add: '新建优惠券', off: '优惠', copy: '复制代码', status_live: '生效中', status_scheduled: '已排期', status_expired: '已过期', status_used_up: '已用完', status_off: '已暂停', min_short: '满 :amount', cap_short: '最多 :amount', per_customer_short: '每位顾客 :count 次', until: '截至 :date', used: '已用 :count / :limit', pause: '暂停', resume: '恢复', empty_title: '还没有优惠券', empty_body: '创建一个像 FRESH10 这样的代码，分享给老顾客。', stall: '摊位', pick_stall: '选择摊位', code: '代码', generate: '生成代码', description: '说明', description_ph: '例如：首单 9 折', type: '优惠类型', type_percent: '百分比', type_fixed: '固定金额', percent: '折扣百分比', amount: '减免金额', min: '最低消费', cap: '最高优惠', optional: '可选', limit: '总使用次数', unlimited: '不限', per_customer: '每位顾客可用次数', starts: '开始', ends: '结束', delete_title: '删除 :code？', delete_body: '已使用过的优惠券会被暂停而不是删除，以保留订单记录。' },
     coupon: { invalid: '该代码不适用于此摊位。', expired: '该代码目前不可用。', minimum: '您在此摊位的金额未达到该代码的最低消费。', used_up: '该代码已被用完。', already_used: '您已使用过该代码。' },
 };
+
+export const additions = {
+    "status": {
+        "no_show": "未取货"
+    },
+    "order": {
+        "no_show_note": "未在取货时段内取走——农产品已重新上架。",
+        "history": "状态历史",
+        "qr_title": "您的取货凭证",
+        "qr_hint": "在摊位出示此码。农户扫码即可立即找到您的订单——或直接报出订单号。",
+        "qr_save": "保存凭证",
+        "qr_alt": "订单 :code 的二维码",
+        "contact_farmer": "联系农户",
+        "call": "致电",
+        "email": "邮件"
+    },
+    "forders": {
+        "no_show": "标记未到",
+        "no_show_title": "标记为未取货？",
+        "no_show_body": "库存将重新上架并通知顾客。多次未到会暂停其预订。",
+        "no_show_count": "最近未取货 :count 次"
+    },
+    "flash": {
+        "order_no_show": "已标记为未取货。",
+        "order_not_found": "您的摊位没有此订单号。",
+        "no_shows_reset": "未取货记录已重置。",
+        "settings_saved": "设置已保存。",
+        "account_deleted": "您的账户已删除。感谢您支持本地农户。",
+        "admin_cannot_delete": "管理员账户不能删除自己。",
+        "demo_cannot_delete": "演示账户为共享账户，无法删除。"
+    },
+    "notify": {
+        "pickup_reminder": {
+            "title": "明日取货：:code",
+            "body": ":date，:time，:market。请在摊位出示凭证。"
+        },
+        "order_no_show": {
+            "title": "订单 :code 未取货",
+            "body": "农产品已重新上架。多次未取货会暂停预订。"
+        }
+    },
+    "dash": {
+        "scan": "扫码",
+        "audit": "审计日志",
+        "settings": "设置"
+    },
+    "scan": {
+        "title": "扫描取货凭证",
+        "subtitle": "将摄像头对准顾客的二维码，或输入订单号。",
+        "start": "打开摄像头",
+        "stop": "停止",
+        "manual": "输入订单号",
+        "manual_hint": "订单号格式如 GG-7K2M9Q。",
+        "code": "订单号",
+        "open": "打开订单",
+        "unsupported": "此浏览器无法扫描二维码。请用手机相机扫描，或输入订单号。",
+        "camera_error": "无法打开摄像头。请允许访问，或在下方输入订单号。",
+        "preview": "摄像头预览"
+    },
+    "audit": {
+        "eyebrow": "问责",
+        "title": "审计日志",
+        "subtitle": "每一次审批、停用、审核决定、设置更改与强制操作——谁、何时、从何处。",
+        "empty": "暂无记录",
+        "empty_body": "管理操作发生时会显示在这里。",
+        "system": "系统",
+        "note": "日志只增不改：应用从不编辑或删除记录。",
+        "area": {
+            "farmer": "摊位",
+            "customer": "顾客",
+            "review": "评价",
+            "listing": "商品",
+            "order": "订单",
+            "settings": "设置",
+            "account": "账户",
+            "market": "市场",
+            "category": "分类",
+            "announcement": "公告",
+            "coupon": "优惠券",
+            "message": "留言"
+        }
+    },
+    "settings": {
+        "eyebrow": "平台",
+        "title": "设置",
+        "subtitle": "适用于整个 GleanGrid 的规则。",
+        "updated": "最近由 :who 于 :when 修改",
+        "orders_60": "订单（±30天）",
+        "revenue_60": "已完成收入",
+        "no_shows": "未取货",
+        "lost": "已拒绝/已取消",
+        "proc": "数据实时来自 sp_platform_summary 存储过程。",
+        "no_show_title": "未取货",
+        "no_show_hint": "在此期间未取货达到次数的顾客，需管理员重置后才能预订。",
+        "no_show_limit": "达到次数后暂停",
+        "no_show_window": "期间（天）",
+        "max_open": "每位顾客最多未完成预订数",
+        "reminders": "取货提醒",
+        "reminder_hour": "前一天晚上发送（小时，PKT）",
+        "reminder_hint": "调度器每小时检查一次；每个订单只提醒一次。",
+        "signups": "注册",
+        "customer_signups": "允许新顾客注册",
+        "farmer_signups": "允许新农户摊位注册",
+        "farmer_signups_hint": "处理积压审批时可暂停。"
+    },
+    "data": {
+        "title": "您的数据",
+        "export_title": "下载副本",
+        "export_body": "您的资料、订单、评价、收藏、家庭关联、近期登录与通知，JSON 文件格式。",
+        "export": "下载我的数据",
+        "delete_title": "删除账户",
+        "delete_body": "未完成的预订将被取消，资料、收藏和家庭关联将被清除，历史订单将匿名化。此操作无法撤销。",
+        "admin_note": "管理员账户需由其他管理员删除。",
+        "delete": "删除我的账户",
+        "type_delete": "输入 DELETE 以确认",
+        "delete_forever": "永久删除"
+    },
+    "acustomers": {
+        "no_shows": "未取货",
+        "reset_no_shows": "重置未取货记录",
+        "reset": "重置"
+    },
+    "aorders": {
+        "trigger_note": "由数据库触发器自动记录。",
+        "override": "以管理员身份取消",
+        "override_hint": "用于纠纷或市场关闭。库存和优惠券将退回，并通知双方。",
+        "reason": "原因（双方可见）",
+        "cancel": "取消订单"
+    },
+    "auth": {
+        "signups_paused": "此类账户的注册暂时关闭——请稍后再来。"
+    },
+    "ui": {
+        "show_full_path": "显示完整路径"
+    },
+    "fields": {
+        "eyebrow": "来自田野",
+        "title": "泥土、阳光与清晨。",
+        "body": "每一篮农产品都早在集市日之前开始。这是您预订的农产品背后的劳作。",
+        "planting": "播种",
+        "baking": "黎明出炉",
+        "market": "集市清晨",
+        "paddy": "稻田",
+        "flowers": "花开时节",
+        "dairy": "草饲放牧"
+    }
+};

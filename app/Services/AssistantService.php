@@ -11,12 +11,6 @@ use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
-/**
- * "Basket Buddy" — a lightweight, offline assistant. It detects the intent of
- * a question, answers it from live database data, and returns an intent key
- * plus structured results. The React widget turns that into a sentence in the
- * visitor's language, so the assistant works in all supported locales.
- */
 class AssistantService
 {
     private const STOPWORDS = [
@@ -26,11 +20,9 @@ class AssistantService
         'and', 'or', 'with', 'looking', 'today', 'this', 'week', 'stock', 'it', 'be', 'will', 'which', 'from',
     ];
 
-    /** Words too generic to identify a particular market or stall by name. */
     private const GENERIC_NAME_WORDS = [
         'market', 'markets', 'bazaar', 'farmers', 'farm', 'farms', 'sunday', 'weekly', 'weekend', 'evening', 'the', 'fresh', 'organic',
         'stall', 'and', 'co', 'garden', 'gardens', 'harvest', 'heritage', 'produce', 'greens', 'countryside', 'mela', 'house',
-        // Product words inside stall names ("Thar Dairy", "Kirthar Honey") must not hijack product searches.
         'dairy', 'honey', 'herb', 'herbs', 'bakehouse', 'bakery', 'poultry', 'eggs', 'orchards', 'mango', 'growers', 'collective',
         'valley', 'river', 'delta', 'bloom', 'stem', 'coastal', 'traders', 'sunrise', 'hilltop',
     ];
@@ -56,7 +48,6 @@ class AssistantService
             }
         }
 
-        // Personal question ("when is my next pickup?") — checked after cancel/modify FAQs.
         if (preg_match('/\bnext\b.*\b(pickup|pick-up|order|collection)\b|\bmy\b.*\b(pickup|pick-up|collection)\b/', $text)) {
             return $this->myNextPickup($user);
         }
@@ -100,7 +91,6 @@ class AssistantService
         return $this->searchProducts($text);
     }
 
-    /** Personal answer: the signed-in customer's next open pre-order. */
     private function myNextPickup(?User $user): array
     {
         if (! $user?->isCustomer()) {
@@ -133,7 +123,6 @@ class AssistantService
             return $this->reply('fallback');
         }
 
-        // Singular/plural tolerant: "tomatoes" should find "Tomato".
         $stems = collect($words)->flatMap(fn ($w) => array_unique([$w, Str::singular($w), rtrim($w, 'es'), rtrim($w, 's')]))
             ->filter(fn ($w) => mb_strlen($w) >= 3)->unique()->values();
 
