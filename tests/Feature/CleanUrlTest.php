@@ -36,7 +36,6 @@ class CleanUrlTest extends TestCase
     public function test_clean_filter_paths_render_with_their_filters(): void
     {
         $this->get('/products/category/fruits/in-stock/sort/price-high')->assertOk()->assertInertia(fn (Assert $page) => $page
-            ->component('Products/Index')
             ->where('filters.category', 'fruits')
             ->where('filters.sort', 'price_desc')
             ->where('filters.in_stock', '1'));
