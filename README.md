@@ -25,6 +25,12 @@
   <img alt="Tests" src="https://img.shields.io/badge/tests-133%20passing-2f7d4f.svg">
 </p>
 
+<p align="center">
+  📖 <a href="https://ahmershah.dev/blogs/gleangrid-case-study-farmers-market-preorder-platform">Case study: how GleanGrid was built</a> ·
+  🥭 <a href="https://ahmershah.dev/blogs/the-last-mango-problem-race-conditions-in-a-real-marketplace">The Last Mango Problem (race conditions)</a> ·
+  📚 <a href="https://github.com/ahmershahdev/GleanGrid/wiki">Wiki</a>
+</p>
+
 ---
 
 ## Contents
@@ -436,7 +442,7 @@ docs/images/                                screenshots and diagrams (guides liv
 - **Contributing:** `main` is the only branch and is protected (linear history, required CI checks, no force-push or deletion), and the repository is kept read-only as the TechWiz 7 submission. Bug reports and ideas are welcome at **support@ahmershah.dev**; [CONTRIBUTING.md](CONTRIBUTING.md) documents the coding style and commit conventions used.
 - **Security:** please report vulnerabilities privately as described in [SECURITY.md](SECURITY.md), not in public issues.
 - **Licence:** GleanGrid is open source under the [MIT licence](LICENSE.txt). Third-party assets keep their own licences (see Credits).
-- **Wiki:** longer guides for each role, the architecture and the API surface live in the [project wiki](https://github.com/ahmershahdev/GleanGrid/wiki).
+- **Wiki:** longer guides live in the [project wiki](https://github.com/ahmershahdev/GleanGrid/wiki): each role's guide, [Architecture](https://github.com/ahmershahdev/GleanGrid/wiki/Architecture), [Security Model](https://github.com/ahmershahdev/GleanGrid/wiki/Security-Model), [Payments](https://github.com/ahmershahdev/GleanGrid/wiki/Payments), [Race Conditions](https://github.com/ahmershahdev/GleanGrid/wiki/Race-Conditions), [Deployment](https://github.com/ahmershahdev/GleanGrid/wiki/Deployment) and [Testing and CI](https://github.com/ahmershahdev/GleanGrid/wiki/Testing-and-CI).
 
 ## Author & credits
 
