@@ -29,7 +29,7 @@ class MarketController extends Controller
         }
 
         $markets = $query
-            ->when($filters['q'] ?? null, fn ($q, $term) => $q->where(fn ($w) => $w->where('name', 'like', "%{$term}%")->orWhere('address', 'like', "%{$term}%")))
+            ->when($filters['q'] ?? null, fn ($q, $s) => $q->searchWords($s, fn ($q, $term) => $q->where(fn ($w) => $w->where('name', 'like', "%{$term}%")->orWhere('address', 'like', "%{$term}%"))))
             ->when(isset($filters['day']), fn ($q) => $q->openOn((int) $filters['day']))
             ->when($filters['city'] ?? null, fn ($q, $city) => $q->where('city', $city))
             ->get()

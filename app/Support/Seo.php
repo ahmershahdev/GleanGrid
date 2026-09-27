@@ -145,7 +145,7 @@ class Seo
             'description' => $description,
             'image' => asset($image ?? self::IMAGE),
             'image_alt' => 'GleanGrid — Hyderabad farmers markets, online',
-            'url' => $request->url(),
+            'url' => PathFilters::canonical($request),
             'robots' => $name === '' || Str::startsWith($name, self::NOINDEX) ? 'noindex, nofollow' : 'index, follow, max-image-preview:large',
             'site' => 'GleanGrid',
         ];
@@ -295,21 +295,21 @@ class Seo
                 'markets.index', 'farmers.index', 'products.index' => 'CollectionPage',
                 default => 'WebPage',
             },
-            '@id' => request()->url().'#webpage',
-            'url' => request()->url(),
+            '@id' => PathFilters::canonical(request()).'#webpage',
+            'url' => PathFilters::canonical(request()),
             'name' => $title,
             'description' => $description,
             'inLanguage' => app()->getLocale(),
             'isPartOf' => ['@id' => url('/#website')],
             'primaryImageOfPage' => ['@type' => 'ImageObject', 'url' => asset(self::IMAGE), 'width' => 1200, 'height' => 1200],
-            'breadcrumb' => $isPublic ? ['@id' => request()->url().'#breadcrumb'] : null,
+            'breadcrumb' => $isPublic ? ['@id' => PathFilters::canonical(request()).'#breadcrumb'] : null,
             'dateModified' => in_array($name, ['terms', 'privacy', 'returns', 'pickup-policy', 'faq'], true) ? LegalContent::UPDATED : null,
             'about' => $name === 'home' ? ['@type' => 'Thing', 'name' => 'Farmers markets in Hyderabad, Sindh'] : null,
         ]);
         if ($isPublic) {
             $graph[] = [
                 '@type' => 'BreadcrumbList',
-                '@id' => request()->url().'#breadcrumb',
+                '@id' => PathFilters::canonical(request()).'#breadcrumb',
                 'itemListElement' => collect($trail)->values()->map(fn ($c, $i) => [
                     '@type' => 'ListItem',
                     'position' => $i + 1,

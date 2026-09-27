@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { buttonClass } from '@/Components/ui';
 import { useT } from '@/lib/i18n';
 import { cn, produceImage } from '@/lib/utils';
+import { pathUrl } from '@/lib/url';
 
 const ART = { 403: 'chestnut', 404: 'tomato', 429: 'honeybee', 500: 'eggplant', 503: 'tractor' };
 
@@ -84,7 +85,7 @@ export default function Error({ status }) {
                     transition={{ delay: 0.5 }}
                     onSubmit={(e) => {
                         e.preventDefault();
-                        router.get(route('products.index'), q.trim() ? { q: q.trim() } : {});
+                        router.get(pathUrl('products.index', q.trim() ? { q: q.trim() } : {}));
                     }}
                     role="search"
                     className="mt-8 flex w-full max-w-md items-center gap-2 rounded-full border border-line-strong bg-elev p-1.5 shadow-soft transition focus-within:border-brand focus-within:ring-1 focus-within:ring-brand"

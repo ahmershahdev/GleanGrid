@@ -35,7 +35,7 @@ class PasswordResetController extends Controller
 
     public function reset(Request $request, string $token): Response
     {
-        return Inertia::render('Auth/ResetPassword', ['token' => $token, 'email' => $request->query('email')]);
+        return Inertia::render('Auth/ResetPassword', ['token' => $token, 'email' => null]);
     }
 
     public function update(Request $request, AccountSecurity $security): RedirectResponse

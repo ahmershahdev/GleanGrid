@@ -4,11 +4,12 @@ import { OrderRow } from '@/Components/OrderBits';
 import { Reveal } from '@/Components/motion';
 import { buttonClass, EmptyState, PageHeader, Pagination, Tabs } from '@/Components/ui';
 import { useT } from '@/lib/i18n';
-import { cleanQuery, cn } from '@/lib/utils';
+import { cn } from '@/lib/utils';
+import { pathUrl } from '@/lib/url';
 
 export default function CustomerOrders({ orders, filters, hasHousehold, placed }) {
     const t = useT();
-    const tab = (status) => route('customer.orders.index', cleanQuery({ ...filters, status }));
+    const tab = (status) => pathUrl('customer.orders.index', { ...filters, status });
     const statuses = ['open', 'completed', 'cancelled', 'declined'];
 
     return (
@@ -29,7 +30,7 @@ export default function CustomerOrders({ orders, filters, hasHousehold, placed }
                 <Tabs active={filters.status ?? 'all'} tabs={[{ key: 'all', label: t('common.all'), href: tab(undefined) }, ...statuses.map((s) => ({ key: s, label: t(`status.${s}`), href: tab(s) }))]} />
                 {hasHousehold && (
                     <button
-                        onClick={() => router.get(route('customer.orders.index'), cleanQuery({ ...filters, household: filters.household ? undefined : 1 }), { preserveScroll: true })}
+                        onClick={() => router.get(pathUrl('customer.orders.index', { ...filters, household: filters.household ? undefined : 1 }), {}, { preserveScroll: true })}
                         className={cn('inline-flex h-9 items-center gap-2 rounded-full px-4 text-sm font-medium', filters.household ? 'bg-brand text-brand-ink' : 'bg-ink/5')}
                     >
                         <Users className="size-4" /> {t('orders.household')}

@@ -5,6 +5,7 @@ import { CountUp } from '@/Components/motion';
 import { Card, SectionTitle } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+import { pathUrl } from '@/lib/url';
 
 function Delta({ change, goodWhenDown = false }) {
     const t = useT();
@@ -57,8 +58,8 @@ export function TodayStrip({ today }) {
     const t = useT();
     const items = [
         { key: 'placed', icon: CircleDashed, label: t('admin.today_placed', {}, 'Placed today'), href: route('admin.orders.index') },
-        { key: 'awaiting_accept', icon: AlarmClock, label: t('admin.today_waiting', {}, 'Awaiting a farmer'), href: route('admin.orders.index', { status: 'placed' }), warn: today.awaiting_accept > 10 },
-        { key: 'ready', icon: PackageCheck, label: t('admin.today_ready', {}, 'Packed & ready'), href: route('admin.orders.index', { status: 'ready' }) },
+        { key: 'awaiting_accept', icon: AlarmClock, label: t('admin.today_waiting', {}, 'Awaiting a farmer'), href: pathUrl('admin.orders.index', { status: 'placed' }), warn: today.awaiting_accept > 10 },
+        { key: 'ready', icon: PackageCheck, label: t('admin.today_ready', {}, 'Packed & ready'), href: pathUrl('admin.orders.index', { status: 'ready' }) },
         { key: 'pickups', icon: CheckCircle2, label: t('admin.today_pickups', {}, 'Pickups today'), href: route('admin.orders.index') },
         { key: 'overdue', icon: TriangleAlert, label: t('admin.today_overdue', {}, 'Past pickup, still open'), href: route('admin.orders.index'), danger: today.overdue > 0 },
     ];
@@ -149,9 +150,9 @@ export function HealthPanels({ catalogue, system }) {
         { label: t('admin.cat_products', {}, 'Live listings'), value: catalogue.products, icon: PackageCheck },
         { label: t('admin.cat_soldout', {}, 'Sold out'), value: catalogue.sold_out, icon: PackageX, tone: catalogue.sold_out ? 'warn' : null, href: route('admin.moderation.products') },
         { label: t('admin.cat_low', {}, 'Low stock (≤ 5)'), value: catalogue.low_stock, icon: CircleAlert, tone: catalogue.low_stock ? 'warn' : null },
-        { label: t('admin.cat_removed', {}, 'Removed listings'), value: catalogue.removed, icon: PackageX, href: route('admin.moderation.products', { removed: 1 }) },
-        { label: t('admin.cat_low_reviews', {}, '1–2★ reviews to check'), value: catalogue.low_reviews, icon: TriangleAlert, tone: catalogue.low_reviews ? 'warn' : null, href: route('admin.moderation.reviews', { max_rating: 2 }) },
-        { label: t('admin.cat_hidden', {}, 'Hidden reviews'), value: catalogue.hidden_reviews, icon: ShieldCheck, href: route('admin.moderation.reviews', { hidden: 1 }) },
+        { label: t('admin.cat_removed', {}, 'Removed listings'), value: catalogue.removed, icon: PackageX, href: pathUrl('admin.moderation.products', { removed: 1 }) },
+        { label: t('admin.cat_low_reviews', {}, '1–2★ reviews to check'), value: catalogue.low_reviews, icon: TriangleAlert, tone: catalogue.low_reviews ? 'warn' : null, href: pathUrl('admin.moderation.reviews', { max_rating: 2 }) },
+        { label: t('admin.cat_hidden', {}, 'Hidden reviews'), value: catalogue.hidden_reviews, icon: ShieldCheck, href: pathUrl('admin.moderation.reviews', { hidden: 1 }) },
         { label: t('admin.cat_categories', {}, 'Active categories'), value: catalogue.categories, icon: Tag, href: route('admin.categories.index') },
         { label: t('admin.cat_coupons', {}, 'Live coupons'), value: catalogue.coupons, icon: Tag, href: route('admin.coupons.index') },
     ];

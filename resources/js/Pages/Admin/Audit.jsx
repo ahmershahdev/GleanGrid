@@ -4,7 +4,7 @@ import { Search, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import { Avatar, Badge, EmptyState, PageHeader, Pagination, Tabs } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
-import { cleanQuery } from '@/lib/utils';
+import { pathUrl } from '@/lib/url';
 
 const TONE = {
     farmer: 'bg-brand-soft text-brand ring-brand/25',
@@ -20,7 +20,7 @@ export default function AdminAudit({ logs, actions, filters }) {
     const t = useT();
     const { date, time, relative } = useFormat();
     const [q, setQ] = useState(filters.q ?? '');
-    const tab = (action) => route('admin.audit.index', cleanQuery({ ...filters, action }));
+    const tab = (action) => pathUrl('admin.audit.index', { ...filters, action });
 
     return (
         <>
@@ -31,7 +31,7 @@ export default function AdminAudit({ logs, actions, filters }) {
                 <form
                     onSubmit={(e) => {
                         e.preventDefault();
-                        router.get(route('admin.audit.index'), cleanQuery({ ...filters, q }), { preserveState: true });
+                        router.get(pathUrl('admin.audit.index', { ...filters, q }), {}, { preserveState: true });
                     }}
                     className="flex h-10 items-center gap-2 rounded-full border border-line-strong bg-elev px-3"
                     role="search"

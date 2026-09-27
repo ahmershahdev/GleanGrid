@@ -10,6 +10,7 @@ import { openSearch } from '@/Components/chrome';
 import { buttonClass } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
 import { cn, produceImage } from '@/lib/utils';
+import { pathUrl } from '@/lib/url';
 
 const FLOATERS = [
     { img: 'tomato', className: 'start-[4%] top-[18%] w-20 md:w-28', depth: 30, r: -12 },
@@ -77,7 +78,7 @@ function Hero({ stats, openToday }) {
                     style={{ '--d': '0.65s' }}
                     onSubmit={(e) => {
                         e.preventDefault();
-                        router.get(route('products.index'), q.trim() ? { q: q.trim() } : {});
+                        router.get(pathUrl('products.index', q.trim() ? { q: q.trim() } : {}));
                     }}
                     className="gg-rise group/search relative z-10 mx-auto mt-9 flex max-w-xl items-center gap-2 rounded-full border border-line-strong bg-elev/90 p-1.5 shadow-soft backdrop-blur-xl transition focus-within:border-brand focus-within:ring-1 focus-within:ring-brand"
                     role="search"
@@ -234,7 +235,7 @@ function Categories({ categories }) {
                 {categories.map((c, i) => (
                     <Reveal key={c.id} delay={(i % 4) * 0.06} className={cn(spans[i] ?? '')}>
                         <Link
-                            href={route('products.index', { category: c.slug })}
+                            href={pathUrl('products.index', { category: c.slug })}
                             data-cursor={t('common.shop')}
                             className="group relative flex h-full flex-col justify-between overflow-hidden rounded-[24px] p-4 transition duration-500 hover:rounded-[40px] sm:rounded-[28px] sm:p-6 sm:hover:rounded-[48px]"
                             style={{ background: `color-mix(in oklab, ${c.color} 30%, var(--bg-elev))` }}
@@ -261,7 +262,7 @@ function Harvest({ products }) {
     const t = useT();
     return (
         <section className="mx-auto mt-32 max-w-[1400px] px-5 sm:px-8">
-            <SectionHead eyebrow={t('home.harvest_eyebrow')} title={t('home.harvest_title')} href={route('products.index', { in_stock: 1 })} cta={t('home.see_all')} />
+            <SectionHead eyebrow={t('home.harvest_eyebrow')} title={t('home.harvest_title')} href={pathUrl('products.index', { in_stock: 1 })} cta={t('home.see_all')} />
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {products.map((p, i) => (
                     <Reveal key={p.id} delay={(i % 4) * 0.07}>

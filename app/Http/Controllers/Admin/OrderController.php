@@ -26,7 +26,7 @@ class OrderController extends Controller
             'orders' => Order::with('customer:id,name', 'farmer:id,stall_name,slug', 'market:id,name')
                 ->when($filters['status'] ?? null, fn ($q, $s) => $q->where('status', $s))
                 ->when($filters['market'] ?? null, fn ($q, $m) => $q->where('market_id', $m))
-                ->when($filters['q'] ?? null, fn ($q, $t) => $q->where('code', 'like', "%{$t}%"))
+                ->when($filters['q'] ?? null, fn ($q, $s) => $q->searchWords($s, fn ($q, $t) => $q->where('code', 'like', "%{$t}%")))
                 ->latest()->paginate(20)->withQueryString(),
             'markets' => Market::orderBy('name')->get(['id', 'name']),
             'filters' => (object) $filters,

@@ -13,10 +13,14 @@ use App\Models\Product;
 use App\Models\Review;
 use App\Models\User;
 use App\Notifications\Channels\SafeMailChannel;
+use App\Support\CleanPaginator;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\Channels\MailChannel;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
@@ -27,10 +31,21 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(MailChannel::class, SafeMailChannel::class);
+        $this->app->bind(LengthAwarePaginator::class, CleanPaginator::class);
     }
 
     public function boot(): void
     {
+        Builder::macro('searchWords', function (?string $text, callable $each) {
+            foreach (array_filter(preg_split('/[\s\-]+/u', trim((string) $text))) as $word) {
+                $this->where(fn ($query) => $each($query, $word));
+            }
+
+            return $this;
+        });
+
+        ResetPassword::createUrlUsing(fn ($user, string $token) => route('password.reset', $token));
+
         Relation::enforceMorphMap([
             'user' => User::class,
             'product' => Product::class,

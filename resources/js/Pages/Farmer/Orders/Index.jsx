@@ -3,7 +3,7 @@ import { Check, PackageCheck, Search, X } from 'lucide-react';
 import { useState } from 'react';
 import { Button, EmptyState, PageHeader, Pagination, StatusBadge, Tabs } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
-import { cleanQuery } from '@/lib/utils';
+import { pathUrl } from '@/lib/url';
 
 export function QuickActions({ order, size = 'sm' }) {
     const t = useT();
@@ -38,7 +38,7 @@ export default function FarmerOrders({ orders, counts, filters }) {
     const t = useT();
     const { money, date, time } = useFormat();
     const [q, setQ] = useState(filters.q ?? '');
-    const tab = (status) => route('farmer.orders.index', cleanQuery({ ...filters, status }));
+    const tab = (status) => pathUrl('farmer.orders.index', { ...filters, status });
     const total = Object.values(counts).reduce((a, b) => a + Number(b), 0);
 
     return (
@@ -53,11 +53,11 @@ export default function FarmerOrders({ orders, counts, filters }) {
                     ]}
                 />
                 <div className="flex gap-2">
-                    <input type="date" value={filters.date ?? ''} onChange={(e) => router.get(route('farmer.orders.index'), cleanQuery({ ...filters, date: e.target.value }), { preserveState: true })} className="h-10 rounded-full border border-line-strong bg-elev px-3 text-sm" aria-label={t('forders.pickup_date')} />
+                    <input type="date" value={filters.date ?? ''} onChange={(e) => router.get(pathUrl('farmer.orders.index', { ...filters, date: e.target.value }), {}, { preserveState: true })} className="h-10 rounded-full border border-line-strong bg-elev px-3 text-sm" aria-label={t('forders.pickup_date')} />
                     <form
                         onSubmit={(e) => {
                             e.preventDefault();
-                            router.get(route('farmer.orders.index'), cleanQuery({ ...filters, q }), { preserveState: true });
+                            router.get(pathUrl('farmer.orders.index', { ...filters, q }), {}, { preserveState: true });
                         }}
                         className="flex h-10 items-center gap-2 rounded-full border border-line-strong bg-elev px-3"
                     >

@@ -5,6 +5,8 @@ import { Fragment, useCallback, useEffect, useId, useMemo, useRef, useState } fr
 import { useFormat, useT } from '@/lib/i18n';
 import { lockScroll } from '@/lib/scroll';
 import { clientPortal, cn, produceImage } from '@/lib/utils';
+import { postJson } from '@/lib/http';
+import { pathUrl } from '@/lib/url';
 
 const EASE = [0.16, 1, 0.3, 1];
 const RECENT_KEY = 'gg-recent-searches';
@@ -222,9 +224,8 @@ export function SearchPalette() {
         setState((s) => ({ status: 'loading', data: s.data }));
         const ctrl = new AbortController();
         const timer = setTimeout(() => {
-            fetch(`${route('search.suggest')}?${new URLSearchParams({ q: term, scope })}`, { headers: { Accept: 'application/json' }, signal: ctrl.signal })
-                .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
-                .then((data) => {
+            postJson(route('search.suggest'), { q: term, scope }, { signal: ctrl.signal })
+                .then(({ data }) => {
                     memo.current.set(key, data);
                     setState({ status: 'done', data });
                 })
@@ -253,7 +254,7 @@ export function SearchPalette() {
     const seeAll = useCallback(
         (text = term) => {
             remember(text);
-            router.get(route(scopeInfo.route), text ? { q: text } : {});
+            router.get(pathUrl(scopeInfo.route, text ? { q: text } : {}));
             setOpen(false);
         },
         [term, scopeInfo, remember],

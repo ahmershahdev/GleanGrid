@@ -23,9 +23,9 @@ class FarmerController extends Controller
         $farmers = FarmerProfile::approved()
             ->with('markets:id,name,slug')
             ->withCount(['products' => fn ($q) => $q->listed()])
-            ->when($filters['q'] ?? null, fn ($q, $term) => $q->where(fn ($w) => $w
+            ->when($filters['q'] ?? null, fn ($q, $s) => $q->searchWords($s, fn ($q, $term) => $q->where(fn ($w) => $w
                 ->where('stall_name', 'like', "%{$term}%")->orWhere('tagline', 'like', "%{$term}%")
-                ->orWhereHas('products', fn ($p) => $p->listed()->where('name', 'like', "%{$term}%"))))
+                ->orWhereHas('products', fn ($p) => $p->listed()->where('name', 'like', "%{$term}%")))))
             ->when($filters['market'] ?? null, fn ($q, $slug) => $q->whereHas('markets', fn ($m) => $m->where('slug', $slug)))
             ->when(isset($filters['day']), fn ($q) => $q->whereHas('pickupSlots', fn ($s) => $s->where('day_of_week', $filters['day'])->where('is_active', true)))
             ->when(($filters['sort'] ?? 'rating') === 'rating', fn ($q) => $q->orderByDesc('rating_avg')->orderByDesc('rating_count'))

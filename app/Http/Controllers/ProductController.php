@@ -26,8 +26,8 @@ class ProductController extends Controller
 
         $products = Product::listed()
             ->with('farmer:id,stall_name,slug', 'category:id,name,slug,color')
-            ->when($filters['q'] ?? null, fn ($q, $term) => $q->where(fn ($w) => $w
-                ->where('name', 'like', "%{$term}%")->orWhere('description', 'like', "%{$term}%")))
+            ->when($filters['q'] ?? null, fn ($q, $s) => $q->searchWords($s, fn ($q, $term) => $q->where(fn ($w) => $w
+                ->where('name', 'like', "%{$term}%")->orWhere('description', 'like', "%{$term}%"))))
             ->when($filters['category'] ?? null, fn ($q, $slug) => $q->whereHas('category', fn ($c) => $c->where('slug', $slug)))
             ->when($filters['market'] ?? null, fn ($q, $slug) => $q->whereHas('farmer.markets', fn ($m) => $m->where('slug', $slug)))
             ->when(isset($filters['day']), fn ($q) => $q->whereHas('farmer.pickupSlots', fn ($s) => $s->where('day_of_week', $filters['day'])->where('is_active', true)))

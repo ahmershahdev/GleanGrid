@@ -3,9 +3,10 @@ function xsrfToken() {
     return match ? decodeURIComponent(match[1]) : '';
 }
 
-export async function postJson(url, body) {
+export async function postJson(url, body, { signal } = {}) {
     const res = await fetch(url, {
         method: 'POST',
+        signal,
         credentials: 'same-origin',
         headers: {
             'Content-Type': 'application/json',

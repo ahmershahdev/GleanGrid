@@ -20,7 +20,7 @@ class AuditController extends Controller
         return Inertia::render('Admin/Audit', [
             'logs' => AuditLog::with('user:id,name,role')
                 ->when($filters['action'] ?? null, fn ($q, $a) => $q->where('action', 'like', "{$a}%"))
-                ->when($filters['q'] ?? null, fn ($q, $t) => $q->where('description', 'like', "%{$t}%"))
+                ->when($filters['q'] ?? null, fn ($q, $s) => $q->searchWords($s, fn ($q, $t) => $q->where('description', 'like', "%{$t}%")))
                 ->latest('id')->paginate(30)->withQueryString(),
             'actions' => AuditLog::query()->selectRaw("SUBSTRING_INDEX(action, '.', 1) as area")->distinct()->orderBy('area')->pluck('area'),
             'filters' => (object) $filters,

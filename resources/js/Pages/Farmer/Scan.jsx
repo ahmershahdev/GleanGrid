@@ -25,7 +25,7 @@ export default function FarmerScan() {
         setActive(false);
     };
 
-    const open = (value) => router.get(route('farmer.orders.lookup'), { code: value });
+    const open = (value) => router.post(route('farmer.orders.lookup'), { code: value });
 
     const start = async () => {
         setError(null);

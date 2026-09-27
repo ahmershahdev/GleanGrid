@@ -3,6 +3,7 @@ import { MessageCircleReply, Star } from 'lucide-react';
 import { useState } from 'react';
 import { Avatar, Button, Card, EmptyState, PageHeader, Pagination, Stars, Tabs, Textarea } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
+import { pathUrl } from '@/lib/url';
 
 function ReplyBox({ review }) {
     const t = useT();
@@ -66,7 +67,7 @@ export default function FarmerReviews({ reviews, rating, filter }) {
                 active={filter ?? 'all'}
                 tabs={[
                     { key: 'all', label: t('common.all'), href: route('farmer.reviews.index') },
-                    { key: 'unanswered', label: t('freviews.unanswered'), href: route('farmer.reviews.index', { filter: 'unanswered' }) },
+                    { key: 'unanswered', label: t('freviews.unanswered'), href: pathUrl('farmer.reviews.index', { filter: 'unanswered' }) },
                 ]}
             />
             <div className="mt-6 grid gap-3 lg:grid-cols-2">

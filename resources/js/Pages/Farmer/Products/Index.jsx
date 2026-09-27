@@ -3,8 +3,9 @@ import { CalendarSync, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Button, buttonClass, EmptyState, Modal, PageHeader, StatusBadge, Tabs } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
-import { cleanQuery, cn } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { SelectMenu } from '@/Components/Dropdown';
+import { pathUrl } from '@/lib/url';
 
 export default function FarmerProducts({ products, filters }) {
     const t = useT();
@@ -15,7 +16,7 @@ export default function FarmerProducts({ products, filters }) {
 
     const setStatus = (p, status) => router.patch(route('farmer.products.status', p.slug), { status }, { preserveScroll: true });
     const setStock = (p, stock) => router.patch(route('farmer.products.status', p.slug), { status: stock > 0 && p.status === 'sold_out' ? 'available' : stock === 0 && p.status === 'available' ? 'sold_out' : p.status, stock_quantity: stock, stock_seen: p.stock_quantity }, { preserveScroll: true });
-    const tab = (status) => route('farmer.products.index', cleanQuery({ ...filters, status }));
+    const tab = (status) => pathUrl('farmer.products.index', { ...filters, status });
 
     return (
         <>
@@ -39,7 +40,7 @@ export default function FarmerProducts({ products, filters }) {
                 <form
                     onSubmit={(e) => {
                         e.preventDefault();
-                        router.get(route('farmer.products.index'), cleanQuery({ ...filters, q }), { preserveState: true });
+                        router.get(pathUrl('farmer.products.index', { ...filters, q }), {}, { preserveState: true });
                     }}
                     className="flex h-10 items-center gap-2 rounded-full border border-line-strong bg-elev px-4"
                 >

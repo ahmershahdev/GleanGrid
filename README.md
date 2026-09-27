@@ -230,6 +230,7 @@ A MariaDB quirk found during testing is also documented in the migration. The fi
 ## SEO, performance & accessibility
 
 - **Per-page titles (40–60 characters) and descriptions (150–160 characters)**, written by hand for static pages and composed from whole sentences for markets, stalls and products (no mid-word truncation). They are server-rendered, so crawlers see them without JavaScript.
+- **Clean URLs everywhere, no `?` or `=`.** Filters, search, sorting and pages are readable path segments: `/products/category/fruits/price/100-500/sort/price-low/page/2`, `/farmers/search/honey`, `/markets/day/sunday`, `/register/farmer`. One rule set (`App\Support\PathFilters` in PHP, `resources/js/lib/url.js` in React) builds and parses them, old query-string links redirect permanently (301) to the clean form, segments are put in one canonical order, and filtered or paginated listings point their canonical URL at the plain listing (category pages stay indexable and are in the sitemap). Password-reset e-mails no longer put the address in the link.
 - Canonical URLs, Open Graph and Twitter cards with a **1200×1200** share image, `robots` directives (`noindex` on private areas), `robots.txt` and a live **`/sitemap.xml`**.
 - **JSON-LD:** Organization, WebSite with site search, Product (offer, pickup, rating), Place (opening hours, geo) for markets, LocalBusiness for stalls, and FAQPage.
 - **`/llms.txt` and `/llms-full.txt`** for AI assistants, generated from live data with `php artisan gleangrid:llms`.

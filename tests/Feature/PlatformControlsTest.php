@@ -126,13 +126,13 @@ class PlatformControlsTest extends TestCase
     {
         $order = $this->place($this->customer);
 
-        $this->actingAs($this->farmer->user)->get(route('farmer.orders.lookup', ['code' => route('farmer.orders.show', $order)]))
+        $this->actingAs($this->farmer->user)->post(route('farmer.orders.lookup'), ['code' => route('farmer.orders.show', $order)])
             ->assertRedirect(route('farmer.orders.show', $order));
-        $this->actingAs($this->farmer->user)->get(route('farmer.orders.lookup', ['code' => strtolower($order->code)]))
+        $this->actingAs($this->farmer->user)->post(route('farmer.orders.lookup'), ['code' => strtolower($order->code)])
             ->assertRedirect(route('farmer.orders.show', $order));
 
         $other = FarmerProfile::approved()->where('id', '!=', $this->farmer->id)->first()->user;
-        $this->actingAs($other)->from(route('farmer.scan'))->get(route('farmer.orders.lookup', ['code' => $order->code]))
+        $this->actingAs($other)->from(route('farmer.scan'))->post(route('farmer.orders.lookup'), ['code' => $order->code])
             ->assertRedirect(route('farmer.scan'))->assertSessionHas('error', 'flash.order_not_found');
     }
 

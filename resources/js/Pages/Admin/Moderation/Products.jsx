@@ -3,7 +3,7 @@ import { EyeOff, RotateCcw, Search } from 'lucide-react';
 import { useState } from 'react';
 import { Button, Checkbox, Modal, PageHeader, Pagination, StatusBadge, Table, Textarea } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
-import { cleanQuery } from '@/lib/utils';
+import { pathUrl } from '@/lib/url';
 
 export default function ModerateProducts({ products, filters }) {
     const t = useT();
@@ -11,7 +11,7 @@ export default function ModerateProducts({ products, filters }) {
     const [q, setQ] = useState(filters.q ?? '');
     const [target, setTarget] = useState(null);
     const form = useForm({ reason: '' });
-    const apply = (patch) => router.get(route('admin.moderation.products'), cleanQuery({ ...filters, ...patch }), { preserveState: true });
+    const apply = (patch) => router.get(pathUrl('admin.moderation.products', { ...filters, ...patch }), {}, { preserveState: true });
 
     return (
         <>

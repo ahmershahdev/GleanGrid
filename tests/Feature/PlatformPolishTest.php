@@ -104,16 +104,16 @@ class PlatformPolishTest extends TestCase
 
     public function test_live_search_groups_ranks_and_suggests(): void
     {
-        $mango = $this->getJson(route('search.suggest', ['q' => 'mango']))->assertOk()->json();
+        $mango = $this->postJson(route('search.suggest'), ['q' => 'mango'])->assertOk()->json();
         $this->assertNotEmpty($mango['groups']['produce']);
         $this->assertStringContainsStringIgnoringCase('mango', $mango['groups']['produce'][0]['title']);
 
-        $typo = $this->getJson(route('search.suggest', ['q' => 'tomatos']))->assertOk()->json();
+        $typo = $this->postJson(route('search.suggest'), ['q' => 'tomatos'])->assertOk()->json();
         $this->assertSame(0, $typo['total']);
         $this->assertSame('tomatoes', $typo['suggestion']);
 
-        $this->assertSame(0, $this->getJson(route('search.suggest', ['q' => '%%']))->json('total'));
-        $this->getJson(route('search.suggest', ['q' => 'x', 'scope' => 'nope']))->assertStatus(422);
+        $this->assertSame(0, $this->postJson(route('search.suggest'), ['q' => '%%'])->json('total'));
+        $this->postJson(route('search.suggest'), ['q' => 'x', 'scope' => 'nope'])->assertStatus(422);
     }
 
     public function test_avatar_upload_is_stored_as_webp_and_can_be_removed(): void

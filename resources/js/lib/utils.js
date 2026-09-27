@@ -27,10 +27,6 @@ export const FARMER_STATUS_STYLE = {
 
 export const produceImage = (key) => `/images/produce/${key}.webp`;
 
-export function cleanQuery(obj) {
-    return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== '' && v !== null && v !== undefined && v !== false));
-}
-
 export const googleDirections = (lat, lng) => `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
 export const osmDirections = (lat, lng) => `https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=%3B${lat}%2C${lng}#map=15/${lat}/${lng}`;
 

@@ -23,7 +23,7 @@ class CustomerController extends Controller
                 ->withCount(['orders', 'reviews', 'orders as recent_no_shows' => fn ($q) => $q->where('status', 'no_show')->where('no_show_at', '>=', now()->subDays(Settings::get('no_show_window_days')))])
                 ->withSum(['orders as spent' => fn ($q) => $q->where('status', 'completed')], 'total_amount')
                 ->when($filters['status'] ?? null, fn ($q, $s) => $q->where('status', $s))
-                ->when($filters['q'] ?? null, fn ($q, $t) => $q->where(fn ($w) => $w->where('name', 'like', "%{$t}%")
+                ->when($filters['q'] ?? null, fn ($q, $s) => $q->searchWords($s, fn ($q, $t) => $q->where(fn ($w) => $w->where('name', 'like', "%{$t}%"))
                     ->orWhere('email', 'like', "%{$t}%")->orWhere('username', 'like', "%{$t}%")))
                 ->latest()->paginate(20)->withQueryString(),
             'filters' => (object) $filters,

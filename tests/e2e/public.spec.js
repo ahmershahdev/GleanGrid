@@ -35,6 +35,20 @@ test.describe('Public site', () => {
         await expect(page.getByRole('button', { name: /^Sort: Featured$/ })).toBeVisible();
     });
 
+    test('filters and sorting keep clean URLs without query strings', async ({ page }) => {
+        await page.goto('/products');
+        await hydrated(page);
+        await page.getByRole('button', { name: /^Fruits/ }).first().click();
+        await expect(page).toHaveURL(/\/products\/category\/fruits$/);
+        await page.getByRole('button', { name: /^Sort:/ }).click();
+        await page.getByRole('option', { name: 'Price: high to low' }).click();
+        await expect(page).toHaveURL(/\/products\/category\/fruits\/sort\/price-high$/);
+        expect(page.url()).not.toContain('?');
+
+        await page.goto('/products?category=fruits&sort=price_asc');
+        await expect(page).toHaveURL(/\/products\/category\/fruits\/sort\/price-low$/);
+    });
+
     test('navigation between pages is client-side (no full reload)', async ({ page }) => {
         await page.goto('/');
         await hydrated(page);

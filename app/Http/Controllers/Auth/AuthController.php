@@ -76,7 +76,7 @@ class AuthController extends Controller
     public function showRegister(Request $request): Response
     {
         return Inertia::render('Auth/Register', [
-            'role' => $request->query('as') === 'farmer' ? 'farmer' : 'customer',
+            'role' => $request->route('as') === 'farmer' ? 'farmer' : 'customer',
             'open' => ['customer' => Settings::get('customer_registration_open'), 'farmer' => Settings::get('farmer_registration_open')],
         ]);
     }

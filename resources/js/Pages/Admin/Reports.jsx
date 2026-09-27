@@ -4,13 +4,14 @@ import { useState } from 'react';
 import { Bars, StatusDonut } from '@/Components/Charts';
 import { Button, Card, PageHeader, SectionTitle, Stat, Table } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
+import { pathUrl } from '@/lib/url';
 
 export default function Reports({ range, summary, byMarket, activeFarmers, byCategory, history }) {
     const t = useT();
     const { money, number, date, relative } = useFormat();
     const [from, setFrom] = useState(range.from);
     const [to, setTo] = useState(range.to);
-    const exportUrl = (type) => route('admin.reports.export', { type, from: range.from, to: range.to });
+    const exportUrl = (type) => pathUrl('admin.reports.export', { from: range.from, to: range.to }, { type });
 
     return (
         <>
@@ -26,7 +27,7 @@ export default function Reports({ range, summary, byMarket, activeFarmers, byCat
             <form
                 onSubmit={(e) => {
                     e.preventDefault();
-                    router.get(route('admin.reports.index'), { from, to }, { preserveScroll: true });
+                    router.get(pathUrl('admin.reports.index', { from, to }), {}, { preserveScroll: true });
                 }}
                 className="mt-6 flex flex-wrap items-end gap-3 print:hidden"
             >

@@ -3,14 +3,14 @@ import { Search } from 'lucide-react';
 import { useState } from 'react';
 import { PageHeader, Pagination, StatusBadge, Table } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
-import { cleanQuery } from '@/lib/utils';
 import { SelectMenu } from '@/Components/Dropdown';
+import { pathUrl } from '@/lib/url';
 
 export default function AdminOrders({ orders, markets, filters }) {
     const t = useT();
     const { money, date, time } = useFormat();
     const [q, setQ] = useState(filters.q ?? '');
-    const apply = (patch) => router.get(route('admin.orders.index'), cleanQuery({ ...filters, ...patch }), { preserveState: true });
+    const apply = (patch) => router.get(pathUrl('admin.orders.index', { ...filters, ...patch }), {}, { preserveState: true });
 
     return (
         <>

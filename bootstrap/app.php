@@ -4,6 +4,7 @@ use App\Http\Middleware\EnsureEmailVerified;
 use App\Http\Middleware\EnsureFarmerApproved;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\PathFilterRoutes;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -37,6 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => EnsureRole::class,
             'farmer.approved' => EnsureFarmerApproved::class,
             'verified' => EnsureEmailVerified::class,
+            'filters' => PathFilterRoutes::class,
         ]);
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo(fn (Request $request) => route($request->user()->dashboardRoute()));

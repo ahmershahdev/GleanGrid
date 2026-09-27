@@ -6,6 +6,7 @@ import { CountUp, Reveal } from '@/Components/motion';
 import { buttonClass, Card, EmptyState, SectionTitle, Stat, StatusBadge } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
 import { googleDirections, produceImage } from '@/lib/utils';
+import { pathUrl } from '@/lib/url';
 
 export default function CustomerDashboard({ stats, upcoming, recent, toReview, suggestions }) {
     const t = useT();
@@ -33,7 +34,7 @@ export default function CustomerDashboard({ stats, upcoming, recent, toReview, s
 
             <div className="mt-10 grid gap-8 xl:grid-cols-[1.3fr_1fr]">
                 <section>
-                    <SectionTitle eyebrow={t('customer.upcoming_eyebrow')} title={t('customer.upcoming_title')} action={<Link href={route('customer.orders.index', { status: 'open' })} className="text-sm font-medium text-brand">{t('common.view_all')}</Link>} />
+                    <SectionTitle eyebrow={t('customer.upcoming_eyebrow')} title={t('customer.upcoming_title')} action={<Link href={pathUrl('customer.orders.index', { status: 'open' })} className="text-sm font-medium text-brand">{t('common.view_all')}</Link>} />
                     {upcoming.length === 0 ? (
                         <EmptyState icon="basket" title={t('customer.no_upcoming')} action={<Link href={route('markets.index')} className={buttonClass('outline', 'sm')}>{t('home.find_market')}</Link>} />
                     ) : (

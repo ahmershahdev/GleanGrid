@@ -7,7 +7,8 @@ import { Reveal, SplitWords } from '@/Components/motion';
 import { Button, EmptyState, Modal, Pagination } from '@/Components/ui';
 import { SelectMenu } from '@/Components/Dropdown';
 import { useFormat, useT } from '@/lib/i18n';
-import { cleanQuery, cn, produceImage } from '@/lib/utils';
+import { cn, produceImage } from '@/lib/utils';
+import { pathUrl } from '@/lib/url';
 
 const SORTS = ['featured', 'price_asc', 'price_desc', 'rating', 'popular', 'newest'];
 
@@ -182,7 +183,7 @@ export default function ProductsIndex({ products, categories, markets, priceRang
     }, [sheet, filters]);
 
     const apply = (patch) => {
-        router.get(route('products.index'), cleanQuery({ ...filters, ...patch, page: undefined }), {
+        router.get(pathUrl('products.index', { ...filters, ...patch, page: undefined }), {}, {
             preserveState: true,
             preserveScroll: true,
             replace: true,
@@ -316,7 +317,7 @@ export default function ProductsIndex({ products, categories, markets, priceRang
                         className="flex-[2]"
                         onClick={() => {
                             setSheet(false);
-                            router.get(route('products.index'), cleanQuery({ ...draft, page: undefined }), { preserveState: true, preserveScroll: true, replace: true });
+                            router.get(pathUrl('products.index', { ...draft, page: undefined }), {}, { preserveState: true, preserveScroll: true, replace: true });
                         }}
                     >
                         <Check className="size-4" /> {t('products.apply', {}, 'Show results')}

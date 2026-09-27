@@ -6,8 +6,8 @@ import { LazyMapView as MapView } from '@/Components/LazyMap';
 import { SplitWords } from '@/Components/motion';
 import { ChipToggle, EmptyState } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
-import { cleanQuery } from '@/lib/utils';
 import { SelectMenu } from '@/Components/Dropdown';
+import { pathUrl } from '@/lib/url';
 
 export default function MarketsIndex({ markets, cities, filters }) {
     const t = useT();
@@ -16,7 +16,7 @@ export default function MarketsIndex({ markets, cities, filters }) {
     const [q, setQ] = useState(filters.q ?? '');
     const [locating, setLocating] = useState(false);
 
-    const apply = (patch) => router.get(route('markets.index'), cleanQuery({ ...filters, ...patch }), { preserveState: true, preserveScroll: true, replace: true });
+    const apply = (patch) => router.get(pathUrl('markets.index', { ...filters, ...patch }), {}, { preserveState: true, preserveScroll: true, replace: true });
 
     const nearMe = () => {
         setLocating(true);

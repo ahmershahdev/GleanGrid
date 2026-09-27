@@ -6,6 +6,7 @@ import { StatusDonut, TrendChart } from '@/Components/Charts';
 import { CountUp } from '@/Components/motion';
 import { Button, Card, SectionTitle, Stat, StatusBadge } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
+import { pathUrl } from '@/lib/url';
 
 export default function AdminDashboard({ stats, daily, byStatus, topFarmers, pendingFarmers, recentOrders, security, kpis, today, catalogue, marketRevenue, topProducts, pickupsWeek, system }) {
     const t = useT();
@@ -72,7 +73,7 @@ export default function AdminDashboard({ stats, daily, byStatus, topFarmers, pen
 
             <div className="mt-6 grid gap-6 xl:grid-cols-3">
                 <Card className="p-6">
-                    <SectionTitle eyebrow={t('admin.approvals_eyebrow')} title={t('admin.approvals_title')} action={<Link href={route('admin.farmers.index', { status: 'pending' })} className="text-sm font-medium text-brand">{t('common.view_all')}</Link>} />
+                    <SectionTitle eyebrow={t('admin.approvals_eyebrow')} title={t('admin.approvals_title')} action={<Link href={pathUrl('admin.farmers.index', { status: 'pending' })} className="text-sm font-medium text-brand">{t('common.view_all')}</Link>} />
                     {pendingFarmers.length === 0 ? (
                         <p className="flex items-center gap-2 text-sm text-success">
                             <ShieldCheck className="size-4" /> {t('admin.no_pending')}

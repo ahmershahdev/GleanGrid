@@ -22,7 +22,7 @@ class FarmerController extends Controller
             'farmers' => FarmerProfile::with('user:id,name,email,status,created_at')
                 ->withCount(['products', 'orders'])
                 ->when($filters['status'] ?? null, fn ($q, $s) => $q->where('status', $s))
-                ->when($filters['q'] ?? null, fn ($q, $t) => $q->where(fn ($w) => $w->where('stall_name', 'like', "%{$t}%")
+                ->when($filters['q'] ?? null, fn ($q, $s) => $q->searchWords($s, fn ($q, $t) => $q->where(fn ($w) => $w->where('stall_name', 'like', "%{$t}%"))
                     ->orWhere('email', 'like', "%{$t}%")->orWhere('contact_person', 'like', "%{$t}%")))
                 ->orderByRaw("field(status, 'pending', 'approved', 'suspended')")->latest()
                 ->paginate(15)->withQueryString(),

@@ -5,14 +5,14 @@ import { FarmerCard } from '@/Components/Cards';
 import { Reveal, SplitWords } from '@/Components/motion';
 import { ChipToggle, EmptyState, Pagination } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
-import { cleanQuery } from '@/lib/utils';
 import { SelectMenu } from '@/Components/Dropdown';
+import { pathUrl } from '@/lib/url';
 
 export default function FarmersIndex({ farmers, markets, filters }) {
     const t = useT();
     const { day } = useFormat();
     const [q, setQ] = useState(filters.q ?? '');
-    const apply = (patch) => router.get(route('farmers.index'), cleanQuery({ ...filters, ...patch }), { preserveState: true, preserveScroll: true, replace: true });
+    const apply = (patch) => router.get(pathUrl('farmers.index', { ...filters, ...patch }), {}, { preserveState: true, preserveScroll: true, replace: true });
 
     return (
         <>

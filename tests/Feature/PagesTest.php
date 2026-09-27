@@ -7,6 +7,7 @@ use App\Models\Market;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
+use App\Support\PathFilters;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -23,9 +24,9 @@ class PagesTest extends TestCase
         $product = Product::listed()->first();
 
         foreach ([
-            route('home'), route('markets.index'), route('markets.index', ['day' => 0, 'lat' => 25.39, 'lng' => 68.36]),
-            route('markets.show', $market->slug), route('farmers.index', ['sort' => 'name']), route('farmers.show', $farmer->slug),
-            route('products.index', ['q' => 'mango', 'sort' => 'price_desc', 'in_stock' => 1]), route('products.show', $product->slug),
+            route('home'), route('markets.index'), PathFilters::url('markets.index', ['day' => 0, 'lat' => 25.39, 'lng' => 68.36]),
+            route('markets.show', $market->slug), PathFilters::url('farmers.index', ['sort' => 'name']), route('farmers.show', $farmer->slug),
+            PathFilters::url('products.index', ['q' => 'mango', 'sort' => 'price_desc', 'in_stock' => 1]), route('products.show', $product->slug),
             route('about'), route('contact'), route('cart'), route('login'), route('register'),
         ] as $url) {
             $this->get($url)->assertOk();
@@ -38,7 +39,7 @@ class PagesTest extends TestCase
         $order = $customer->orders()->first();
 
         foreach ([
-            route('customer.dashboard'), route('customer.checkout'), route('customer.orders.index'), route('customer.orders.index', ['household' => 1, 'status' => 'open']),
+            route('customer.dashboard'), route('customer.checkout'), route('customer.orders.index'), PathFilters::url('customer.orders.index', ['household' => 1, 'status' => 'open']),
             route('customer.orders.show', $order), route('customer.favorites.index'), route('customer.reviews.index'), route('customer.family.index'),
             route('profile.edit'), route('notifications.index'),
         ] as $url) {

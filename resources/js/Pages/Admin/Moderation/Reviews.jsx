@@ -3,7 +3,8 @@ import { Eye, EyeOff, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Avatar, Button, Card, Checkbox, Modal, PageHeader, Pagination, Stars, Textarea } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
-import { cleanQuery, cn } from '@/lib/utils';
+import { cn } from '@/lib/utils';
+import { pathUrl } from '@/lib/url';
 
 export default function ModerateReviews({ reviews, filters }) {
     const t = useT();
@@ -11,7 +12,7 @@ export default function ModerateReviews({ reviews, filters }) {
     const [target, setTarget] = useState(null);
     const [del, setDel] = useState(null);
     const form = useForm({ reason: '' });
-    const apply = (patch) => router.get(route('admin.moderation.reviews'), cleanQuery({ ...filters, ...patch }), { preserveState: true });
+    const apply = (patch) => router.get(pathUrl('admin.moderation.reviews', { ...filters, ...patch }), {}, { preserveState: true });
 
     return (
         <>

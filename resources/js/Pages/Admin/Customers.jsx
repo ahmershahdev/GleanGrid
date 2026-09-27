@@ -3,13 +3,13 @@ import { Search } from 'lucide-react';
 import { useState } from 'react';
 import { Avatar, Badge, Button, PageHeader, Pagination, Table, Tabs } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
-import { cleanQuery } from '@/lib/utils';
+import { pathUrl } from '@/lib/url';
 
 export default function AdminCustomers({ customers, filters }) {
     const t = useT();
     const { money, relative } = useFormat();
     const [q, setQ] = useState(filters.q ?? '');
-    const tab = (status) => route('admin.customers.index', cleanQuery({ ...filters, status }));
+    const tab = (status) => pathUrl('admin.customers.index', { ...filters, status });
     const toggle = (c) => router.patch(route('admin.customers.status', c.id), { status: c.status === 'active' ? 'inactive' : 'active' }, { preserveScroll: true });
 
     return (
@@ -20,7 +20,7 @@ export default function AdminCustomers({ customers, filters }) {
                 <form
                     onSubmit={(e) => {
                         e.preventDefault();
-                        router.get(route('admin.customers.index'), cleanQuery({ ...filters, q }), { preserveState: true });
+                        router.get(pathUrl('admin.customers.index', { ...filters, q }), {}, { preserveState: true });
                     }}
                     className="flex h-10 items-center gap-2 rounded-full border border-line-strong bg-elev px-3"
                 >

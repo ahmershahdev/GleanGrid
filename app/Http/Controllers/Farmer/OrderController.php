@@ -27,7 +27,7 @@ class OrderController extends Controller
             'orders' => (clone $base)->with('customer:id,name,phone', 'market:id,name', 'items')
                 ->when($filters['status'] ?? null, fn ($q, $s) => $q->where('status', $s))
                 ->when($filters['date'] ?? null, fn ($q, $d) => $q->whereDate('pickup_date', $d))
-                ->when($filters['q'] ?? null, fn ($q, $t) => $q->where(fn ($w) => $w->where('code', 'like', "%{$t}%")
+                ->when($filters['q'] ?? null, fn ($q, $s) => $q->searchWords($s, fn ($q, $t) => $q->where(fn ($w) => $w->where('code', 'like', "%{$t}%"))
                     ->orWhereHas('customer', fn ($c) => $c->where('name', 'like', "%{$t}%"))))
                 ->orderByRaw("field(status, 'placed', 'accepted', 'ready', 'completed', 'declined', 'cancelled')")
                 ->orderBy('pickup_date')->paginate(15)->withQueryString(),

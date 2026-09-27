@@ -4,14 +4,14 @@ import { useState } from 'react';
 import { SuspendModal } from '@/Pages/Admin/Farmers/Show';
 import { Button, PageHeader, Pagination, StatusBadge, Table, Tabs } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
-import { cleanQuery } from '@/lib/utils';
+import { pathUrl } from '@/lib/url';
 
 export default function AdminFarmers({ farmers, counts, filters }) {
     const t = useT();
     const { relative } = useFormat();
     const [q, setQ] = useState(filters.q ?? '');
     const [suspend, setSuspend] = useState(null);
-    const tab = (status) => route('admin.farmers.index', cleanQuery({ ...filters, status }));
+    const tab = (status) => pathUrl('admin.farmers.index', { ...filters, status });
     const approve = (f) => router.patch(route('admin.farmers.status', f.slug), { status: 'approved' }, { preserveScroll: true });
 
     return (
@@ -25,7 +25,7 @@ export default function AdminFarmers({ farmers, counts, filters }) {
                 <form
                     onSubmit={(e) => {
                         e.preventDefault();
-                        router.get(route('admin.farmers.index'), cleanQuery({ ...filters, q }), { preserveState: true });
+                        router.get(pathUrl('admin.farmers.index', { ...filters, q }), {}, { preserveState: true });
                     }}
                     className="flex h-10 items-center gap-2 rounded-full border border-line-strong bg-elev px-3"
                 >

@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\FarmerProfile;
 use App\Models\Market;
 use App\Models\Product;
 use App\Support\LegalContent;
+use App\Support\PathFilters;
 use App\Support\Seo;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
@@ -30,6 +32,8 @@ class SitemapController extends Controller
                 [route('privacy'), $this->updated(), 'yearly', '0.3', []],
             ]);
 
+            Category::where('is_active', true)->orderBy('sort_order')->get(['slug', 'updated_at'])
+                ->each(fn ($c) => $urls->push([PathFilters::url('products.index', ['category' => $c->slug]), $c->updated_at, 'daily', '0.7', []]));
             Market::active()->get(['slug', 'name', 'updated_at'])
                 ->each(fn ($m) => $urls->push([route('markets.show', $m->slug), $m->updated_at, 'weekly', '0.8', []]));
             FarmerProfile::approved()->get(['id', 'slug', 'stall_name', 'logo', 'updated_at'])

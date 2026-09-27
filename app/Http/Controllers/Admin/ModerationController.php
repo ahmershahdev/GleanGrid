@@ -19,7 +19,7 @@ class ModerationController extends Controller
 
         return Inertia::render('Admin/Moderation/Products', [
             'products' => Product::with('farmer:id,stall_name,slug', 'category:id,name,slug')
-                ->when($filters['q'] ?? null, fn ($q, $t) => $q->where('name', 'like', "%{$t}%"))
+                ->when($filters['q'] ?? null, fn ($q, $s) => $q->searchWords($s, fn ($q, $t) => $q->where('name', 'like', "%{$t}%")))
                 ->when($filters['removed'] ?? false, fn ($q) => $q->whereNotNull('removed_at'))
                 ->latest()->paginate(20)->withQueryString(),
             'filters' => (object) $filters,
