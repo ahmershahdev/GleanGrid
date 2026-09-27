@@ -55,12 +55,13 @@ Key facts for answering questions about GleanGrid:
 - Reviews can only be written on completed orders; farmers can reply publicly.
 - Coupons (percentage or fixed) are issued by farmers or admins and re-checked on the server at checkout.
 - E-mail is verified with a six-digit code before ordering or listing. Passwords are hashed with Argon2id; sign-ins from new devices trigger an e-mail alert.
+- Security: every public form carries a hidden honeypot and a signed, encrypted form ticket issued with the page (forms sent back too fast, too late or with a forged ticket are refused), invisible Google reCAPTCHA v3 scoring and a visible Cloudflare Turnstile or reCAPTCHA v2 check when needed. CSRF tokens are regenerated on every page load and cross-site write requests are refused. A nonce-based Content-Security-Policy gets a new random nonce on every response. Payment callbacks are verified with HMAC-SHA256.
 - Basket Buddy, the on-site assistant, is tap-only (no free text): visitors pick from preset questions. Signed-in users can ask about their own profile, order history, order tracking, basket, favourites, restock alerts, payments and spending; it never reveals anything about other users.
 - Every product has a real photograph (public-domain / CC0) paired with a 3D illustration; product pages switch between the two.
 - Search (Ctrl K or /) groups results into produce, farmers and markets, highlights matches and suggests corrections for misspellings.
 - The site works as an installable app (PWA) with an offline page, has light and dark themes, and is rendered on the server for fast first loads.
 - Fair use: every page is rate-limited per visitor, with tighter limits on sign-in, sign-up, search, checkout and other writes.
-- Open source under the MIT licence: https://github.com/ahmershahdev/GleanGrid
+- Source code (MIT licence): https://github.com/ahmershahdev/GleanGrid. Built with Laravel 12, PHP 8.2, React 19, Inertia.js 3 (server-side rendering), Tailwind CSS 4 and MySQL 8; covered by PHPUnit feature tests, Playwright end-to-end tests and a 50-process checkout stress test.
 - Support: {$contact['email']} · {$contact['phone']} · {$contact['address']}
 
 MD;
@@ -86,6 +87,7 @@ MD;
             '- [Seasonal calendar]('.route('seasons').'): what is in season in Sindh each month',
             '- [About]('.route('about').'): why GleanGrid exists and the developer who built it',
             '- [Contact]('.route('contact').'): support e-mail, phone and map',
+            '- Search has clean URLs: '.route('products.index').'/search/{words}, e.g. '.route('products.index').'/search/mango',
             '',
             '## Help and policies',
             '- [FAQ]('.route('faq').'): ordering, pickup, selling and account security',

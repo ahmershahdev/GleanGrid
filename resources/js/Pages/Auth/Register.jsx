@@ -34,7 +34,7 @@ export default function Register({ role, open = { customer: true, farmer: true }
         password_confirmation: '',
         terms: false,
         website: '',
-        captcha_v2: '',
+        captcha_v2: '', captcha_turnstile: '',
     });
     const guard = useBotGuard(form, 'register', 'checkbox');
     const farmer = form.data.role === 'farmer';
@@ -188,7 +188,7 @@ export default function Register({ role, open = { customer: true, farmer: true }
                             <ArrowLeft className="rtl-flip size-5" />
                         </Button>
                     )}
-                    <Button type="submit" size="lg" className="flex-1" loading={form.processing} disabled={step === 2 && (!strongEnough || !form.data.terms || (guard.needsBox && !form.data.captcha_v2))}>
+                    <Button type="submit" size="lg" className="flex-1" loading={form.processing} disabled={step === 2 && (!strongEnough || !form.data.terms || (guard.needsBox && !guard.solved))}>
                         {step < 2 ? (
                             <>
                                 {t('auth.next')} <ArrowRight className="rtl-flip size-5" />

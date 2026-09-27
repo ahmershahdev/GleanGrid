@@ -6,7 +6,7 @@ import { useT } from '@/lib/i18n';
 
 export default function ResetPassword({ token, email }) {
     const t = useT();
-    const form = useForm({ token, email: email ?? '', password: '', password_confirmation: '', website: '', captcha_v2: '' });
+    const form = useForm({ token, email: email ?? '', password: '', password_confirmation: '', website: '', captcha_v2: '', captcha_turnstile: '' });
     const guard = useBotGuard(form, 'reset', 'checkbox');
 
     return (

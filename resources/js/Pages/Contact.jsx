@@ -85,7 +85,7 @@ export default function Contact({ contact }) {
     const { social } = usePage().props;
     const clock = useLocalTime();
     const [sent, setSent] = useState(false);
-    const form = useForm({ name: '', email: '', topic: 'order', subject: '', message: '', website: '', captcha_v2: '' });
+    const form = useForm({ name: '', email: '', topic: 'order', subject: '', message: '', website: '', captcha_v2: '', captcha_turnstile: '' });
     const guard = useBotGuard(form, 'contact', 'checkbox');
     const topic = form.data.topic;
     const pickTopic = (k) => form.setData('topic', k);
@@ -245,7 +245,7 @@ export default function Contact({ contact }) {
                                         </div>
                                         <BotFields form={form} guard={guard} t={t} />
                                         <div className="flex flex-wrap items-center gap-4">
-                                            <Button type="submit" size="lg" loading={form.processing} disabled={form.data.message.trim().length < 10 || (guard.needsBox && !form.data.captcha_v2)}>
+                                            <Button type="submit" size="lg" loading={form.processing} disabled={form.data.message.trim().length < 10 || (guard.needsBox && !guard.solved)}>
                                                 <Send className="rtl-flip size-4" /> {t('contact.send')}
                                             </Button>
                                             <p className="text-xs text-ink-faint">{t('contact.privacy_note')}</p>

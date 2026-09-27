@@ -203,7 +203,7 @@ export default {
     search: { open: '搜索', title: '搜索 GleanGrid', placeholder: '搜索农产品、农户或市集…', hint: '按 Enter 搜索全部农产品', go_produce: '浏览全部农产品', go_farmers: '认识农户', go_markets: '查找市集', quick: '快速前往', popular: '当前热门', esc: '按 Esc 关闭' },
     ui: { back_to_top: '回到顶部' },
     verify: { title: '请查看收件箱', subtitle: '我们已向 :email 发送六位验证码。请在下方输入以确认身份。', digit: '第 :n 位', confirm: '验证邮箱', no_code: '还没收到？请查看垃圾邮件，或', resend: '重新发送验证码', resend_in: ':s 秒后可重发', wrong_email: '邮箱填错了？', expired: '验证码已过期或尝试次数过多，请重新获取。', wrong: '验证码不正确。请查看最新邮件后重试。' },
-    captcha: { failed: '无法确认您是真人，请重试。', challenge: '快速验证：勾选下方复选框，然后再次提交。' },
+    captcha: { expired: '此表单打开时间过长，请重新提交。', turnstile_notice: '由 Cloudflare Turnstile 提供保护 —', failed: '无法确认您是真人，请重试。', challenge: '快速验证：勾选下方复选框，然后再次提交。' },
     security: { title: '登录与安全', subtitle: '您的登录位置、近期登录记录和邮箱状态。', verified: '邮箱已验证', unverified: '邮箱未验证', sessions: '活跃会话', this_device: '当前设备', confirm_password: '输入密码确认', logout_others: '退出其他设备', recent: '近期登录', no_history: '暂无登录记录。', password_changed: '密码最近修改于 :when。' },
     faq: { eyebrow: '帮助中心', title: '有问必答。', subtitle: '关于预订、取货、售卖和账户安全的一切。', search: '搜索常见问题…', all: '全部', still: '还有疑问？', contact: '联系真人客服', none: '暂时没有匹配的答案。' },
     legal: { nav: '政策', terms: '条款', privacy: '隐私', returns: '退货与退款', pickup: '取货政策', updated: '最后更新：:date', english_only: '我们的政策以英文发布，英文版本为准。' },

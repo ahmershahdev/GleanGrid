@@ -23,6 +23,8 @@ class HandleInertiaRequests extends Middleware
             'seo' => fn () => Seo::forRequest($request),
             'ziggy' => fn () => $request->header('X-Inertia') ? null : [...(new Ziggy)->toArray(), 'location' => $request->url()],
             'captcha' => fn () => BotGuard::clientConfig(),
+            // signed, encrypted issue time for the bot traps — a new random value on every render
+            'formTicket' => fn () => BotGuard::ticket(),
             'contact' => fn () => config('gleangrid.contact'),
             'social' => fn () => config('gleangrid.social'),
             'oauth' => fn () => [...app(SocialAuthService::class)->status(), 'debug' => app()->isLocal()],

@@ -28,7 +28,7 @@ class SecurityTest extends TestCase
             'role' => 'customer', 'name' => 'Test Shopper', 'username' => 'testshopper', 'email' => 'shopper@example.com',
             'phone' => '+92 300 1234567', 'address' => 'Qasimabad, Hyderabad', 'city' => 'Hyderabad',
             'password' => 'Fresh#Mango7', 'password_confirmation' => 'Fresh#Mango7', 'terms' => true,
-            'website' => '', 'form_started_at' => now()->subSeconds(20)->getTimestampMs(),
+            'website' => '', 'form_ticket' => $this->formTicket(),
             ...$overrides,
         ];
     }
@@ -75,7 +75,7 @@ class SecurityTest extends TestCase
     public function test_honeypot_and_time_trap_reject_bots(): void
     {
         $this->post(route('register'), $this->registration(['website' => 'http://spam.example']))->assertSessionHasErrors('captcha');
-        $this->post(route('register'), $this->registration(['username' => 'fastbot', 'email' => 'fast@example.com', 'form_started_at' => now()->getTimestampMs()]))
+        $this->post(route('register'), $this->registration(['username' => 'fastbot', 'email' => 'fast@example.com', 'form_ticket' => $this->formTicket(0)]))
             ->assertSessionHasErrors('captcha');
 
         $this->assertDatabaseMissing('users', ['email' => 'shopper@example.com']);
@@ -91,10 +91,10 @@ class SecurityTest extends TestCase
     public function test_repeated_failed_sign_ins_lock_the_account_for_that_ip(): void
     {
         foreach (range(1, 5) as $i) {
-            $this->post(route('login'), ['login' => 'customer@gleangrid.test', 'password' => 'wrong-'.$i]);
+            $this->post(route('login'), $this->human(['login' => 'customer@gleangrid.test', 'password' => 'wrong-'.$i]));
         }
 
-        $this->post(route('login'), ['login' => 'customer@gleangrid.test', 'password' => 'Customer@123'])->assertSessionHasErrors('login');
+        $this->post(route('login'), $this->human(['login' => 'customer@gleangrid.test', 'password' => 'Customer@123']))->assertSessionHasErrors('login');
         $this->assertGuest();
         $this->assertSame(5, LoginEvent::where('login', 'customer@gleangrid.test')->where('successful', false)->count());
     }
@@ -105,12 +105,12 @@ class SecurityTest extends TestCase
         $user = User::where('email', 'customer@gleangrid.test')->first();
 
         $this->withHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0) Chrome/130.0')
-            ->post(route('login'), ['login' => $user->email, 'password' => 'Customer@123']);
+            ->post(route('login'), $this->human(['login' => $user->email, 'password' => 'Customer@123']));
         Notification::assertNothingSent();
 
         $this->post(route('logout'));
         $this->withHeader('User-Agent', 'Mozilla/5.0 (Linux; Android 14) Firefox/131.0')
-            ->post(route('login'), ['login' => $user->email, 'password' => 'Customer@123']);
+            ->post(route('login'), $this->human(['login' => $user->email, 'password' => 'Customer@123']));
         Notification::assertSentTo($user, NewSignInAlert::class);
     }
 
@@ -120,7 +120,7 @@ class SecurityTest extends TestCase
         DB::table('users')->where('id', $user->id)->update(['password' => Hash::driver('bcrypt')->make('Customer@123')]);
         $this->assertStringStartsWith('$2y$', $user->fresh()->password);
 
-        $this->post(route('login'), ['login' => $user->email, 'password' => 'Customer@123'])->assertRedirect();
+        $this->post(route('login'), $this->human(['login' => $user->email, 'password' => 'Customer@123']))->assertRedirect();
         $this->assertStringStartsWith('$argon2id$', $user->fresh()->password);
     }
 

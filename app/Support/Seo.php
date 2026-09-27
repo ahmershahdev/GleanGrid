@@ -17,7 +17,7 @@ class Seo
     private const PAGES = [
         'home' => [
             'Fresh Hyderabad Produce, Straight From Local Farmers',
-            'Pre-order this week’s harvest from Hyderabad’s farmers markets — mangoes, desi tomatoes, sourdough, raw honey — and collect it at the stall. Pay at pickup.',
+            'Pre-order this week’s harvest from Hyderabad’s farmers markets: mangoes, desi tomatoes, sourdough, raw honey. Pay online or at the stall, then collect it.',
         ],
         'markets.index' => [
             'Hyderabad Farmers Markets: Days, Hours & Map | GleanGrid',
@@ -41,7 +41,7 @@ class Seo
         ],
         'cart' => [
             'Your Market Basket: Review Before You Pre-Order',
-            'Check the produce you’ve reserved, adjust quantities and pick a pickup window at each farmer’s stall. Nothing is charged online — you pay at the market.',
+            'Check the produce you’ve reserved, adjust quantities and pick a pickup window at each stall. Pay with Easypaisa, JazzCash or card, or in cash at pickup.',
         ],
         'login' => [
             'Sign In to GleanGrid: Orders, Favourites & Stalls',
@@ -61,7 +61,7 @@ class Seo
         ],
         'faq' => [
             'GleanGrid FAQ: Pre-Orders, Pickup & Selling Help',
-            'Straight answers on how pre-orders, pickup windows, cut-offs, payments at the stall and selling as a farmer work on GleanGrid — plus account and security help.',
+            'Straight answers on pre-orders, pickup windows, cut-offs, online and cash payments, refunds and selling as a farmer on GleanGrid, plus account and security help.',
         ],
         'terms' => [
             'Terms of Use: The Ground Rules for GleanGrid',
@@ -69,7 +69,7 @@ class Seo
         ],
         'privacy' => [
             'Privacy Policy: What GleanGrid Collects and Why',
-            'What personal data GleanGrid holds, why, who can see it and how long we keep it. No card data, no ad tracking, Argon2id-hashed passwords, and your rights.',
+            'What personal data GleanGrid holds, why, who sees it and for how long. Card numbers are never stored, there is no ad tracking, and you can export or delete it.',
         ],
         'returns' => [
             'Returns, Refunds & Cancellations | GleanGrid',
@@ -77,7 +77,7 @@ class Seo
         ],
         'pickup-policy' => [
             'Pickup & Delivery Policy: How Collection Works',
-            'How GleanGrid pickup works: choose a window, get ready alerts, show your order code at the stall and pay the farmer directly. Why we are pickup-only by design.',
+            'How GleanGrid pickup works: choose a window, get a ready alert, show your QR pass at the stall and collect. Why the platform is pickup-only by design.',
         ],
         'seasons' => [
             'Sindh Seasonal Produce Calendar: What’s Fresh Each Month',
@@ -87,6 +87,15 @@ class Seo
             'Confirm Your E-mail to Start Using GleanGrid',
             'Enter the six-digit code we e-mailed you to confirm your address. It keeps order updates and pickup codes going to the right inbox and protects your account.',
         ],
+    ];
+
+    /** The author, as the one Person entity ahmershah.dev publishes (same @id on both sites). */
+    private const FOUNDER = [
+        '@type' => 'Person',
+        '@id' => 'https://ahmershah.dev/#person',
+        'name' => 'Syed Ahmer Shah',
+        'url' => 'https://ahmershah.dev/',
+        'jobTitle' => 'Software Engineer & Full-Stack Developer',
     ];
 
     private const AREAS = [
@@ -222,7 +231,7 @@ class Seo
             self::sentences([
                 $f->tagline ? rtrim($f->tagline, '.').'.' : "{$f->stall_name} sells at Hyderabad’s farmers markets.",
                 'See this week’s harvest and honest customer reviews.',
-                'Reserve online, pay at the stall.',
+                'Reserve online, pay online or at the stall.',
                 'Follow them for restock alerts.',
             ]),
             null,
@@ -244,8 +253,8 @@ class Seo
             self::sentences(array_filter([
                 $desc,
                 $by ? "Grown by {$by} and picked for this week’s Hyderabad market." : 'Picked for this week’s Hyderabad market.',
-                "Reserve now at {$price}/{$p->unit} and pay at pickup.",
-                'No online payment needed.',
+                "Reserve now at {$price}/{$p->unit}.",
+                'Pay online or in cash at pickup.',
             ])),
             null,
         ];
@@ -268,9 +277,13 @@ class Seo
                 '@id' => url('/#org'),
                 'name' => 'GleanGrid',
                 'url' => url('/'),
-                'logo' => asset('icon-512.png'),
+                'description' => 'A pre-order marketplace for the farmers markets of Hyderabad, Sindh: farmers publish weekly stock and pickup windows, customers reserve it and collect it at the stall.',
+                'logo' => ['@type' => 'ImageObject', '@id' => url('/#logo'), 'url' => asset('icon-512.png'), 'width' => 512, 'height' => 512],
+                'image' => ['@id' => url('/#logo')],
+                'email' => $contact['email'],
                 'sameAs' => $social,
-                'founder' => ['@type' => 'Person', 'name' => 'Syed Ahmer Shah', 'url' => config('gleangrid.social.website')],
+                // the same Person entity ahmershah.dev publishes, so search engines join the two
+                'founder' => self::FOUNDER,
                 'contactPoint' => ['@type' => 'ContactPoint', 'email' => $contact['email'], 'telephone' => str_replace(' ', '', $contact['phone']), 'contactType' => 'customer support', 'areaServed' => 'PK', 'availableLanguage' => ['en', 'ur', 'ar', 'hi', 'ru', 'zh', 'es', 'fr']],
                 'address' => ['@type' => 'PostalAddress', 'addressLocality' => 'Hyderabad', 'addressRegion' => 'Sindh', 'postalCode' => '71000', 'addressCountry' => 'PK'],
             ],
@@ -280,10 +293,12 @@ class Seo
                 'name' => 'GleanGrid',
                 'url' => url('/'),
                 'publisher' => ['@id' => url('/#org')],
+                'creator' => self::FOUNDER,
                 'inLanguage' => app()->getLocale(),
                 'potentialAction' => [
                     '@type' => 'SearchAction',
-                    'target' => ['@type' => 'EntryPoint', 'urlTemplate' => route('products.index').'?q={search_term_string}'],
+                    // clean path URLs; the old ?q= form 301s to this one
+                    'target' => ['@type' => 'EntryPoint', 'urlTemplate' => route('products.index').'/search/{search_term_string}'],
                     'query-input' => 'required name=search_term_string',
                 ],
             ],
@@ -332,22 +347,30 @@ class Seo
 
         if ($name === 'products.show' && ($p = $model('product')) instanceof Product) {
             $p->loadMissing('farmer:id,stall_name,slug', 'category:id,name');
+            $url = route('products.show', $p->slug);
+            $image = $p->photo_url ?? $p->image_url;
             $graph[] = array_filter([
                 '@type' => 'Product',
+                '@id' => $url.'#product',
+                'url' => $url,
+                'sku' => 'GG-'.$p->id,
                 'name' => $p->name,
                 'description' => $p->description,
-                'image' => $p->photo_url ?? $p->image_url,
+                'image' => $image ? url($image) : null,
                 'category' => $p->category?->name,
                 'brand' => ['@type' => 'Brand', 'name' => $p->farmer?->stall_name],
-                'offers' => [
+                'offers' => array_filter([
                     '@type' => 'Offer',
                     'price' => number_format((float) $p->price, 2, '.', ''),
                     'priceCurrency' => 'PKR',
+                    // weekly stock: this week's price holds until the end of next week at the latest
+                    'priceValidUntil' => now()->endOfWeek()->addWeek()->toDateString(),
                     'availability' => $p->isOrderable() ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-                    'url' => route('products.show', $p->slug),
-                    'seller' => ['@type' => 'Organization', 'name' => $p->farmer?->stall_name],
+                    'itemCondition' => 'https://schema.org/NewCondition',
+                    'url' => $url,
+                    'seller' => $p->farmer ? ['@type' => 'LocalBusiness', '@id' => route('farmers.show', $p->farmer->slug).'#business', 'name' => $p->farmer->stall_name] : null,
                     'availableDeliveryMethod' => 'https://schema.org/OnSitePickup',
-                ],
+                ]),
                 'aggregateRating' => $p->rating_count > 0 ? ['@type' => 'AggregateRating', 'ratingValue' => $p->rating_avg, 'reviewCount' => $p->rating_count] : null,
             ]);
         }
@@ -356,6 +379,8 @@ class Seo
             $dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
             $graph[] = [
                 '@type' => 'Place',
+                '@id' => route('markets.show', $m->slug).'#place',
+                'url' => route('markets.show', $m->slug),
                 'name' => $m->name,
                 'description' => $m->description,
                 'address' => ['@type' => 'PostalAddress', 'streetAddress' => $m->address, 'addressLocality' => 'Hyderabad', 'addressRegion' => 'Sindh', 'addressCountry' => 'PK'],
@@ -372,10 +397,13 @@ class Seo
         if ($name === 'farmers.show' && ($f = $model('farmer')) instanceof FarmerProfile) {
             $graph[] = array_filter([
                 '@type' => 'LocalBusiness',
+                '@id' => route('farmers.show', $f->slug).'#business',
                 'name' => $f->stall_name,
                 'description' => $f->tagline ?: $f->bio,
-                'image' => $f->logo_url,
+                'image' => $f->logo_url ? url($f->logo_url) : null,
                 'url' => route('farmers.show', $f->slug),
+                'address' => ['@type' => 'PostalAddress', 'addressLocality' => 'Hyderabad', 'addressRegion' => 'Sindh', 'addressCountry' => 'PK'],
+                'parentOrganization' => ['@id' => url('/#org')],
                 'geo' => $f->latitude ? ['@type' => 'GeoCoordinates', 'latitude' => $f->latitude, 'longitude' => $f->longitude] : null,
                 'aggregateRating' => $f->rating_count > 0 ? ['@type' => 'AggregateRating', 'ratingValue' => $f->rating_avg, 'reviewCount' => $f->rating_count] : null,
             ]);

@@ -20,7 +20,7 @@ class PlatformPolishTest extends TestCase
 
     private function bot(array $extra = []): array
     {
-        return ['website' => '', 'form_started_at' => now()->subSeconds(20)->getTimestampMs(), ...$extra];
+        return $this->human($extra);
     }
 
     private function enableCaptcha(): void
@@ -59,7 +59,7 @@ class PlatformPolishTest extends TestCase
         $this->enableCaptcha();
 
         $captcha = $this->get(route('login'))->viewData('page')['props']['captcha'];
-        $this->assertSame(['v3' => 'v3-site', 'v2' => 'v2-site'], $captcha);
+        $this->assertSame(['v3' => 'v3-site', 'v2' => 'v2-site', 'turnstile' => null], $captcha);
     }
 
     public function test_demo_accounts_sign_in_without_captcha_or_email_and_count_as_verified(): void

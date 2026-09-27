@@ -4,6 +4,7 @@ use App\Http\Middleware\EnsureEmailVerified;
 use App\Http\Middleware\EnsureFarmerApproved;
 use App\Http\Middleware\EnsureProfileComplete;
 use App\Http\Middleware\EnsureRole;
+use App\Http\Middleware\FreshCsrfToken;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\PathFilterRoutes;
 use App\Http\Middleware\SecurityHeaders;
@@ -30,11 +31,12 @@ return Application::configure(basePath: dirname(__DIR__))
         }
         $middleware->web(append: [
             ThrottleRequests::using('global'),
+            FreshCsrfToken::class,
             SecurityHeaders::class,
             SetLocale::class,
             HandleInertiaRequests::class,
         ]);
-        $middleware->validateCsrfTokens(except: ['webhooks/resend/inbound', 'payments/callback/*']);
+        $middleware->validateCsrfTokens(except: FreshCsrfToken::CROSS_SITE_OK);
         $middleware->alias([
             'role' => EnsureRole::class,
             'farmer.approved' => EnsureFarmerApproved::class,

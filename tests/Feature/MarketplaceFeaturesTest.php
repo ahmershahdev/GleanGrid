@@ -294,7 +294,7 @@ class MarketplaceFeaturesTest extends TestCase
         $this->actingAs($user)->delete(route('social.unlink', 'google'))->assertSessionHas('error', 'flash.oauth_last_method');
         $this->assertSame(1, $user->socialAccounts()->count());
         auth()->logout();
-        $this->post(route('login'), ['login' => 'onlyg@example.com', 'password' => 'anything'])->assertSessionHasErrors('login');
+        $this->post(route('login'), $this->human(['login' => 'onlyg@example.com', 'password' => 'anything']))->assertSessionHasErrors('login');
         $this->assertGuest();
     }
 

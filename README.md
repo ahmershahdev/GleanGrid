@@ -22,7 +22,7 @@
   <img alt="React 19" src="https://img.shields.io/badge/React-19-1f4d36.svg">
   <img alt="Inertia 3" src="https://img.shields.io/badge/Inertia-3-c9e265.svg">
   <img alt="8 languages" src="https://img.shields.io/badge/languages-8-f2b33d.svg">
-  <a href="CONTRIBUTING.md"><img alt="PRs welcome" src="https://img.shields.io/badge/PRs-welcome-13201a.svg"></a>
+  <img alt="Tests" src="https://img.shields.io/badge/tests-133%20passing-2f7d4f.svg">
 </p>
 
 ---
@@ -115,7 +115,7 @@ Every functional requirement in the *MarketLink SRS v1.0* is implemented. Where 
 | Cart → pre-order against farmer stock | Basket (guest-friendly) → `Customer/Checkout`, stock reserved with row locks |
 | Choose pickup date & slot within farmer windows | Checkout shows only bookable, non-full windows |
 | Order status placed → accepted → ready → completed; cancel/modify before cut-off | `Customer/Orders/*`, enforced server-side |
-| No payment gateway — pay at pickup | By design; no card data anywhere |
+| Pay at pickup, no payment gateway required | Cash at pickup is always offered. Online payment (Easypaisa, JazzCash, card) was added on top, beyond the brief; card numbers and CVCs are never stored |
 | View / modify / cancel orders | `Customer/Orders/Show`, `Customer/Orders/Edit` |
 | Past orders and quick reorder | Order history + one-tap reorder |
 | Favourites with restock alerts | E-mail + in-app alert when a favourited item is back |
@@ -142,7 +142,7 @@ Every functional requirement in the *MarketLink SRS v1.0* is implemented. Where 
 | E-mail or in-app notifications (confirmation, ready for pickup) | Both — database notifications + branded e-mail |
 | About Us (team & platform) · Contact Us with Google Maps | `About`, `Contact` (Google Maps embed) |
 
-**Beyond the brief:** e-mail OTP verification, new-device sign-in alerts, session management, Argon2id hashing, CSP with nonces, reCAPTCHA v3/v2 + honeypot, FAQ and four policy pages, JSON-LD structured data, `llms.txt`, 8 languages, dark mode, and the motion design details (custom cursor and scrollbar, fly-to-basket, ⌘K search, smooth scroll).
+**Beyond the brief:** online payments with automatic refunds, Google/Facebook sign-in, e-mail OTP verification, new-device sign-in alerts, session management, Argon2id hashing, a per-response CSP nonce, per-page CSRF tokens, reCAPTCHA v3 + Cloudflare Turnstile / reCAPTCHA v2 + honeypot + signed form tickets, FAQ and four policy pages, JSON-LD structured data, `llms.txt`, 8 languages, dark mode, and the motion design details (custom cursor and scrollbar, fly-to-basket, ⌘K search, smooth scroll).
 
 ## Tech stack
 
@@ -163,6 +163,10 @@ Every functional requirement in the *MarketLink SRS v1.0* is implemented. Where 
 
 A classic multi-tier web application, as the SRS asks, organised so each layer has one job:
 
+- **Presentation:** React 19 pages rendered on the server by Inertia SSR, hydrated in the browser. No separate public API: every page gets its props from a controller.
+- **Application:** Laravel middleware (rate limits, CSRF, CSP, locale, roles) and thin controllers that validate and authorise, then call a service.
+- **Domain services:** `OrderService`, `PaymentService`, `CouponService`, `AccountSecurity`, `BadgeService`: every rule and every lock lives here, testable without HTTP.
+- **Data:** MySQL/MariaDB with foreign keys, CHECK constraints, triggers and reporting views; queued, after-commit notifications; the scheduler for payment expiry, reminders, restocks and badges.
 
 **Design decisions that keep it scalable:**
 
@@ -196,10 +200,10 @@ A classic multi-tier web application, as the SRS asks, organised so each layer h
 |---|---|
 | Password theft | **Argon2id** (64 MiB, 4 passes). Old bcrypt hashes upgrade on next sign-in. The policy requires upper- and lower-case letters, a number and a symbol; production also rejects known-breached passwords. |
 | Credential stuffing / brute force | Per-account + IP lockout with growing cool-downs, named rate limiters on every public write, and a failed-login audit trail with a suspicious-IP panel for admins |
-| Bots & spam | Honeypot field, a minimum-time trap, and Google reCAPTCHA: the **v2 “I’m not a robot” checkbox** is required on sign-up, contact and both password-reset forms, while sign-in uses invisible **v3** scoring that escalates to the checkbox on a low score. One script load serves both versions. The published demo accounts skip Google (their passwords are public anyway) but keep the honeypot and lockout. |
+| Bots & spam | Four layers (`App\Support\BotGuard`). **1. Honeypot** field. **2. Signed form ticket:** every page render carries a fresh, encrypted issue time (AES-256 + MAC with `APP_KEY`, random IV, so no two are alike); a form sent back in under 2 s, after 2 h, or with a missing, forged or edited ticket is refused. (The old client-side timestamp could simply be faked by a script.) **3. Invisible Google reCAPTCHA v3** scoring. **4. A visible challenge**, **Cloudflare Turnstile** or the **reCAPTCHA v2** checkbox (`CAPTCHA_CHALLENGE`), required on sign-up, contact and both password-reset forms and shown on sign-in after a low v3 score. Turnstile tokens are checked for the right action and hostname and carry an idempotency key. If Google or Cloudflare is unreachable the form fails open by default (`CAPTCHA_FAIL_OPEN`) while the other layers and rate limits still apply. Demo accounts skip the captcha (their passwords are public) but keep the honeypot and lockout. |
 | Account takeover | 6-digit e-mail codes (hashed, single-use, 15-minute life, 5 attempts, row-locked), new-device sign-in e-mails, password-change e-mails, and *sign out other devices* |
 | XSS | React escaping by default, plus a **nonce-based Content-Security-Policy** with `strict-dynamic`, `object-src 'none'` and `base-uri 'self'` |
-| CSRF | Laravel CSRF tokens on every state-changing request (Inertia sends the XSRF header automatically) |
+| CSRF | Laravel CSRF tokens on every state-changing request, **regenerated on every full page load** (a refresh or a new tab gets a new CSPRNG token; Inertia and `fetch` read the `XSRF-TOKEN` cookie at send time, so other open tabs keep working). Write requests the browser marks `Sec-Fetch-Site: cross-site` are refused with 403 before any controller runs (`FreshCsrfToken`); only the signed payment callback and mail webhook are exempt. |
 | Clickjacking & sniffing | `frame-ancestors 'self'`, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `X-Permitted-Cross-Domain-Policies`, HSTS and `upgrade-insecure-requests` over HTTPS only. `Cross-Origin-Opener-Policy` is opt-in (`SECURITY_COOP=true`) because it stops Lighthouse/PageSpeed from tracing the page. |
 | Session fixation / hijacking | Session ID regenerated on sign-in, encrypted, `HttpOnly`, `Secure`, `SameSite=Lax` cookies; database sessions users can revoke |
 | Account enumeration | Password-reset answers the same way whether the e-mail exists or not |
@@ -332,7 +336,7 @@ With `MAIL_MAILER=log`, verification codes and every other e-mail are written to
 
 **PHP extensions:** enable `extension=gd` (WebP re-encoding of uploads) and `zend_extension=opcache` with `opcache.enable=1` in `C:\xampp\php\php.ini`. Restart Apache or `php artisan serve` afterwards.
 
-**reCAPTCHA:** in the Google reCAPTCHA admin console, add `localhost`, `127.0.0.1` and your production domain to **both** keys (v3 and v2). See [Troubleshooting](#troubleshooting) if the box doesn’t appear.
+**reCAPTCHA / Turnstile:** in the Google reCAPTCHA admin console, add `localhost`, `127.0.0.1` and your production domain to **both** keys (v3 and v2). For Turnstile, add the domain to the widget in the Cloudflare dashboard; locally, Cloudflare's always-pass test keys (`1x00000000000000000000AA` / `1x0000000000000000000000000000000AA`) work. See [Troubleshooting](#troubleshooting) if the box doesn’t appear.
 
 **Demo accounts** (already verified):
 
@@ -351,6 +355,7 @@ On the sign-in page, the three **demo tiles sign in with one tap**. Every `…@g
 | reCAPTCHA box missing or shows *“ERROR for site owner: Invalid domain”*; sign-in keeps asking for the checkbox | Google treats `127.0.0.1` and `localhost` as different domains. If only `localhost` is on the key, a site opened at `http://127.0.0.1:8000` gets *“Localhost is not supported by default”* | Add **`127.0.0.1`** to both keys in the reCAPTCHA console, or open the site at `http://localhost:8000` |
 | Every form says *Page expired (419)* locally | `.env` still has production values (`SESSION_SECURE_COOKIE=true` on plain `http`) | For local work use `APP_ENV=local`, `APP_DEBUG=true`, `APP_URL=http://127.0.0.1:8000`, `SESSION_SECURE_COOKIE=false` |
 | *Vite manifest not found* | Assets were never built on this checkout (`public/build` is git-ignored) | `npm ci && npm run build`, or `npm run dev` |
+| A form says *“This form was open for too long”* | The signed form ticket is older than `BOT_FORM_TTL_SECONDS` (2 h) | Send it again: the page already holds a fresh ticket. Raise the TTL for very long forms |
 | *No application encryption key* | Empty `APP_KEY` | `php artisan key:generate` (only when the key is empty — changing it logs everyone out) |
 | Uploaded photos don’t appear | Missing storage link | `php artisan storage:link` |
 | No e-mails arrive locally | No mail provider configured | `MAIL_MAILER=log` and read `storage/logs/laravel.log`; demo `@gleangrid.test` accounts never receive mail by design |
@@ -370,7 +375,7 @@ A complete, step-by-step guide for a **free Oracle Cloud server** (Nginx, PHP-FP
 ## Testing & CI
 
 ```bash
-php artisan test                           # 66 feature tests, 395 assertions
+php artisan test                           # 133 tests, 779 assertions
 npx playwright test                        # browser end-to-end tests (start the app first)
 php tests/Stress/checkout-race.php 50      # real parallel checkouts against MySQL
 ```
@@ -378,10 +383,10 @@ php tests/Stress/checkout-race.php 50      # real parallel checkouts against MyS
 **Feature tests** run against a real MySQL/MariaDB test database (`gleangrid_test`) and cover:
 
 - **Order lifecycle:** place, accept, ready, complete, review; stock, cut-off and pickup-window rules.
-- **Security:** OTP flow and attempt limits, honeypot and time trap, password policy, lockout, new-device alerts, bcrypt → Argon2id upgrade, CSP nonce headers, write throttling, friendly duplicate-value errors.
+- **Security:** OTP flow and attempt limits, honeypot, forged / expired / replayed form tickets, Turnstile and reCAPTCHA rules, per-load CSRF rotation, cross-site write refusal, password policy, lockout, new-device alerts, bcrypt → Argon2id upgrade, CSP nonce headers, write throttling, friendly duplicate-value errors.
 - **Race conditions:** every interleaving in the table above, stale farmer stock edits, the atomic weekly restock, plus the database CHECK constraints.
 - **Pages and roles:** every page renders for its role, and each role is blocked from the others.
-- **Platform:** reCAPTCHA rules (Google faked), demo-account behaviour, contact topics, live search ranking and typo suggestions, WebP upload and removal, SVG rejection, case-insensitive URLs and aliases, pickup reminders, data export and account deletion.
+- **Platform:** structured data (clean search URL, linked Product / LocalBusiness / Place entities), reCAPTCHA rules (Google faked), demo-account behaviour, contact topics, live search ranking and typo suggestions, WebP upload and removal, SVG rejection, case-insensitive URLs and aliases, pickup reminders, data export and account deletion.
 
 **End-to-end tests** (`tests/e2e`, configured by `playwright.config.js`) drive the real site in Chrome on desktop and a phone: the public pages and SEO tags, a full customer order from basket to cancellation, and the admin panel. They sign in with the demo accounts and clean up after themselves.
 
@@ -420,7 +425,7 @@ docs/images/                                screenshots and diagrams (guides liv
 
 ## Assumptions
 
-- Payment is settled at the stall; delivery and courier logistics are out of scope (per SRS §1.5).
+- Payment is made online at checkout or in cash at the stall; delivery and courier logistics are out of scope (per SRS §1.5).
 - Farmer identity, licences and organic or food-safety certification are not verified by the platform (per SRS §1.5); stall approval is a basic admin review.
 - One pickup window belongs to one market on one weekday; each window has a capacity set by the farmer.
 - Currency is the Pakistani rupee; times are Pakistan Standard Time (`Asia/Karachi` is the IANA zone name).
@@ -428,7 +433,7 @@ docs/images/                                screenshots and diagrams (guides liv
 
 ## Contributing, security & licence
 
-- **Contributing:** issues and pull requests are welcome — read [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow, coding style and commit conventions.
+- **Contributing:** `main` is the only branch and is protected (linear history, required CI checks, no force-push or deletion), and the repository is kept read-only as the TechWiz 7 submission. Bug reports and ideas are welcome at **support@ahmershah.dev**; [CONTRIBUTING.md](CONTRIBUTING.md) documents the coding style and commit conventions used.
 - **Security:** please report vulnerabilities privately as described in [SECURITY.md](SECURITY.md), not in public issues.
 - **Licence:** GleanGrid is open source under the [MIT licence](LICENSE.txt). Third-party assets keep their own licences (see Credits).
 - **Wiki:** longer guides for each role, the architecture and the API surface live in the [project wiki](https://github.com/ahmershahdev/GleanGrid/wiki).

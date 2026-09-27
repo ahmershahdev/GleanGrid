@@ -43,6 +43,20 @@ return [
         'v2_secret' => env('RECAPTCHA_V2_SECRET_KEY'),
         'min_score' => (float) env('RECAPTCHA_MIN_SCORE', 0.5),
         'min_seconds' => (int) env('BOT_MIN_FORM_SECONDS', 2),
+        'ticket_ttl' => (int) env('BOT_FORM_TTL_SECONDS', 7200),
+    ],
+
+    // Cloudflare Turnstile — the visible challenge (instead of the reCAPTCHA v2 checkbox) when set.
+    'turnstile' => [
+        'site' => env('TURNSTILE_SITE_KEY'),
+        'secret' => env('TURNSTILE_SECRET_KEY'),
+    ],
+
+    'captcha' => [
+        // which visible challenge to show when both are configured: turnstile | recaptcha
+        'challenge' => env('CAPTCHA_CHALLENGE', 'turnstile'),
+        // provider unreachable: let the request through (honeypot, ticket and limits still apply)
+        'fail_open' => (bool) env('CAPTCHA_FAIL_OPEN', true),
     ],
 
 ];

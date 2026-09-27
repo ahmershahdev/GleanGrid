@@ -55,12 +55,12 @@ class SecurityHeaders
 
         $directives = [
             'default-src' => ["'self'"],
-            'script-src' => ["'self'", "'nonce-{$nonce}'", "'strict-dynamic'", 'https://www.google.com/recaptcha/', 'https://www.gstatic.com/recaptcha/', $dev],
+            'script-src' => ["'self'", "'nonce-{$nonce}'", "'strict-dynamic'", 'https://www.google.com/recaptcha/', 'https://www.gstatic.com/recaptcha/', 'https://challenges.cloudflare.com', $dev],
             'style-src' => ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', $dev],
             'font-src' => ["'self'", 'data:', 'https://fonts.gstatic.com'],
             'img-src' => ["'self'", 'data:', 'blob:', 'https://tile.openstreetmap.org', 'https://*.tile.openstreetmap.org', 'https://www.gstatic.com', 'https://www.google.com'],
-            'connect-src' => ["'self'", 'https://router.project-osrm.org', 'https://www.google.com/recaptcha/', $dev, $devWs],
-            'frame-src' => ['https://www.google.com', 'https://maps.google.com', 'https://www.openstreetmap.org', 'https://recaptcha.google.com'],
+            'connect-src' => ["'self'", 'https://router.project-osrm.org', 'https://www.google.com/recaptcha/', 'https://challenges.cloudflare.com', $dev, $devWs],
+            'frame-src' => ['https://www.google.com', 'https://maps.google.com', 'https://www.openstreetmap.org', 'https://recaptcha.google.com', 'https://challenges.cloudflare.com'],
             'worker-src' => ["'self'", 'blob:'],
             'manifest-src' => ["'self'"],
             'object-src' => ["'none'"],

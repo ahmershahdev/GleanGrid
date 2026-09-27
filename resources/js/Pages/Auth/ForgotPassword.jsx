@@ -6,7 +6,7 @@ import { useT } from '@/lib/i18n';
 
 export default function ForgotPassword() {
     const t = useT();
-    const form = useForm({ email: '', website: '', captcha_v2: '' });
+    const form = useForm({ email: '', website: '', captcha_v2: '', captcha_turnstile: '' });
     const guard = useBotGuard(form, 'forgot', 'checkbox');
 
     return (

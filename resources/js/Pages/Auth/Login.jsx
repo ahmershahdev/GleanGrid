@@ -15,7 +15,7 @@ const DEMO = [
 
 export default function Login() {
     const t = useT();
-    const form = useForm({ login: '', password: '', remember: true, website: '', captcha_v2: '' });
+    const form = useForm({ login: '', password: '', remember: true, website: '', captcha_v2: '', captcha_turnstile: '' });
     const guard = useBotGuard(form, 'login');
 
     const submit = (e) => {
