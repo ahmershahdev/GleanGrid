@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\SchemaCompat;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +24,7 @@ return new class extends Migration
     public function down(): void
     {
         if (DB::getDriverName() === 'mysql') {
-            DB::statement('ALTER TABLE contact_messages DROP CONSTRAINT chk_contact_topic');
+            SchemaCompat::dropCheck('contact_messages', 'chk_contact_topic');
         }
 
         Schema::table('contact_messages', fn (Blueprint $table) => $table->dropColumn('topic'));

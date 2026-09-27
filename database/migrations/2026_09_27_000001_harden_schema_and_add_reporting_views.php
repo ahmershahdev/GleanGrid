@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\SchemaCompat;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -138,7 +139,7 @@ return new class extends Migration
         if ($this->supportsChecks()) {
             foreach (self::CHECKS as $table => $checks) {
                 foreach (array_keys($checks) as $name) {
-                    DB::statement("ALTER TABLE `{$table}` DROP CONSTRAINT IF EXISTS `{$name}`");
+                    SchemaCompat::dropCheck($table, $name);
                 }
             }
         }

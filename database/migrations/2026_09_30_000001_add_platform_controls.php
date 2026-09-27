@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\SchemaCompat;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -69,7 +70,7 @@ return new class extends Migration
             return;
         }
 
-        DB::statement('ALTER TABLE orders DROP CONSTRAINT IF EXISTS chk_order_status');
+        SchemaCompat::dropCheck('orders', 'chk_order_status');
         DB::statement("ALTER TABLE orders ADD CONSTRAINT chk_order_status CHECK (status IN ('placed','accepted','ready','completed','declined','cancelled','no_show'))");
         DB::statement('ALTER TABLE users ADD CONSTRAINT chk_users_no_shows CHECK (no_show_count <= 1000)');
         DB::statement("ALTER TABLE settings ADD CONSTRAINT chk_settings_key CHECK (`key` REGEXP '^[a-z_]+$')");
@@ -124,8 +125,8 @@ return new class extends Migration
             DB::unprepared('DROP TRIGGER IF EXISTS trg_orders_status_insert');
             DB::unprepared('DROP TRIGGER IF EXISTS trg_orders_status_update');
             DB::statement('ALTER TABLE products DROP INDEX products_fulltext');
-            DB::statement('ALTER TABLE users DROP CONSTRAINT IF EXISTS chk_users_no_shows');
-            DB::statement('ALTER TABLE orders DROP CONSTRAINT IF EXISTS chk_order_status');
+            SchemaCompat::dropCheck('users', 'chk_users_no_shows');
+            SchemaCompat::dropCheck('orders', 'chk_order_status');
             DB::statement("ALTER TABLE orders ADD CONSTRAINT chk_order_status CHECK (status IN ('placed','accepted','ready','completed','declined','cancelled'))");
         }
         Schema::dropIfExists('order_status_history');

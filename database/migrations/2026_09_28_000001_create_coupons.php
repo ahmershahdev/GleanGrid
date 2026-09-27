@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\SchemaCompat;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -57,7 +58,7 @@ return new class extends Migration
     public function down(): void
     {
         if (in_array(DB::getDriverName(), ['mysql', 'mariadb'], true)) {
-            DB::statement('ALTER TABLE orders DROP CONSTRAINT IF EXISTS chk_order_discount');
+            SchemaCompat::dropCheck('orders', 'chk_order_discount');
         }
         Schema::table('orders', fn (Blueprint $t) => $t->dropColumn(['subtotal', 'discount_amount', 'coupon_code']));
         Schema::dropIfExists('coupon_redemptions');
