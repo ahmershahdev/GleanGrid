@@ -179,7 +179,7 @@ class MarketplaceFeaturesTest extends TestCase
         $this->assertSame([12], $guava->peak_months, 'Peak months outside the season are dropped.');
 
         $this->actingAs($admin)->post(route('admin.seasons.store'), ['name' => 'Bad', 'months' => [13]])->assertSessionHasErrors('months.0');
-        $this->get(route('seasons'))->assertOk()->assertInertia(fn ($page) => $page->component('Seasons')->has('items'));
+        $this->get(route('seasons'))->assertOk()->assertInertia(fn ($page) => $page->has('items')->has('month'));
     }
 
     public function test_assistant_only_answers_about_the_signed_in_user(): void
