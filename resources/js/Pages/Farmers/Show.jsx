@@ -1,45 +1,17 @@
 import { Link } from '@inertiajs/react';
-import { CalendarClock, Mail, MapPin, MessageCircleReply, Phone, Star, Timer } from 'lucide-react';
+import { CalendarClock, Mail, MapPin, Phone, Star, Timer } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ProductCard } from '@/Components/Cards';
 import { LazyDirectionsMap as DirectionsMap } from '@/Components/LazyMap';
 import { Reveal, SplitWords } from '@/Components/motion';
-import { Avatar, EmptyState, Stars } from '@/Components/ui';
+import { EmptyState } from '@/Components/ui';
+import { ReviewList } from '@/Components/Reviews';
+import { StallBadges } from '@/Components/Badges';
 import { FavoriteButton } from '@/Components/widgets';
 import { useFormat, useT } from '@/lib/i18n';
 import { cn, photoProps } from '@/lib/utils';
 
-export function ReviewList({ reviews }) {
-    const t = useT();
-    const { relative } = useFormat();
-    if (!reviews.length) return <p className="rounded-3xl border border-dashed border-line-strong p-8 text-center text-ink-soft">{t('reviews.none')}</p>;
-    return (
-        <ul className="space-y-3">
-            {reviews.map((r) => (
-                <li key={r.id} className="rounded-3xl border border-line bg-elev p-5">
-                    <div className="flex items-center gap-3">
-                        <Avatar name={r.user?.name} size="size-9" />
-                        <div className="flex-1">
-                            <p className="text-sm font-semibold">{r.user?.name}</p>
-                            <p className="text-xs text-ink-faint">{relative(r.created_at)}</p>
-                        </div>
-                        <Stars value={r.rating} />
-                    </div>
-                    {r.comment && <p className="mt-3 text-ink-soft">{r.comment}</p>}
-                    {r.farmer_reply && (
-                        <div className="mt-3 flex gap-2 rounded-2xl bg-brand-soft p-3 text-sm">
-                            <MessageCircleReply className="mt-0.5 size-4 shrink-0 text-brand" />
-                            <p>
-                                <span className="font-semibold">{t('reviews.farmer_reply')}: </span>
-                                {r.farmer_reply}
-                            </p>
-                        </div>
-                    )}
-                </li>
-            ))}
-        </ul>
-    );
-}
+export { ReviewList };
 
 export default function FarmerShow({ farmer, products, reviews, slots }) {
     const t = useT();
@@ -70,6 +42,7 @@ export default function FarmerShow({ farmer, products, reviews, slots }) {
                             <SplitWords text={farmer.stall_name} immediate />
                         </h1>
                         {farmer.tagline && <p className="mt-4 text-lg opacity-80 md:text-xl">{farmer.tagline}</p>}
+                        <StallBadges farmer={farmer} className="mt-5" />
                         <div className="mt-8 flex flex-wrap items-center gap-3 text-sm">
                             {farmer.rating_count > 0 && (
                                 <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-ink/10 px-3 py-1.5">

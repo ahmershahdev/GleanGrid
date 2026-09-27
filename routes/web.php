@@ -4,7 +4,9 @@ use App\Http\Controllers\Admin;
 use App\Http\Controllers\AssistantController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\EmailVerificationController;
+use App\Http\Controllers\Auth\OnboardingController;
 use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CouponController;
 use App\Http\Controllers\Customer;
@@ -14,11 +16,13 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MarketController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\PaymentCallbackController;
 use App\Http\Controllers\PreferenceController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ResendWebhookController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\SeasonController;
 use App\Http\Controllers\SitemapController;
 use App\Support\PathFilters;
 use Illuminate\Support\Facades\Route;
@@ -30,6 +34,7 @@ Route::get('/farmers/{filters?}', [FarmerController::class, 'index'])->where('fi
 Route::get('/farmers/{farmer:slug}', [FarmerController::class, 'show'])->name('farmers.show');
 Route::get('/products/{filters?}', [ProductController::class, 'index'])->where('filters', PathFilters::pattern())->middleware('filters')->name('products.index');
 Route::get('/products/{product:slug}', [ProductController::class, 'show'])->name('products.show');
+Route::get('/seasonal-calendar', SeasonController::class)->name('seasons');
 Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
 Route::get('/faq', [PageController::class, 'faq'])->name('faq');
@@ -41,6 +46,8 @@ Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 Route::post('/search/suggest', SearchController::class)->middleware('throttle:search')->name('search.suggest');
 
 Route::post('/webhooks/resend/inbound', ResendWebhookController::class)->middleware('throttle:60,1')->name('webhooks.resend');
+Route::post('/payments/callback/{provider}', PaymentCallbackController::class)->where('provider', 'jazzcash')->middleware('throttle:60,1')->name('payments.callback');
+Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'callback'])->where('provider', 'google|facebook')->middleware('throttle:oauth')->name('social.callback');
 Route::post('/contact', [PageController::class, 'sendContact'])->middleware('throttle:contact')->name('contact.send');
 Route::get('/cart', [CartController::class, 'show'])->name('cart');
 Route::post('/cart/sync', [CartController::class, 'sync'])->middleware('throttle:cart')->name('cart.sync');
@@ -56,6 +63,7 @@ Route::middleware('guest')->group(function () {
     Route::post('/forgot-password', [PasswordResetController::class, 'email'])->middleware('throttle:password')->name('password.email');
     Route::get('/reset-password/{token}', [PasswordResetController::class, 'reset'])->name('password.reset');
     Route::post('/reset-password', [PasswordResetController::class, 'update'])->middleware('throttle:password')->name('password.update');
+    Route::get('/auth/{provider}/redirect', [SocialAuthController::class, 'redirect'])->where('provider', 'google|facebook')->middleware('throttle:oauth')->name('social.redirect');
 });
 
 Route::middleware('auth')->group(function () {
@@ -64,7 +72,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/verify-email', [EmailVerificationController::class, 'notice'])->name('verification.notice');
     Route::post('/verify-email', [EmailVerificationController::class, 'verify'])->middleware('throttle:verify')->name('verification.verify');
     Route::post('/verify-email/resend', [EmailVerificationController::class, 'resend'])->middleware('throttle:resend')->name('verification.resend');
-    Route::get('/dashboard', fn () => redirect()->route(auth()->user()->dashboardRoute()))->name('dashboard');
+    Route::get('/dashboard', fn () => redirect()->route(auth()->user()->dashboardRoute()))->middleware('onboarded')->name('dashboard');
+
+    Route::get('/welcome/complete-profile', [OnboardingController::class, 'show'])->name('onboarding.show');
+    Route::post('/welcome/complete-profile', [OnboardingController::class, 'store'])->middleware('throttle:writes')->name('onboarding.store');
+    Route::get('/account/connections/{provider}/link', [SocialAuthController::class, 'link'])->where('provider', 'google|facebook')->middleware('throttle:oauth')->name('social.link');
+    Route::delete('/account/connections/{provider}', [SocialAuthController::class, 'unlink'])->where('provider', 'google|facebook')->middleware('throttle:password')->name('social.unlink');
 
     Route::get('/account/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/account/profile', [ProfileController::class, 'update'])->middleware('throttle:writes')->name('profile.update');
@@ -77,7 +90,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/account/notifications/read-all', [NotificationController::class, 'readAll'])->middleware('throttle:writes')->name('notifications.read-all');
     Route::post('/account/notifications/{id}/read', [NotificationController::class, 'read'])->middleware('throttle:writes')->name('notifications.read');
 
-    Route::middleware(['role:customer', 'verified', 'throttle:writes'])->prefix('account')->name('customer.')->group(function () {
+    Route::middleware(['role:customer', 'verified', 'onboarded', 'throttle:writes'])->prefix('account')->name('customer.')->group(function () {
         Route::get('/', Customer\DashboardController::class)->name('dashboard');
         Route::get('/checkout', [Customer\CheckoutController::class, 'show'])->name('checkout');
         Route::post('/checkout/coupon', [CouponController::class, 'preview'])->middleware('throttle:20,1')->name('coupons.preview');
@@ -87,7 +100,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/orders/{order}/edit', [Customer\OrderController::class, 'edit'])->name('orders.edit');
         Route::put('/orders/{order}', [Customer\OrderController::class, 'update'])->name('orders.update');
         Route::post('/orders/{order}/cancel', [Customer\OrderController::class, 'cancel'])->name('orders.cancel');
-        Route::post('/orders/{order}/reviews', [Customer\ReviewController::class, 'store'])->name('reviews.store');
+        Route::post('/orders/{order}/reviews', [Customer\ReviewController::class, 'store'])->middleware('throttle:reviews')->name('reviews.store');
+        Route::get('/payments', [Customer\PaymentController::class, 'index'])->name('payments.index');
+        Route::get('/payments/{payment}', [Customer\PaymentController::class, 'show'])->name('payments.show');
+        Route::post('/payments/{payment}/pay', [Customer\PaymentController::class, 'pay'])->middleware('throttle:payments')->name('payments.pay');
+        Route::get('/payments/{payment}/status', [Customer\PaymentController::class, 'status'])->middleware('throttle:payment-poll')->name('payments.status');
+        Route::post('/payments/{payment}/cancel', [Customer\PaymentController::class, 'cancel'])->name('payments.cancel');
+        Route::post('/stock-alerts/{product:id}', [Customer\StockAlertController::class, 'store'])->middleware('throttle:alerts')->name('alerts.store');
+        Route::delete('/stock-alerts/{product:id}', [Customer\StockAlertController::class, 'destroy'])->middleware('throttle:alerts')->name('alerts.destroy');
         Route::get('/reviews/{filters?}', [Customer\ReviewController::class, 'index'])->where('filters', PathFilters::pattern())->middleware('filters')->name('reviews.index');
         Route::get('/favorites', [Customer\FavoriteController::class, 'index'])->name('favorites.index');
         Route::post('/favorites/{type}/{id}', [Customer\FavoriteController::class, 'toggle'])->name('favorites.toggle');
@@ -98,7 +118,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/family/{link}', [Customer\FamilyController::class, 'destroy'])->name('family.destroy');
     });
 
-    Route::middleware(['role:farmer', 'verified', 'throttle:writes'])->prefix('farmer')->name('farmer.')->group(function () {
+    Route::middleware(['role:farmer', 'verified', 'onboarded', 'throttle:writes'])->prefix('farmer')->name('farmer.')->group(function () {
         Route::get('/', Farmer\DashboardController::class)->name('dashboard');
         Route::get('/stall-profile', [Farmer\StallController::class, 'edit'])->name('stall.edit');
         Route::put('/stall-profile', [Farmer\StallController::class, 'update'])->name('stall.update');
@@ -162,6 +182,22 @@ Route::middleware('auth')->group(function () {
         Route::get('/messages/{filters?}', [Admin\MessageController::class, 'index'])->where('filters', PathFilters::pattern())->middleware('filters')->name('messages.index');
         Route::patch('/messages/{message}', [Admin\MessageController::class, 'read'])->name('messages.read');
         Route::post('/messages/{message}/reply', [Admin\MessageController::class, 'reply'])->middleware('throttle:20,1')->name('messages.reply');
+
+        Route::get('/payments/{filters?}', [Admin\PaymentController::class, 'index'])->where('filters', PathFilters::pattern())->middleware('filters')->name('payments.index');
+        Route::get('/payments/{payment}', [Admin\PaymentController::class, 'show'])->name('payments.show');
+        Route::post('/payments/{payment}/refund', [Admin\PaymentController::class, 'refund'])->middleware('throttle:20,1')->name('payments.refund');
+
+        Route::get('/badges/{filters?}', [Admin\BadgeController::class, 'index'])->where('filters', PathFilters::pattern())->middleware('filters')->name('badges.index');
+        Route::post('/badges/recompute', [Admin\BadgeController::class, 'recompute'])->middleware('throttle:6,1')->name('badges.recompute');
+        Route::put('/badges/rules', [Admin\BadgeController::class, 'rules'])->name('badges.rules');
+        Route::post('/badges/farmers/{farmer:id}', [Admin\BadgeController::class, 'award'])->name('badges.award');
+        Route::patch('/badges/{badge}/revoke', [Admin\BadgeController::class, 'revoke'])->name('badges.revoke');
+        Route::patch('/badges/{badge}/unlock', [Admin\BadgeController::class, 'unlock'])->name('badges.unlock');
+
+        Route::resource('seasons', Admin\SeasonController::class)->except(['show', 'create', 'edit']);
+
+        Route::patch('/moderation/review-photos/{photo}', [Admin\ModerationController::class, 'togglePhoto'])->name('moderation.photos.toggle');
+        Route::delete('/moderation/review-photos/{photo}', [Admin\ModerationController::class, 'destroyPhoto'])->name('moderation.photos.destroy');
 
         Route::get('/audit/{filters?}', [Admin\AuditController::class, 'index'])->where('filters', PathFilters::pattern())->middleware('filters')->name('audit.index');
         Route::get('/settings', [Admin\SettingsController::class, 'edit'])->name('settings.edit');

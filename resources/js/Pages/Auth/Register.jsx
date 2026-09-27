@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, Check, ShoppingBasket, Store } from 'lucide-reac
 import { useEffect, useState } from 'react';
 import { Button, Checkbox, Input, PASSWORD_RULES, PasswordInput, Textarea } from '@/Components/ui';
 import AuthLayout from '@/Layouts/AuthLayout';
+import SocialButtons from '@/Components/SocialButtons';
 import { BotFields, useBotGuard } from '@/lib/botguard';
 import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -96,6 +97,7 @@ export default function Register({ role, open = { customer: true, farmer: true }
                 ))}
             </ol>
 
+            {step === 0 && <SocialButtons as={form.data.role} className="mb-2" />}
             <form onSubmit={submit} className="relative" noValidate>
                 <AnimatePresence mode="wait" custom={dir} initial={false}>
                     <motion.div

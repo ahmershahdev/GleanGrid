@@ -24,3 +24,18 @@ export async function postJson(url, body, { signal } = {}) {
     }
     return { data, status: res.status };
 }
+
+export async function getJson(url, { signal } = {}) {
+    const res = await fetch(url, {
+        signal,
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+    });
+    const data = res.headers.get('content-type')?.includes('json') ? await res.json() : null;
+    if (!res.ok) {
+        const error = new Error(`HTTP ${res.status}`);
+        error.response = { status: res.status, data };
+        throw error;
+    }
+    return { data, status: res.status };
+}

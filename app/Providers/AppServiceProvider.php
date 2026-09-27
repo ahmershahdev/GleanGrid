@@ -6,11 +6,14 @@ use App\Models\Announcement;
 use App\Models\Category;
 use App\Models\ContactMessage;
 use App\Models\Coupon;
+use App\Models\FarmerBadge;
 use App\Models\FarmerProfile;
 use App\Models\Market;
 use App\Models\Order;
+use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Review;
+use App\Models\SeasonalProduce;
 use App\Models\User;
 use App\Notifications\Channels\SafeMailChannel;
 use App\Support\CleanPaginator;
@@ -57,9 +60,17 @@ class AppServiceProvider extends ServiceProvider
             'announcement' => Announcement::class,
             'coupon' => Coupon::class,
             'message' => ContactMessage::class,
+            'payment' => Payment::class,
+            'season' => SeasonalProduce::class,
+            'badge' => FarmerBadge::class,
         ]);
 
-        RateLimiter::for('assistant', fn (Request $request) => Limit::perMinute(20)->by($request->user()?->id ?: $request->ip()));
+        RateLimiter::for('payments', fn (Request $request) => [Limit::perMinute(8)->by('pay:'.$request->user()?->id), Limit::perHour(40)->by('pay:'.$request->user()?->id)]);
+        RateLimiter::for('payment-poll', fn (Request $request) => Limit::perMinute(90)->by('poll:'.($request->user()?->id ?: $request->ip())));
+        RateLimiter::for('oauth', fn (Request $request) => [Limit::perMinute(10)->by('oauth:'.$request->ip()), Limit::perHour(60)->by('oauth:'.$request->ip())]);
+        RateLimiter::for('alerts', fn (Request $request) => Limit::perMinute(30)->by('alerts:'.$request->user()?->id));
+        RateLimiter::for('reviews', fn (Request $request) => [Limit::perMinute(6)->by('rev:'.$request->user()?->id), Limit::perDay(60)->by('rev:'.$request->user()?->id)]);
+        RateLimiter::for('assistant', fn (Request $request) => Limit::perMinute(30)->by($request->user()?->id ?: $request->ip()));
         RateLimiter::for('contact', fn (Request $request) => [Limit::perMinute(3)->by($request->ip()), Limit::perDay(20)->by($request->ip())]);
         RateLimiter::for('register', fn (Request $request) => [Limit::perMinute(3)->by($request->ip()), Limit::perDay(15)->by($request->ip())]);
         RateLimiter::for('login', fn (Request $request) => Limit::perMinute(10)->by($request->ip()));

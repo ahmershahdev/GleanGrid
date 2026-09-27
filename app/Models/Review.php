@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Review extends Model
@@ -32,6 +33,16 @@ class Review extends Model
     public function reviewable(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    public function photos(): HasMany
+    {
+        return $this->hasMany(ReviewPhoto::class)->orderBy('sort');
+    }
+
+    public function visiblePhotos(): HasMany
+    {
+        return $this->photos()->where('is_hidden', false);
     }
 
     public function order(): BelongsTo

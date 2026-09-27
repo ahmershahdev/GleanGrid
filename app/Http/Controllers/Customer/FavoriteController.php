@@ -25,6 +25,9 @@ class FavoriteController extends Controller
             'products' => $group('product'),
             'farmers' => $group('farmer'),
             'markets' => $group('market'),
+            'alerts' => $request->user()->stockAlerts()->whereNull('notified_at')->with('product.farmer:id,stall_name,slug')->latest()->get()
+                ->filter(fn ($a) => $a->product)
+                ->map(fn ($a) => ['id' => $a->id, 'created_at' => $a->created_at, 'product' => $a->product->only('id', 'name', 'slug', 'price', 'unit', 'status', 'stock_quantity', 'image_url') + ['farmer' => $a->product->farmer?->stall_name]])->values(),
         ]);
     }
 

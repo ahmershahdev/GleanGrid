@@ -52,6 +52,14 @@ export default function FarmersIndex({ farmers, markets, filters }) {
                                 </option>
                             ))}
                         </SelectMenu>
+                        <SelectMenu value={filters.badge ?? ''} onChange={(e) => apply({ badge: e.target.value })} aria-label={t('badges.filter')}>
+                            <option value="">{t('badges.any')}</option>
+                            {['top_rated', 'reliable', 'customer_favourite', 'rising_star'].map((b) => (
+                                <option key={b} value={b}>
+                                    {t(`badges.${b}`)}
+                                </option>
+                            ))}
+                        </SelectMenu>
                         <SelectMenu value={filters.sort || 'rating'} onChange={(e) => apply({ sort: e.target.value })} aria-label={t('common.sort')}>
                             <option value="rating">{t('farmers.sort_rating')}</option>
                             <option value="name">{t('farmers.sort_name')}</option>

@@ -4,7 +4,7 @@ namespace App\Support;
 
 class LegalContent
 {
-    public const UPDATED = '2026-09-27';
+    public const UPDATED = '2026-10-02';
 
     public static function page(string $key): array
     {
@@ -22,7 +22,7 @@ class LegalContent
                         'GleanGrid is a meeting place. Farmers list what they will bring to market; customers reserve it online and collect it in person during a pickup window. The sale itself is a contract between you and the farmer.',
                         ['list', [
                             'We do not buy, grow, store, transport, inspect or resell produce.',
-                            'We do not process payments, hold money or take a commission. Every order is paid for at the stall, directly to the farmer.',
+                            'We take no commission. You choose how to pay at checkout: online with Easypaisa, JazzCash or a debit/credit card, or in person at the stall. Online payments are handled by the payment provider; GleanGrid never sees or stores your full card number or security code.',
                             'We do not deliver. GleanGrid is pickup-only (see the Pickup & Delivery Policy).',
                         ]],
                     ]],
@@ -47,7 +47,7 @@ class LegalContent
                         'Please turn up. Repeated no-shows hurt small growers who set produce aside for you. Once a pickup window has passed, the farmer can mark the order as not collected and the produce goes back on sale. A set number of no-shows within a rolling period (by default 3 in 60 days, adjustable by our team) pauses pre-ordering until the account is reviewed.',
                     ]],
                     ['Farmers and listings', [
-                        'New stalls are reviewed by our team before they can list. Approval confirms a real stall exists at a real market; it is not a certification of organic status, food safety, weights and measures or licences — those responsibilities stay with each farmer under Pakistani law.',
+                        'New stalls are reviewed by a GleanGrid administrator before they can list. Approval confirms a real stall exists at a real market; it is not a certification of organic status, food safety, weights and measures or licences — those responsibilities stay with each farmer under Pakistani law.',
                         ['list', [
                             'Describe produce honestly: name, price, unit, quantity, photos and growing practices.',
                             'Keep stock and pickup windows up to date; mark items sold out rather than declining orders.',
@@ -60,7 +60,7 @@ class LegalContent
                         'Reviews can only be left on a completed order, so every rating comes from a real pickup. Keep them honest, first-hand and respectful: no personal data, hate, threats or advertising. Farmers can reply publicly. Our moderators may hide reviews that break these rules; we never edit what you wrote or remove fair criticism.',
                     ]],
                     ['Coupons', [
-                        'Farmers and our team may publish coupon codes. A coupon applies only to the stall or scope it was issued for, within its dates and usage limits, and is checked again when you confirm. Coupons have no cash value, cannot be exchanged, and a coupon used on an order that is cancelled or declined is returned to you automatically.',
+                        'Farmers and GleanGrid may publish coupon codes. A coupon applies only to the stall or scope it was issued for, within its dates and usage limits, and is checked again when you confirm. Coupons have no cash value, cannot be exchanged, and a coupon used on an order that is cancelled or declined is returned to you automatically.',
                     ]],
                     ['Fair use', [
                         ['list', [
@@ -97,7 +97,8 @@ class LegalContent
                             'Security records: sign-in times, IP address and a coarse device description (for example “Chrome on Android”) used to spot suspicious sign-ins and to let you sign other devices out.',
                             'Location — only if you press “Near me” or ask for directions. It is used in your browser to sort markets and draw a route, and is not stored on our servers.',
                         ]],
-                        'We never collect card or bank details — payment happens in person at the stall.',
+                        'Payments: if you pay online we keep the method, amount, status, a payment reference, the last four digits and brand of a card or a masked wallet number (for example 0300•••4567). Full card numbers and security codes go straight to the payment provider — they are never stored, logged or visible to farmers or staff.',
+                        'Google or Facebook sign-in: if you use it we receive your name, e-mail address, account ID and profile photo, and nothing else. We never receive or store your Google or Facebook password, and you can disconnect it from your profile at any time.',
                     ]],
                     ['How we use it', [
                         ['list', [
@@ -155,7 +156,7 @@ class LegalContent
                     ['The short version', [
                         ['list', [
                             'Cancel or change any pre-order free until the farmer’s cut-off time shown on the order.',
-                            'Nothing is paid online, so there is never a card refund to wait for.',
+                            'Paid online? Cancelling before the cut-off, or a farmer declining, refunds you automatically — wallets in minutes, cards in 5–7 working days.',
                             'At pickup, you pay only for the items you accept.',
                             'Problem after you got home? Tell us within 24 hours with your order code and a photo.',
                         ]],
@@ -165,7 +166,7 @@ class LegalContent
                         'Cancelling releases the stock for other customers straight away and returns any coupon you used. After the cut-off the farmer has picked and packed for you, so the order is locked — if something unexpected happens, message the farmer as early as you can.',
                     ]],
                     ['Check before you pay', [
-                        'Because you pay at pickup, you see and handle everything before any money changes hands. If an item is missing, damaged, under weight or not what was listed, tell the farmer at the stall. You pay only for what you accept; the farmer adjusts the total on the spot.',
+                        'If you chose to pay at pickup you see and handle everything before any money changes hands, and you pay only for what you accept. If you paid online and an item is missing, damaged, under weight or not what was listed, tell the farmer at the stall — they record it and the difference is refunded to your original payment method.',
                     ]],
                     ['After you’ve left the market', [
                         'Found a problem once you got home — spoiled inside, wrong variety, short weight? Write to the farmer through your order page or to us within 24 hours of pickup, with your order code (for example GG-7K2M9Q) and a photo. Farmers on GleanGrid commit to a fair outcome, normally one of:',
@@ -229,8 +230,9 @@ class LegalContent
                     ['Delivery', [
                         'We don’t offer delivery or courier services, and farmers are not asked to deliver. This keeps prices low and produce fresh. If that changes we will announce it here first.',
                     ]],
-                    ['Payment at pickup', [
-                        'Pay the farmer the total shown on your order (after any coupon) in cash or by any method they accept — many take bank transfer, JazzCash or Easypaisa. GleanGrid never asks for card details and never collects money on a farmer’s behalf.',
+                    ['Payment', [
+                        'At checkout you choose to pay online (Easypaisa, JazzCash or a debit/credit card) or at the stall. Online payments must be completed within the time shown on the payment page; if not, the reservation is released automatically and nothing is charged. Paid orders just need your pickup code at the stall.',
+                        'If you chose to pay at pickup, pay the farmer the total shown on your order (after any coupon) in cash or by any method they accept.',
                     ]],
                     ['Weather and market closures', [
                         'If a market closes unexpectedly (weather, public holiday, civic order), affected orders are declined or moved with your agreement and you are notified. A site-wide announcement is shown on the home page when a closure affects many stalls.',
@@ -252,11 +254,12 @@ class LegalContent
                 ['Is GleanGrid free?', 'Yes, for customers and farmers alike. There are no fees, subscriptions or commissions.'],
             ],
             'Ordering' => [
-                ['Do I pay online?', 'No. GleanGrid only reserves your produce. You pay the farmer at the stall when you collect, after checking your order.'],
+                ['Can I pay online?', 'Yes — with Easypaisa, JazzCash or a debit/credit card at checkout. Or choose “Cash at pickup” and pay the farmer when you collect.'],
                 ['Can I order from several farmers at once?', 'Yes. Your basket can hold items from many stalls. At checkout each farmer becomes a separate pre-order with its own pickup window.'],
                 ['How do I change or cancel an order?', 'Open it under My orders and choose Modify or Cancel. Both work until the farmer’s cut-off time, shown on the order. Cancelling releases the stock and returns any coupon.'],
                 ['What is a cut-off time?', 'The moment a farmer stops accepting changes so they can pick and pack. Each farmer sets their own (1 to 168 hours before the window); it is printed on every order.'],
-                ['What does “sold out” mean on a product?', 'The farmer’s stock for this week is fully reserved. Tap the heart to save it and turn on the restock alert — we’ll tell you when it’s back.'],
+                ['What does “sold out” mean on a product?', 'The farmer’s stock for this week is fully reserved. Tap “Notify me when it’s back” and we’ll send you one alert the moment it is restocked.'],
+                ['What do the stall badges mean?', 'Top Rated, Reliable Pickups, Rising Star and Customer Favourite are recalculated every night from reviews (weighted so a handful of ratings can’t game it), fulfilment rate and how many shoppers saved the stall.'],
                 ['How do coupons work?', 'Enter a code at checkout. It is checked against the stall, dates and usage limit, and the discount is shown before you confirm. If the order is later cancelled or declined, the coupon use is given back.'],
                 ['Can I reorder a previous basket?', 'Yes — open a past order and choose Reorder. Items still in stock go straight back into your basket.'],
                 ['Can my family share one basket?', 'Yes — use Family sharing to link accounts. Linked members can see household orders and collect them.'],
@@ -264,19 +267,20 @@ class LegalContent
             'Pickup & payment' => [
                 ['Where do I collect my order?', 'At the farmer’s stall in the market you chose at checkout. The order page has the stall, a map and directions from your location.'],
                 ['What do I show at the stall?', 'Your pickup pass — the QR code on your order page — or the order code (for example GG-7K2M9Q). The evening before, you also get a reminder with both.'],
-                ['What happens if I miss my pickup?', 'Once the window has passed the farmer can mark the order as not collected and the produce goes back on sale. Repeated missed pickups (by default 3 in 60 days) pause pre-ordering until our team reviews the account.'],
-                ['How do I pay?', 'In cash or by any method the farmer accepts, such as bank transfer, JazzCash or Easypaisa. GleanGrid never asks for card details.'],
+                ['What happens if I miss my pickup?', 'Once the window has passed the farmer can mark the order as not collected and the produce goes back on sale. Repeated missed pickups (by default 3 in 60 days) pause pre-ordering until an administrator reviews the account.'],
+                ['How do I pay?', 'Online at checkout (Easypaisa, JazzCash or card) or in person at the stall. Card numbers go straight to the payment provider — GleanGrid never stores them.'],
+                ['Is paying online safe?', 'Yes. Payment pages are encrypted, every attempt carries a one-time key so a double tap can’t charge you twice, and we only keep the last four digits of a card for your receipt.'],
                 ['What if I’m late?', 'Message the farmer from your order. Most will hold your order until the market closes; perishables can’t be kept for the next market day.'],
                 ['Is there delivery?', 'Not at the moment — GleanGrid is pickup-only so produce stays fresh and farmers get a fair price. You can send someone else with your order code.'],
             ],
             'Returns & refunds' => [
                 ['What if something is wrong with my order?', 'Tell the farmer at the stall — you only pay for what you accept. If you notice a problem at home, report it within 24 hours with your order code and a photo.'],
-                ['How are refunds paid?', 'As there is no online payment, refunds are a replacement at your next pickup, cash back in person, a bank or mobile-wallet transfer, or a coupon — whichever you and the farmer agree.'],
+                ['How are refunds paid?', 'Online payments are refunded automatically to the same wallet or card when you cancel before the cut-off or a farmer declines. For cash orders, refunds are a replacement, cash back, a wallet transfer or a coupon — whichever you and the farmer agree.'],
                 ['What if the farmer cancels?', 'You owe nothing, any coupon is returned and you are notified immediately.'],
             ],
             'Farmers' => [
-                ['How do I start selling?', 'Register as a farmer with your stall details. Our team reviews new stalls, usually within a day. Once approved you can list products, set pickup windows and receive orders.'],
-                ['Does GleanGrid take a commission?', 'No. Customers pay you directly and in full at your stall.'],
+                ['How do I start selling?', 'Register as a farmer with your stall details. A GleanGrid administrator reviews new stalls, usually within a day. Once approved you can list products, set pickup windows and receive orders.'],
+                ['Does GleanGrid take a commission?', 'No. Cash orders are paid to you at the stall; online orders show as “Paid online” so you just hand them over.'],
                 ['How do pickup windows and capacity work?', 'Add a window for each market day with start and end times and a maximum number of orders. Full windows vanish from checkout automatically, and you set one cut-off for all of them.'],
                 ['What is the weekly stock template?', 'Set a usual weekly quantity for each product, then reset your whole stall to it in one click at the start of each week.'],
                 ['Can I pause a product?', 'Yes — mark it sold out or temporarily unavailable any time. Customers who favourited it are alerted when you bring it back.'],

@@ -1,18 +1,66 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Leaf, MapPin, Package, ShoppingBasket, Star, Store, Timer } from 'lucide-react';
+import { BellRing, BellOff, CalendarRange, Leaf, MapPin, Package, ShoppingBasket, Star, Store, Timer } from 'lucide-react';
 import { useState } from 'react';
 import { ProductCard } from '@/Components/Cards';
 import { SplitWords } from '@/Components/motion';
 import { Button, StatusBadge } from '@/Components/ui';
 import { FavoriteButton, QtyStepper, toast } from '@/Components/widgets';
-import { ReviewList } from '@/Pages/Farmers/Show';
+import { ReviewList, ReviewSummary } from '@/Components/Reviews';
+import { StallBadges } from '@/Components/Badges';
+import PriceHistory from '@/Components/PriceHistory';
 import { cart, useCart } from '@/lib/cart';
 import { fly } from '@/lib/fly';
 import { useFormat, useT } from '@/lib/i18n';
 import { cn, photoProps } from '@/lib/utils';
 
-export default function ProductShow({ product, reviews, related, moreFromFarmer }) {
+function NotifyMe({ product, alerting: initial }) {
+    const t = useT();
+    const { auth } = usePage().props;
+    const [on, setOn] = useState(initial);
+    const [busy, setBusy] = useState(false);
+    const toggle = () => {
+        if (!auth.user) return router.visit(route('login'));
+        setBusy(true);
+        setOn(!on);
+        const opts = { preserveScroll: true, onError: () => setOn(on), onFinish: () => setBusy(false) };
+        on ? router.delete(route('customer.alerts.destroy', product.id), opts) : router.post(route('customer.alerts.store', product.id), {}, opts);
+    };
+    return (
+        <div className="w-full rounded-3xl border border-dashed border-accent/40 bg-accent/5 p-4">
+            <p className="text-sm text-accent">{t('product.sold_out_hint')}</p>
+            <button
+                type="button"
+                onClick={toggle}
+                disabled={busy}
+                aria-pressed={on}
+                className={cn('group relative mt-3 inline-flex h-12 items-center gap-2 overflow-hidden rounded-full px-5 text-sm font-semibold transition', on ? 'bg-ink text-bg' : 'bg-accent text-accent-ink hover:brightness-110')}
+            >
+                <motion.span key={String(on)} initial={{ rotate: -30, scale: 0.6 }} animate={{ rotate: on ? [0, -18, 14, -8, 0] : 0, scale: 1 }} transition={{ duration: 0.6 }}>
+                    <BellRing className="size-5" />
+                </motion.span>
+                {on ? t('product.notifying') : t('product.notify_me')}
+                {on && <BellOff className="size-4 opacity-0 transition group-hover:opacity-70" />}
+            </button>
+            <p className="mt-2 text-xs text-ink-soft">{t('product.notify_hint')}</p>
+        </div>
+    );
+}
+
+function SeasonChip({ season }) {
+    const t = useT();
+    const { locale } = usePage().props.app;
+    if (!season) return null;
+    const fmt = new Intl.DateTimeFormat(locale, { month: 'short' });
+    const months = season.months.map((m) => fmt.format(new Date(2026, m - 1, 1))).join(' · ');
+    return (
+        <Link href={route('seasons')} className={cn('inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset transition hover:brightness-95', season.is_peak ? 'bg-lime text-forest ring-lime' : season.in_season ? 'bg-lime/30 text-forest ring-lime/60 dark:text-lime' : 'bg-ink/5 text-ink-soft ring-line')} title={t('product.season_months', { months })}>
+            <CalendarRange className="size-3.5" /> {t(season.is_peak ? 'product.peak_season' : season.in_season ? 'product.in_season' : 'product.off_season')}
+        </Link>
+    );
+}
+
+export default function ProductShow({ product, reviews, reviewSummary, priceHistory, season, alerting = false, related, moreFromFarmer }) {
     const t = useT();
     const { money } = useFormat();
     const { auth } = usePage().props;
@@ -95,6 +143,7 @@ export default function ProductShow({ product, reviews, related, moreFromFarmer 
                     <div className="flex flex-col">
                         <div className="flex flex-wrap items-center gap-2">
                             <StatusBadge status={orderable ? 'available' : product.status === 'unavailable' ? 'unavailable' : 'sold_out'} kind="product" />
+                            <SeasonChip season={season} />
                             {product.rating_count > 0 && (
                                 <span className="inline-flex items-center gap-1 text-sm text-ink-soft">
                                     <Star className="size-4 fill-sun text-sun" /> {product.rating_avg.toFixed(1)} ({product.rating_count})
@@ -125,7 +174,7 @@ export default function ProductShow({ product, reviews, related, moreFromFarmer 
                                         )}
                                     </>
                                 ) : (
-                                    <p className="rounded-2xl bg-accent/10 px-4 py-3 text-sm text-accent">{t('product.sold_out_hint')}</p>
+                                    <NotifyMe product={product} alerting={alerting} />
                                 )}
                             </div>
                         )}
@@ -154,6 +203,7 @@ export default function ProductShow({ product, reviews, related, moreFromFarmer 
                                     <Store className="size-3.5" /> {t('product.grown_by')}
                                 </span>
                                 <span className="font-display block text-xl group-hover:underline">{product.farmer.stall_name}</span>
+                                <StallBadges farmer={product.farmer} limit={2} className="my-1" />
                                 <span className="flex flex-wrap items-center gap-1 text-xs text-ink-soft">
                                     <MapPin className="size-3" /> {product.farmer.markets.map((m) => m.name).join(' · ')}
                                 </span>
@@ -166,9 +216,16 @@ export default function ProductShow({ product, reviews, related, moreFromFarmer 
                 </div>
             </section>
 
+            {priceHistory && (
+                <section className="mx-auto mt-20 max-w-[1400px] px-5 sm:px-8">
+                    <PriceHistory history={priceHistory} unit={product.unit} current={product.price} />
+                </section>
+            )}
+
             <section className="mx-auto mt-24 grid max-w-[1400px] gap-10 px-5 sm:px-8 lg:grid-cols-[1fr_1fr]">
                 <div>
                     <h2 className="font-display mb-6 text-4xl font-light">{t('reviews.title')}</h2>
+                    <ReviewSummary average={product.rating_avg} count={product.rating_count} distribution={reviewSummary?.distribution} withPhotos={reviewSummary?.with_photos} />
                     <ReviewList reviews={reviews} />
                 </div>
                 {moreFromFarmer.length > 0 && (

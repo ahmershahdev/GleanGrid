@@ -5,7 +5,10 @@ import Breadcrumbs from '@/Components/Breadcrumbs';
 import Seo from '@/Components/Seo';
 import { AnimatePresence, motion } from 'motion/react';
 import {
+    Award,
     BarChart3,
+    CalendarRange,
+    CreditCard,
     Bell,
     CalendarClock,
     Carrot,
@@ -47,6 +50,7 @@ const NAV = {
     customer: [
         { key: 'overview', route: 'customer.dashboard', icon: LayoutGrid, match: 'customer.dashboard' },
         { key: 'orders', route: 'customer.orders.index', icon: ClipboardList, match: 'customer.orders.*' },
+        { key: 'payments', route: 'customer.payments.index', icon: CreditCard, match: 'customer.payments.*' },
         { key: 'favorites', route: 'customer.favorites.index', icon: Heart, match: 'customer.favorites.*' },
         { key: 'reviews', route: 'customer.reviews.index', icon: Star, match: 'customer.reviews.*' },
         { key: 'family', route: 'customer.family.index', icon: UsersRound, match: 'customer.family.*' },
@@ -71,9 +75,12 @@ const NAV = {
         { key: 'markets', route: 'admin.markets.index', icon: MapPinned, match: 'admin.markets.*' },
         { key: 'categories', route: 'admin.categories.index', icon: Tags, match: 'admin.categories.*' },
         { key: 'orders', route: 'admin.orders.index', icon: ClipboardList, match: 'admin.orders.*' },
+        { key: 'payments', route: 'admin.payments.index', icon: CreditCard, match: 'admin.payments.*' },
         { divider: true },
         { key: 'mod_products', route: 'admin.moderation.products', icon: PackageSearch, match: 'admin.moderation.products*' },
         { key: 'mod_reviews', route: 'admin.moderation.reviews', icon: MessageSquareWarning, match: 'admin.moderation.reviews*' },
+        { key: 'badges', route: 'admin.badges.index', icon: Award, match: 'admin.badges.*' },
+        { key: 'seasons', route: 'admin.seasons.index', icon: CalendarRange, match: 'admin.seasons.*' },
         { key: 'reports', route: 'admin.reports.index', icon: BarChart3, match: 'admin.reports.*' },
         { key: 'announcements', route: 'admin.announcements.index', icon: Megaphone, match: 'admin.announcements.*' },
         { key: 'coupons', route: 'admin.coupons.index', icon: TicketPercent, match: 'admin.coupons.*' },

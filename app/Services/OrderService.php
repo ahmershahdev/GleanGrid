@@ -17,10 +17,13 @@ use Illuminate\Validation\ValidationException;
 
 class OrderService
 {
-    public function __construct(private CouponService $coupons) {}
+    public function __construct(private CouponService $coupons, private PaymentService $payments) {}
 
-    public function place(User $customer, array $groups): Collection
+    public function place(User $customer, array $groups, string $method = 'cash'): Collection
     {
+        if (! in_array($method, $this->payments->methods(), true)) {
+            throw ValidationException::withMessages(['payment_method' => 'payment.method_unavailable']);
+        }
         if ($customer->preorderRestricted()) {
             throw ValidationException::withMessages(['checkout' => 'Pre-ordering is paused on your account after repeated missed pickups. Please contact support.']);
         }
@@ -34,9 +37,13 @@ class OrderService
             if ($open + count($groups) > Settings::get('max_open_orders_per_customer')) {
                 throw ValidationException::withMessages(['checkout' => 'You have reached the limit of open pre-orders. Collect or cancel some first.']);
             }
-            $orders = $this->placeLocked($customer, $groups);
+            $orders = $this->placeLocked($customer, $groups, $method);
         } finally {
             $lock->release();
+        }
+
+        if ($orders->first()?->payment_id) {
+            return $orders;
         }
 
         foreach ($orders as $order) {
@@ -49,12 +56,12 @@ class OrderService
         return $orders;
     }
 
-    private function placeLocked(User $customer, array $groups): Collection
+    private function placeLocked(User $customer, array $groups, string $method): Collection
     {
         $groups = collect($groups)->sortBy('farmer_profile_id')->values()->all();
 
-        return DB::transaction(function () use ($customer, $groups) {
-            return collect($groups)->map(function (array $group) use ($customer) {
+        return DB::transaction(function () use ($customer, $groups, $method) {
+            $orders = collect($groups)->map(function (array $group) use ($customer) {
                 $farmer = FarmerProfile::approved()->findOrFail($group['farmer_profile_id']);
                 $slot = $this->resolveSlot($farmer, (int) $group['pickup_slot_id'], $group['pickup_date']);
                 $lines = $this->reserveStock($farmer, $group['items']);
@@ -77,8 +84,15 @@ class OrderService
                 $order->items()->createMany($lines->all());
                 $this->applyCoupon($order, $customer, $group['coupon'] ?? null);
 
-                return $order;
+                return $order->refresh();
             });
+
+            if ($method !== 'cash' && $orders->sum('total_amount') > 0) {
+                $this->payments->open($customer, $orders, $method);
+                $orders->each->refresh();
+            }
+
+            return $orders;
         }, attempts: 3);
     }
 
@@ -100,6 +114,9 @@ class OrderService
         DB::transaction(function () use ($order, $data) {
             $order = $this->lockFresh($order);
             $this->ensureEditable($order);
+            if ($order->isPaidOnline()) {
+                throw ValidationException::withMessages(['order' => 'payment.online_locked']);
+            }
             $farmer = $order->farmer;
             $this->releaseStock($order);
 
@@ -142,9 +159,13 @@ class OrderService
         DB::transaction(function () use ($order) {
             $order = $this->lockFresh($order);
             $this->ensureEditable($order);
+            if ($order->awaitingPayment()) {
+                throw ValidationException::withMessages(['order' => 'payment.cancel_from_payment']);
+            }
             $this->releaseStock($order);
             $this->coupons->release($order);
             $order->update(['status' => 'cancelled', 'cancelled_at' => now()]);
+            $this->payments->refundOrder($order, 'Cancelled by the customer before the cut-off.');
         });
 
         $order->load('farmer.user', 'market');
@@ -153,6 +174,10 @@ class OrderService
 
     public function forceClose(Order $order, string $status, string $reason): bool
     {
+        if ($order->fresh()?->awaitingPayment()) {
+            return $this->payments->abandon($order->payment, $reason, 'failed');
+        }
+
         $closed = DB::transaction(function () use ($order, $status, $reason) {
             $order = $this->lockFresh($order);
             if (! in_array($order->status, Order::OPEN, true)) {
@@ -161,6 +186,7 @@ class OrderService
             $this->releaseStock($order);
             $this->coupons->release($order);
             $order->update(['status' => $status, $status.'_at' => now(), 'farmer_note' => $reason]);
+            $this->payments->refundOrder($order, $reason);
 
             return true;
         });
@@ -179,6 +205,9 @@ class OrderService
     {
         DB::transaction(function () use ($order, $status, $note) {
             $order = $this->lockFresh($order);
+            if ($order->awaitingPayment()) {
+                throw ValidationException::withMessages(['status' => 'This order is still waiting for the customer’s online payment.']);
+            }
             if (! $order->canTransitionTo($status)) {
                 throw ValidationException::withMessages(['status' => "Cannot move an order from {$order->status} to {$status}."]);
             }
@@ -204,6 +233,9 @@ class OrderService
                 $status.'_at' => now(),
                 'farmer_note' => $note ?: $order->farmer_note,
             ]);
+            if ($status === 'declined') {
+                $this->payments->refundOrder($order, 'Declined by the farmer.');
+            }
         });
 
         $order->refresh()->load('customer', 'farmer', 'market');
@@ -213,6 +245,31 @@ class OrderService
             route('customer.orders.show', $order),
             in_array($status, ['accepted', 'ready', 'declined', 'no_show'], true),
         ));
+    }
+
+    public function releaseUnpaid(Order $order, string $reason): void
+    {
+        DB::transaction(function () use ($order, $reason) {
+            $order = $this->lockFresh($order);
+            if ($order->status !== 'placed' || $order->payment_status !== 'pending') {
+                return;
+            }
+            $this->releaseStock($order);
+            $this->coupons->release($order);
+            $order->update([
+                'status' => 'cancelled',
+                'cancelled_at' => now(),
+                'payment_status' => 'failed',
+                'farmer_note' => Str::limit($reason, 250),
+            ]);
+        });
+    }
+
+    public function refund(Order $order, string $reason): void
+    {
+        DB::transaction(function () use ($order, $reason) {
+            $this->payments->refundOrder($this->lockFresh($order), $reason);
+        }, attempts: 3);
     }
 
     public function availableSlots(FarmerProfile $farmer): Collection

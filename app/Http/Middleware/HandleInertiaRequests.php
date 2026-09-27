@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Announcement;
+use App\Services\SocialAuthService;
 use App\Support\BotGuard;
 use App\Support\Seo;
 use Illuminate\Http\Request;
@@ -24,6 +25,7 @@ class HandleInertiaRequests extends Middleware
             'captcha' => fn () => BotGuard::clientConfig(),
             'contact' => fn () => config('gleangrid.contact'),
             'social' => fn () => config('gleangrid.social'),
+            'oauth' => fn () => [...app(SocialAuthService::class)->status(), 'debug' => app()->isLocal()],
             'app' => [
                 'name' => config('app.name'),
                 'currency' => config('gleangrid.currency'),
@@ -38,6 +40,7 @@ class HandleInertiaRequests extends Middleware
                     'email' => $user->email,
                     'role' => $user->role,
                     'avatar' => $user->avatar ? asset('storage/'.$user->avatar) : null,
+                    'first_name' => strtok((string) $user->name, ' '),
                     'verified' => $user->hasVerifiedEmail(),
                     'farmer_status' => $user->isFarmer() ? $user->farmerProfile?->status : null,
                     'farmer_slug' => $user->isFarmer() ? $user->farmerProfile?->slug : null,

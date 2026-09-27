@@ -1,6 +1,9 @@
 import { Link, router, useForm } from '@inertiajs/react';
-import { CalendarClock, Mail, MessageCircle, Pencil, Phone, RotateCcw, Timer, XCircle } from 'lucide-react';
-import { useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
+import { MethodIcon } from '@/Components/PaymentVisuals';
+import { compressToWebp } from '@/lib/image';
+import { CalendarClock, Camera, Loader2, Mail, MessageCircle, Pencil, Phone, RotateCcw, Timer, X, XCircle } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { LazyDirectionsMap as DirectionsMap } from '@/Components/LazyMap';
 import { OrderTimeline, StatusHistory } from '@/Components/OrderBits';
 import OrderQr from '@/Components/OrderQr';
@@ -9,9 +12,61 @@ import { toast } from '@/Components/widgets';
 import { cart } from '@/lib/cart';
 import { useFormat, useT } from '@/lib/i18n';
 
+function PhotoDrop({ files, onChange }) {
+    const t = useT();
+    const input = useRef(null);
+    const [busy, setBusy] = useState(false);
+    const [previews, setPreviews] = useState([]);
+
+    useEffect(() => {
+        const urls = files.map((f) => URL.createObjectURL(f));
+        setPreviews(urls);
+        return () => urls.forEach((u) => URL.revokeObjectURL(u));
+    }, [files]);
+
+    const add = async (list) => {
+        setBusy(true);
+        const out = [];
+        for (const raw of [...list].slice(0, 4 - files.length)) {
+            try {
+                out.push((await compressToWebp(raw, { maxSide: 1400 })).file);
+            } catch {
+            }
+        }
+        onChange([...files, ...out].slice(0, 4));
+        setBusy(false);
+        if (input.current) input.current.value = '';
+    };
+
+    return (
+        <div>
+            <div className="flex flex-wrap gap-2">
+                <AnimatePresence>
+                    {previews.map((src, i) => (
+                        <motion.div key={src} layout initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.6, opacity: 0 }} className="relative size-20 overflow-hidden rounded-2xl ring-1 ring-line">
+                            <img src={src} alt="" className="size-full object-cover" />
+                            <button type="button" onClick={() => onChange(files.filter((_, j) => j !== i))} className="absolute end-1 top-1 rounded-full bg-soil/70 p-1 text-white" aria-label={t('common.remove')}>
+                                <X className="size-3" />
+                            </button>
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
+                {files.length < 4 && (
+                    <button type="button" onClick={() => input.current?.click()} disabled={busy} className="flex size-20 flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-line-strong text-xs text-ink-soft transition hover:border-ink hover:text-ink">
+                        {busy ? <Loader2 className="size-5 animate-spin" /> : <Camera className="size-5" />}
+                        {t('reviews.add_photos')}
+                    </button>
+                )}
+            </div>
+            <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" multiple className="sr-only" onChange={(e) => add(e.target.files)} aria-label={t('reviews.add_photos')} />
+            <p className="mt-1.5 text-xs text-ink-faint">{t('reviews.photos_hint')}</p>
+        </div>
+    );
+}
+
 function ReviewForm({ order, type, id, label, image, done }) {
     const t = useT();
-    const form = useForm({ type, id, rating: 5, comment: '' });
+    const form = useForm({ type, id, rating: 5, comment: '', photos: [] });
     if (done) {
         return (
             <div className="flex items-center gap-3 rounded-2xl bg-success/10 p-3 text-sm text-success">
@@ -19,11 +74,12 @@ function ReviewForm({ order, type, id, label, image, done }) {
             </div>
         );
     }
+    const photoError = Object.entries(form.errors).find(([k]) => k.startsWith('photos'))?.[1];
     return (
         <form
             onSubmit={(e) => {
                 e.preventDefault();
-                form.post(route('customer.reviews.store', order.id), { preserveScroll: true });
+                form.post(route('customer.reviews.store', order.code), { preserveScroll: true, forceFormData: true });
             }}
             className="space-y-3 rounded-2xl border border-line p-4"
         >
@@ -34,10 +90,44 @@ function ReviewForm({ order, type, id, label, image, done }) {
                 <RatingInput value={form.data.rating} onChange={(r) => form.setData('rating', r)} />
             </div>
             <Textarea rows={2} placeholder={t('reviews.placeholder')} value={form.data.comment} onChange={(e) => form.setData('comment', e.target.value)} error={form.errors.comment || form.errors.rating} />
+            <PhotoDrop files={form.data.photos} onChange={(photos) => form.setData('photos', photos)} />
+            {photoError && <p className="text-xs text-danger">{t(photoError)}</p>}
             <Button type="submit" size="sm" loading={form.processing}>
                 {t('reviews.submit')}
             </Button>
         </form>
+    );
+}
+
+function PaymentPanel({ order }) {
+    const t = useT();
+    const { money } = useFormat();
+    const p = order.payment;
+    if (order.payment_method === 'cash' || !p) {
+        return (
+            <p className="flex items-center gap-2 text-sm text-ink-soft">
+                <MethodIcon method="cash" className="size-5" /> {t('pay.cash')} · {t('pay.cash_hint')}
+            </p>
+        );
+    }
+    return (
+        <div className="flex flex-wrap items-center gap-3">
+            <MethodIcon method={p.method} />
+            <div className="min-w-0 flex-1 text-sm">
+                <p className="font-medium">
+                    {t(`pay.${p.method}`)}
+                    {p.card_last4 && ` · •••• ${p.card_last4}`}
+                    {p.wallet_msisdn && ` · ${p.wallet_msisdn}`}
+                </p>
+                <p className="font-mono text-xs text-ink-faint">{p.reference}</p>
+            </div>
+            <StatusBadge status={order.payment_status} />
+            {order.payment_status === 'pending' && (
+                <Link href={route('customer.payments.show', p.reference)} className={buttonClass('accent', 'sm')}>
+                    {t('pay.pay_link')} · {money(order.total_amount)}
+                </Link>
+            )}
+        </div>
     );
 }
 
@@ -71,9 +161,11 @@ export default function CustomerOrderShow({ order, isOwner, reviewed, history = 
                 <div className="flex flex-wrap gap-2">
                     {isOwner && order.editable && (
                         <>
-                            <Link href={route('customer.orders.edit', order.code)} className={buttonClass('outline', 'sm')}>
-                                <Pencil className="size-4" /> {t('order.modify')}
-                            </Link>
+                            {order.modifiable && (
+                                <Link href={route('customer.orders.edit', order.code)} className={buttonClass('outline', 'sm')}>
+                                    <Pencil className="size-4" /> {t('order.modify')}
+                                </Link>
+                            )}
                             <Button variant="ghost" size="sm" className="text-danger" onClick={() => setConfirm(true)}>
                                 <XCircle className="size-4" /> {t('order.cancel')}
                             </Button>
@@ -87,6 +179,9 @@ export default function CustomerOrderShow({ order, isOwner, reviewed, history = 
 
             <Card className="mt-8 p-6 md:p-8">
                 <OrderTimeline order={order} />
+                <div className="mt-6 border-t border-line pt-5">
+                    <PaymentPanel order={order} />
+                </div>
                 {order.editable && (
                     <p className="mt-6 flex items-center gap-2 rounded-2xl bg-sun/15 p-3 text-sm">
                         <Timer className="size-4 shrink-0" /> {t('order.cutoff_notice', { when: relative(order.cutoff_at) })}

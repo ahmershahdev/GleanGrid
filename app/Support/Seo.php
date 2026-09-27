@@ -12,7 +12,7 @@ class Seo
 {
     public const IMAGE = 'images/brand/gleangrid-og.jpg';
 
-    private const NOINDEX = ['customer.', 'farmer.', 'admin.', 'profile.', 'notifications.', 'password.', 'verification.', 'dashboard', 'cart', 'login', 'register'];
+    private const NOINDEX = ['customer.', 'farmer.', 'admin.', 'profile.', 'notifications.', 'password.', 'verification.', 'onboarding.', 'social.', 'dashboard', 'cart', 'login', 'register'];
 
     private const PAGES = [
         'home' => [
@@ -33,7 +33,7 @@ class Seo
         ],
         'about' => [
             'Why We Built GleanGrid: Fair Trade for Local Farmers',
-            'GleanGrid links Hyderabad households with the farmers who grow their food — fewer middlemen, less waste, fairer prices. Meet the team and see how it works.',
+            'GleanGrid links Hyderabad households with the farmers who grow their food — fewer middlemen, less waste, fairer prices. Meet the developer who built it and see how it works.',
         ],
         'contact' => [
             'Contact GleanGrid: Questions, Stalls & Partnerships',
@@ -79,6 +79,10 @@ class Seo
             'Pickup & Delivery Policy: How Collection Works',
             'How GleanGrid pickup works: choose a window, get ready alerts, show your order code at the stall and pay the farmer directly. Why we are pickup-only by design.',
         ],
+        'seasons' => [
+            'Sindh Seasonal Produce Calendar: What’s Fresh Each Month',
+            'Month-by-month harvest calendar for Hyderabad and Sindh — mangoes, kinnow, tomatoes, carrots and more. See what’s in season, what peaks now and shop it fresh.',
+        ],
         'verification.notice' => [
             'Confirm Your E-mail to Start Using GleanGrid',
             'Enter the six-digit code we e-mailed you to confirm your address. It keeps order updates and pickup codes going to the right inbox and protects your account.',
@@ -88,6 +92,13 @@ class Seo
     private const AREAS = [
         'customer.dashboard' => 'Your Market Week at a Glance',
         'customer.checkout' => 'Choose Pickup Windows & Confirm',
+        'customer.payments.index' => 'Your Online Payments & Refunds',
+        'customer.payments.show' => 'Complete Your Secure Payment',
+        'admin.payments.index' => 'Online Payments Across GleanGrid',
+        'admin.payments.show' => 'Payment Details, Timeline & Refunds',
+        'admin.badges.index' => 'Stall Badges: Rules, Scores & Overrides',
+        'admin.seasons.index' => 'Manage the Seasonal Produce Calendar',
+        'onboarding.show' => 'Finish Setting Up Your GleanGrid Account',
         'customer.orders.index' => 'Your Pre-Orders & Pickup Codes',
         'customer.orders.show' => 'Pre-Order Details & Pickup Code',
         'customer.orders.edit' => 'Change Your Pre-Order Before Cut-Off',

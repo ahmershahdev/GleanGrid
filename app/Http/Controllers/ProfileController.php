@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\Order;
 use App\Services\AccountSecurity;
 use App\Services\OrderService;
+use App\Services\SocialAuthService;
 use App\Support\ImageUpload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,10 +21,15 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ProfileController extends Controller
 {
-    public function edit(Request $request, AccountSecurity $security): Response
+    public function edit(Request $request, AccountSecurity $security, SocialAuthService $social): Response
     {
         return Inertia::render('Account/Profile', [
             'profile' => $request->user()->only('name', 'username', 'email', 'phone', 'address', 'city', 'locale'),
+            'connections' => [
+                'linked' => $request->user()->socialAccounts()->get(['provider', 'email', 'last_used_at', 'created_at']),
+                'available' => $social->status(),
+                'has_password' => $request->user()->hasPassword(),
+            ],
             'security' => [
                 'verified' => $request->user()->hasVerifiedEmail(),
                 'password_changed_at' => $request->user()->password_changed_at,
@@ -80,9 +86,11 @@ class ProfileController extends Controller
 
     public function password(Request $request, AccountSecurity $security): RedirectResponse
     {
-        $data = $request->validate([
+        $data = $request->validate($request->user()->hasPassword() ? [
             'current_password' => 'required|current_password',
             'password' => ['required', 'confirmed', 'different:current_password', Password::defaults()],
+        ] : [
+            'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
         $request->user()->update(['password' => Hash::make($data['password'])]);
@@ -93,7 +101,7 @@ class ProfileController extends Controller
 
     public function destroyOtherSessions(Request $request, AccountSecurity $security): RedirectResponse
     {
-        $request->validate(['password' => 'required|current_password']);
+        $request->validate($request->user()->hasPassword() ? ['password' => 'required|current_password'] : ['confirm' => 'required|in:SIGN OUT']);
         $security->logoutOtherSessions($request);
         $request->user()->forceFill(['remember_token' => Str::random(60)])->save();
 
@@ -112,6 +120,9 @@ class ProfileController extends Controller
                 ->map(fn ($o) => [...$o->only('code', 'status', 'pickup_date', 'pickup_starts_at', 'pickup_ends_at', 'subtotal', 'discount_amount', 'coupon_code', 'total_amount', 'customer_note', 'created_at'), 'farmer' => $o->farmer?->stall_name, 'market' => $o->market?->name, 'items' => $o->items]),
             'reviews' => $user->reviews()->get(['reviewable_type', 'reviewable_id', 'rating', 'comment', 'farmer_reply', 'created_at']),
             'favorites' => $user->favorites()->get(['favoritable_type', 'favoritable_id', 'notify_restock', 'created_at']),
+            'stock_alerts' => $user->stockAlerts()->with('product:id,name')->get()->map(fn ($a) => ['product' => $a->product?->name, 'notified_at' => $a->notified_at, 'created_at' => $a->created_at]),
+            'payments' => $user->payments()->get(['reference', 'method', 'status', 'amount', 'refunded_amount', 'card_brand', 'card_last4', 'wallet_msisdn', 'paid_at', 'created_at']),
+            'connected_accounts' => $user->socialAccounts()->get(['provider', 'email', 'created_at', 'last_used_at']),
             'family_links' => [
                 'members' => $user->familyMembers()->with('member:id,name')->get()->map(fn ($l) => ['name' => $l->member?->name, 'status' => $l->status]),
                 'households' => $user->familyMemberships()->with('owner:id,name')->get()->map(fn ($l) => ['name' => $l->owner?->name, 'status' => $l->status]),
@@ -132,7 +143,9 @@ class ProfileController extends Controller
     public function destroy(Request $request, OrderService $orders): RedirectResponse
     {
         $user = $request->user();
-        $request->validate(['password' => 'required|current_password', 'confirm' => 'required|in:DELETE']);
+        $request->validate($user->hasPassword()
+            ? ['password' => 'required|current_password', 'confirm' => 'required|in:DELETE']
+            : ['confirm' => 'required|in:DELETE']);
 
         if ($user->isAdmin()) {
             return back()->with('error', 'flash.admin_cannot_delete');
@@ -162,6 +175,8 @@ class ProfileController extends Controller
             $user->familyMemberships()->delete();
             $user->notifications()->delete();
             $user->loginEvents()->delete();
+            $user->socialAccounts()->delete();
+            $user->stockAlerts()->delete();
             DB::table('verification_codes')->where('user_id', $user->id)->delete();
             DB::table('sessions')->where('user_id', $user->id)->delete();
             $user->forceFill([

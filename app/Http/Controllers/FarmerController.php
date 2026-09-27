@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\FarmerBadge;
 use App\Models\FarmerProfile;
 use App\Models\Market;
 use App\Services\OrderService;
@@ -18,6 +19,7 @@ class FarmerController extends Controller
             'market' => 'nullable|string|exists:markets,slug',
             'day' => 'nullable|integer|between:0,6',
             'sort' => 'nullable|in:rating,name,newest',
+            'badge' => 'nullable|in:'.implode(',', FarmerBadge::BADGES),
         ]);
 
         $farmers = FarmerProfile::approved()
@@ -27,6 +29,7 @@ class FarmerController extends Controller
                 ->where('stall_name', 'like', "%{$term}%")->orWhere('tagline', 'like', "%{$term}%")
                 ->orWhereHas('products', fn ($p) => $p->listed()->where('name', 'like', "%{$term}%")))))
             ->when($filters['market'] ?? null, fn ($q, $slug) => $q->whereHas('markets', fn ($m) => $m->where('slug', $slug)))
+            ->when($filters['badge'] ?? null, fn ($q, $b) => $q->whereHas('activeBadges', fn ($x) => $x->where('badge', $b)))
             ->when(isset($filters['day']), fn ($q) => $q->whereHas('pickupSlots', fn ($s) => $s->where('day_of_week', $filters['day'])->where('is_active', true)))
             ->when(($filters['sort'] ?? 'rating') === 'rating', fn ($q) => $q->orderByDesc('rating_avg')->orderByDesc('rating_count'))
             ->when(($filters['sort'] ?? null) === 'name', fn ($q) => $q->orderBy('stall_name'))
@@ -44,13 +47,13 @@ class FarmerController extends Controller
     {
         abort_unless($farmer->isApproved() && $farmer->user->isActive(), 404);
 
-        $farmer->load('markets');
+        $farmer->unsetRelation('user')->load('markets');
 
         return Inertia::render('Farmers/Show', [
             'farmer' => $farmer,
             'products' => $farmer->products()->whereNull('removed_at')->with('category:id,name,slug,color')
                 ->orderByRaw("status = 'available' desc")->orderBy('name')->get(),
-            'reviews' => $farmer->reviews()->where('is_hidden', false)->with('user:id,name')->latest()->limit(20)->get(),
+            'reviews' => $farmer->reviews()->where('is_hidden', false)->with('user:id,name', 'visiblePhotos')->latest()->limit(20)->get(),
             'slots' => $orders->availableSlots($farmer),
         ]);
     }

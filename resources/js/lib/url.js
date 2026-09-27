@@ -7,6 +7,8 @@ const KEYS = {
     day: 'day',
     price: 'price',
     status: 'status',
+    method: 'method',
+    badge: 'badge',
     'max-rating': 'max_rating',
     action: 'action',
     date: 'date',
@@ -24,7 +26,7 @@ const FLAGS = {
     unanswered: ['filter', 'unanswered'],
 };
 
-const ORDER = ['search', 'category', 'market', 'city', 'near', 'day', 'price', 'in-stock', 'status', 'household', 'removed', 'hidden', 'unanswered', 'max-rating', 'action', 'date', 'from', 'to', 'sort', 'page'];
+const ORDER = ['search', 'category', 'market', 'city', 'near', 'day', 'price', 'in-stock', 'status', 'method', 'badge', 'household', 'removed', 'hidden', 'unanswered', 'max-rating', 'action', 'date', 'from', 'to', 'sort', 'page'];
 const DAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 const SORTS = { price_asc: 'price-low', price_desc: 'price-high', rating: 'top-rated', name: 'a-z' };
 

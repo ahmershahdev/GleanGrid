@@ -120,11 +120,18 @@ class ProductController extends Controller
 
     public function applyTemplate(Request $request): RedirectResponse
     {
-        $this->farmer($request)->products()->whereNull('removed_at')->where('weekly_quantity', '>', 0)->update([
-            'stock_quantity' => DB::raw('weekly_quantity'),
-            'status' => DB::raw("CASE WHEN status = 'sold_out' THEN 'available' ELSE status END"),
-            'updated_at' => now(),
-        ]);
+        $farmer = $this->farmer($request);
+        DB::transaction(function () use ($farmer) {
+            $scope = fn () => $farmer->products()->whereNull('removed_at')->where('weekly_quantity', '>', 0);
+            $revived = $scope()->where(fn ($q) => $q->where('status', 'sold_out')->orWhere(fn ($q) => $q->where('status', 'available')->where('stock_quantity', 0)))
+                ->lockForUpdate()->pluck('id');
+            $scope()->update([
+                'stock_quantity' => DB::raw('weekly_quantity'),
+                'status' => DB::raw("CASE WHEN status = 'sold_out' THEN 'available' ELSE status END"),
+                'updated_at' => now(),
+            ]);
+            Product::announceRestock($revived);
+        });
 
         return back()->with('success', 'flash.template_applied');
     }

@@ -36,6 +36,16 @@ class SecurityHeaders
         return $response;
     }
 
+    private function gatewayOrigin(): ?string
+    {
+        if (config('payments.mode') !== 'live' || blank(config('payments.jazzcash.merchant_id'))) {
+            return null;
+        }
+        $url = parse_url((string) config('payments.jazzcash.endpoint'));
+
+        return isset($url['scheme'], $url['host']) && $url['scheme'] === 'https' ? 'https://'.$url['host'] : null;
+    }
+
     private function policy(string $nonce, bool $secure): string
     {
         $dev = app()->isLocal() && is_file(public_path('hot'))
@@ -55,7 +65,7 @@ class SecurityHeaders
             'manifest-src' => ["'self'"],
             'object-src' => ["'none'"],
             'base-uri' => ["'self'"],
-            'form-action' => ["'self'"],
+            'form-action' => ["'self'", $this->gatewayOrigin()],
             'frame-ancestors' => ["'self'"],
         ];
 

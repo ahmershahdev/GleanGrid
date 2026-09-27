@@ -23,6 +23,7 @@ class SitemapController extends Controller
                 [route('markets.index'), now(), 'daily', '0.9', []],
                 [route('products.index'), now(), 'daily', '0.9', []],
                 [route('farmers.index'), now(), 'weekly', '0.8', []],
+                [route('seasons'), now()->startOfMonth(), 'monthly', '0.7', []],
                 [route('about'), null, 'monthly', '0.6', []],
                 [route('contact'), null, 'yearly', '0.5', []],
                 [route('faq'), $this->updated(), 'monthly', '0.6', []],

@@ -11,6 +11,8 @@ use App\Support\BotGuard;
 use App\Support\LegalContent;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\File;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -26,6 +28,14 @@ class PageController extends Controller
                 'markets' => Market::active()->count(),
                 'orders' => Order::count(),
             ],
+            'build' => Cache::remember('about.build', now()->addDay(), fn () => [
+                'screens' => count(File::allFiles(resource_path('js/Pages'))),
+                'languages' => count(config('gleangrid.locales', [])),
+                'tests' => collect(['Feature', 'Unit'])->filter(fn ($d) => is_dir(base_path("tests/{$d}")))
+                    ->flatMap(fn ($d) => File::files(base_path("tests/{$d}")))
+                    ->sum(fn ($f) => preg_match_all('/function test_/', (string) file_get_contents($f->getPathname()))),
+                'roles' => 3,
+            ]),
         ]);
     }
 

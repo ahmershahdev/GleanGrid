@@ -15,6 +15,8 @@ class PathFilters
         'day' => 'day',
         'price' => 'price',
         'status' => 'status',
+        'method' => 'method',
+        'badge' => 'badge',
         'max-rating' => 'max_rating',
         'action' => 'action',
         'date' => 'date',
@@ -32,7 +34,7 @@ class PathFilters
         'unanswered' => ['filter', 'unanswered'],
     ];
 
-    public const ORDER = ['search', 'category', 'market', 'city', 'near', 'day', 'price', 'in-stock', 'status', 'household', 'removed', 'hidden', 'unanswered', 'max-rating', 'action', 'date', 'from', 'to', 'sort', 'page'];
+    public const ORDER = ['search', 'category', 'market', 'city', 'near', 'day', 'price', 'in-stock', 'status', 'method', 'badge', 'household', 'removed', 'hidden', 'unanswered', 'max-rating', 'action', 'date', 'from', 'to', 'sort', 'page'];
 
     public const DAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 

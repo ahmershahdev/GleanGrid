@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Farm fresh, just a click away.</strong><br>
-  Pre-order this week’s harvest from Hyderabad’s farmers markets and collect it at the stall.
+  Pre-order this week’s harvest from Hyderabad’s farmers markets, pay with Easypaisa, JazzCash, card or cash, and collect it at the stall.
 </p>
 
 <p align="center">
@@ -38,16 +38,19 @@
 7. [Database design](#database-design)
 8. [Security](#security)
 9. [Concurrency & race conditions](#concurrency--race-conditions)
-10. [SEO, performance & accessibility](#seo-performance--accessibility)
-11. [Internationalisation](#internationalisation)
-12. [Running locally (XAMPP)](#running-locally-xampp)
-13. [Troubleshooting](#troubleshooting)
-14. [Deploying to production](#deploying-to-production)
-15. [Testing & CI](#testing--ci)
-16. [Project structure](#project-structure)
-17. [Assumptions](#assumptions)
-18. [Contributing, security & licence](#contributing-security--licence)
-19. [Team & credits](#team--credits)
+10. [Online payments](#online-payments)
+11. [Social sign-in (Google & Facebook): what we store](#social-sign-in-google--facebook-what-we-store)
+12. [Badges, price history, seasons, photo reviews & alerts](#badges-price-history-seasons-photo-reviews--alerts)
+13. [SEO, performance & accessibility](#seo-performance--accessibility)
+14. [Internationalisation](#internationalisation)
+15. [Running locally (XAMPP)](#running-locally-xampp)
+16. [Troubleshooting](#troubleshooting)
+17. [Deploying to production](#deploying-to-production)
+18. [Testing & CI](#testing--ci)
+19. [Project structure](#project-structure)
+20. [Assumptions](#assumptions)
+21. [Contributing, security & licence](#contributing-security--licence)
+22. [Author & credits](#author--credits)
 
 ---
 
@@ -56,7 +59,7 @@
 Shoppers rarely know which farmers will be at a market, what they’ll have, or at what price. Farmers can’t take orders before market day. GleanGrid fixes both:
 
 - **Farmers** publish weekly stock, prices and pickup windows for each market they trade at, then accept, prepare and hand over pre-orders.
-- **Customers** find markets on a live map, browse and filter produce, reserve items against real stock, pick a pickup window and **pay the farmer in person** — no online payment, no delivery.
+- **Customers** find markets on a live map, browse and filter produce, reserve items against real stock, pick a pickup window and **pay online with Easypaisa, JazzCash or a debit/credit card — or pay the farmer in person**. Pickup only, no delivery.
 - **Administrators** approve stalls, moderate content, manage markets and master data, publish announcements and read platform reports.
 
 Every page is responsive, available in **8 languages** (including right-to-left Urdu and Arabic), and works in light and dark themes.
@@ -83,10 +86,15 @@ Every page is responsive, available in **8 languages** (including right-to-left 
 | One pre-order per farmer, pickup window per order | Pickup windows with capacity, one cut-off for all | Markets (days, hours, coordinates) and categories |
 | Modify / cancel until cut-off, reorder in one tap | Accept → ready → complete, decline with a note | Listing and review moderation |
 | Order code, directions, call / WhatsApp / e-mail the farmer | Revenue, pipeline, best sellers, low-stock alerts | Reports with CSV export and a report history |
-| Favourites with restock alerts, family sharing | Public replies to reviews | Coupons, announcements, contact inbox with replies |
+| Favourites, **“Notify me when it’s back”** alerts, family sharing | Public replies to reviews | Coupons, announcements, contact inbox with replies |
+| **Online payments** — Easypaisa, JazzCash, card (3D animated card, wallet approval screen) with automatic refunds | “Paid online” vs “collect at pickup” on every order | **Payments** console with timelines and one-click refunds, per-method switches |
+| **Price-history charts** (1M / 3M / 6M, low, high, 30-day average) and a **seasonal calendar** | **Badges**: Top Rated, Reliable Pickups, Rising Star, Customer Favourite | **Badge rules** (tunable thresholds, Bayesian score) with manual award / revoke / unlock |
+| **Photo reviews** (up to 4 photos) with a lightbox and a rating histogram | Review photos shown on your stall and products | **Seasonal calendar** editor and **review-photo** moderation |
+| **Sign in with Google or Facebook** | Farmer sign-up with Google / Facebook too | Everything recorded in the audit log |
 | Reviews for farmers and products after pickup | Stall coupons | Failed-sign-in and suspicious-IP panel |
 | Real photos for every product with the 3D illustration as a sticker, and a Photo / 3D switch | Stock edits that never erase sales made while the form was open | Platform settings, audit log and order overrides |
-| Basket Buddy assistant, 8 languages, light/dark | E-mail + in-app notifications | Every order across all markets |
+| **Basket Buddy** — tap-only, personal assistant: *my orders, tracking, basket, favourites, payments, spending*; never reveals other users | Basket Buddy: today’s pickups, orders to accept, low stock, rating & badges | Basket Buddy: what needs attention |
+| 8 languages, light/dark | E-mail + in-app notifications | Every order across all markets |
 
 **Experience details:** pinned horizontal galleries that slide sideways as you scroll down (“Soil, sun and early mornings”, “Meet the people behind your food”), instant page changes (links prefetch on hover or touch), optimistic favourites that fly into — and back out of — the header heart, fly-to-basket, a magnetic back-to-top medallion, a sun/moon theme switch that spreads from the toggle, a slim custom scrollbar, smooth scrolling and a custom cursor, all switched off for people who prefer reduced motion. URLs are forgiving: `/Contact`, `/FAQ`, `/contact-us`, `/tos` or `/refund-policy` redirect (301) to the canonical lowercase page.
 
@@ -199,6 +207,11 @@ A classic multi-tier web application, as the SRS asks, organised so each layer h
 | SQL injection | Every query goes through PDO prepared statements (Eloquent / query builder bindings); the few raw fragments are fixed strings or use `?` placeholders |
 | Floods, DoS and scrapers | A site-wide limiter on every page (300 requests a minute per IP for guests, 600 per signed-in account) on top of the per-form limits; writes are capped at 60 a minute per account while page views stay free. Set `TRUSTED_PROXIES` when running behind Cloudflare or a load balancer so limits apply to the real visitor IP, not the proxy |
 | Duplicate-value races | If two people claim the same username, e-mail or coupon code at the same instant, the database's unique index decides and the loser gets a normal form error instead of a server error |
+| Card data | Card numbers and CVCs are validated (Luhn, expiry, CVC length) and passed to the gateway but **never stored, logged or flashed back** to the session — only the brand and last four digits are kept. The fields are excluded from exception flashing (`dontFlash`). Wallet numbers are masked (`0300•••4567`). |
+| Payment tampering & forged callbacks | Amounts are always recomputed on the server from the orders. Gateway callbacks are CSRF-exempt but must carry a valid **HMAC-SHA256 signature** (compared in constant time) and a matching amount, otherwise they are rejected with 403/422. A payment page or status endpoint for someone else’s payment returns 404. |
+| Payment abuse | Dedicated limiters: 8 payment attempts a minute and 40 an hour per account, 5 attempts per checkout, 90 status polls a minute. Payment windows expire and release stock automatically. |
+| OAuth (Google / Facebook) | The OAuth `state` parameter (Socialite) blocks login-CSRF; only providers on an allow-list are routable; unverified provider e-mails are refused; a social identity can belong to one user only. **Pre-account-takeover** is blocked: if someone registered your e-mail but never verified it, signing in with Google proves ownership, so that unverified password is wiped and all its sessions are killed. Profile photos are fetched only over HTTPS from Google/Facebook CDN hosts (every redirect re-checked — no SSRF), size-capped and re-encoded to WebP. The last sign-in method can’t be disconnected. |
+| Assistant data leaks & prompt injection | Basket Buddy accepts **only whitelisted intent keys** — no free text reaches the server, so there is nothing to inject. Every personal answer is built from `$request->user()` alone; the request cannot name another user, and the chat history is kept per user in the browser. |
 | Unsafe downloads | CSV exports are generated only on an explicit click (SRS non-functional requirement) |
 | Malicious uploads | Photos are shrunk and converted to WebP **in the browser** before upload, then the server checks the real MIME type, dimensions and pixel count, decodes and **re-encodes** the pixels with GD (dropping EXIF/GPS and anything hidden after the image data), and stores them under a random name. SVG is never accepted. Users can remove a photo; nothing is deleted until they save. |
 | Lost work | Profile, stall, product and contact forms warn before an in-app link, refresh or tab close would discard unsaved changes. Every delete asks for confirmation first. |
@@ -220,12 +233,54 @@ Farmers-market mornings are bursty: many shoppers reserve the same limited stock
 | Many buyers hit a pickup window at once | A stale snapshot: under MySQL’s REPEATABLE READ, a plain `COUNT` after waiting for a lock still sees the data from before the wait | The booking count is a locking read (`FOR UPDATE`), which always sees the latest committed orders |
 | A farmer saves the stock form while customers are buying | The farmer’s old number overwrites the sales made meanwhile (a lost update), so the stall oversells | The form sends the stock it showed; the server locks the product and subtracts anything sold since, and leaves stock alone if the field wasn’t changed |
 | Monday restock / *Apply weekly template* runs during a checkout | A read-then-save loop overwrites a reservation made in between | One atomic `UPDATE … SET stock_quantity = weekly_quantity` per run, no read-modify-write |
+| Double-tap on *Pay* / two tabs paying the same checkout | Charged twice | The payment row is locked `FOR UPDATE`; it moves `pending → processing` exactly once; each attempt carries a **one-time idempotency key** stored under a unique index, so a replayed request returns the existing result instead of charging again |
+| Gateway confirms after the payment window closed | Money taken for orders that were already released | The late capture is detected (payment no longer `processing`) and **refunded automatically**, with a `late_capture` event in the timeline |
+| Customer cancels while the payment is in flight | Order cancelled but still charged | Orders awaiting payment can only be released through the payment (all-or-nothing); paid orders refund through a conditional `UPDATE … WHERE payment_status = 'paid'`, so a refund can never run twice |
+| Two restocks fire at once | Two “back in stock” e-mails | Each alert is claimed with `UPDATE … SET notified_at = NOW() WHERE notified_at IS NULL`; only the process that wins the row sends it |
+| Admin revokes a badge while the nightly job runs | Badge silently re-awarded | Badge rows are locked during recompute and manual decisions are **locked** so the job leaves them alone |
 | Deadlocks under load | Request fails | Transactions retry up to 3 times (`DB::transaction(..., attempts: 3)`) |
 | Notifications for rolled-back work | “Back in stock” / “order placed” e-mails for things that never happened | Notifications are dispatched **after commit** |
 
 **Proven with real parallel processes:** `php tests/Stress/checkout-race.php 50` fires 50 separate PHP processes at checkout at the same instant, against the real MySQL database: one item left in stock, a coupon that can be used once, a pickup window with room for three, and one buyer double-submitting. Every run ends with exactly 1 sale, 1 coupon use, 3 bookings, 0 crashes and 0 negative stock, and the script cleans up after itself.
 
 A MariaDB quirk found during testing is also documented in the migration. The first non-null `TIMESTAMP` column in a table silently gets `ON UPDATE CURRENT_TIMESTAMP`, which reset the code expiry on every guess. Expiry and report dates now use `DATETIME`.
+
+## Online payments
+
+Checkout offers **Cash at pickup**, **Easypaisa**, **JazzCash** and **Debit / credit card** (each can be switched off in *Admin → Settings*).
+
+1. Placing an online order reserves the stock and creates one `payments` row for the whole checkout (one payment can cover orders from several stalls). Farmers aren’t notified and can’t accept the order until it is paid.
+2. The customer lands on the payment page: a 3D card that tilts with the pointer and flips to show the CVC, or a phone that shows the wallet approval request. A countdown shows how long the stock is held (default 20 minutes).
+3. **Card:** validated (Luhn, expiry, CVC) → charged → `paid`. **Wallets:** a payment request goes to the phone → the page polls → `paid` once approved.
+4. When paid, every order in the checkout becomes `paid`, farmers get their *New pre-order* e-mail and the customer gets a receipt.
+5. Unpaid checkouts are released by `gleangrid:expire-payments` (scheduled every minute): the stock goes back on sale and coupons are returned.
+6. Refunds are automatic when the customer cancels before the cut-off or the farmer declines. Admins can refund any payment from *Admin → Payments*, which also shows each payment’s full event timeline (attempts, declines, captures, refunds, IPs).
+
+**Gateways.** `PAYMENTS_MODE=sandbox` (the default) runs a built-in simulator so the whole flow can be judged without real money. Test data is shown on the payment page: `4242 4242 4242 4242` approves, `4000 0000 0000 0002` is declined, `4000 0000 0000 9995` has no funds; any `03XXXXXXXXX` wallet number approves after a few seconds and numbers ending in `0000` are declined. With `PAYMENTS_MODE=live` and `JAZZCASH_MERCHANT_ID`, `JAZZCASH_PASSWORD` and `JAZZCASH_INTEGRITY_SALT` set, JazzCash uses its hosted checkout (`pp_SecureHash` HMAC-SHA256, verified again on the signed callback). Live Easypaisa and card acquiring need a merchant agreement; they plug into the same `App\Payments\PaymentGateway` interface and stay hidden in live mode until a driver is configured.
+
+## Social sign-in (Google & Facebook): what we store
+
+Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `FACEBOOK_CLIENT_ID` and `FACEBOOK_CLIENT_SECRET` (callback URLs: `https://YOUR-DOMAIN/auth/google/callback` and `/auth/facebook/callback`). The buttons appear on *Sign in* and on the first step of *Join* (as a customer or a farmer).
+
+| Field | Where it comes from | What we store |
+|---|---|---|
+| **Name** | Provider profile name | `users.name` — the customer can edit it at onboarding and in their profile |
+| **E-mail** | Provider e-mail, only if the provider says it is **verified** (Google `email_verified`; Facebook only returns confirmed e-mails) | `users.email`, and `email_verified_at` is set immediately — no six-digit code needed. If Facebook returns no e-mail (the user declined the permission), sign-up is refused with a clear message. |
+| **Profile photo** | Provider avatar URL (Google 512 px, Facebook large picture) | Downloaded once over HTTPS from Google/Facebook hosts only, re-encoded to WebP and stored as `users.avatar` — we never hot-link the provider, and never overwrite a photo the user already chose |
+| **Phone number** | Not provided by Google/Facebook | `users.phone` stays empty until the user fills the **Complete your profile** step, which is required (with address and the terms) before they can order or open a stall. Farmers also enter their stall name there. |
+| **Password** | Never shared by Google/Facebook | `users.password` is **NULL** — nobody can sign in with a password for that account until the user sets one under *Profile → Set a password* (no current password asked). Password sign-in with an empty hash always fails. |
+| **Provider identity** | Provider’s stable user ID | `social_accounts` (`provider`, `provider_user_id`, provider e-mail, `last_used_at`), unique per provider identity **and** per user + provider. We do **not** store access or refresh tokens. |
+| **Username** | Derived from the e-mail’s local part | `users.username`, made unique automatically |
+
+**Linking rules.** A returning provider identity signs straight in. A new identity whose verified e-mail matches an existing account is linked to it (and the owner gets an e-mail); if that account was never verified, its password is wiped and its sessions revoked (pre-hijack protection). From *Profile → Connected accounts* users can connect or disconnect Google/Facebook; the last remaining sign-in method can’t be removed. Account deletion removes the linked identities too.
+
+## Badges, price history, seasons, photo reviews & alerts
+
+- **Stall badges** are recalculated nightly by `gleangrid:badges` (and on demand from *Admin → Stall badges*). **Top Rated** uses a Bayesian average — `score = v/(v+m)·R + m/(v+m)·C` where *R* is the stall’s average rating over stall + product reviews, *v* the review count, *C* the platform average and *m* the prior weight (default 5) — and needs score ≥ 4.5 with ≥ 5 reviews. **Reliable Pickups** needs ≥ 10 completed orders in 90 days and ≥ 95 % fulfilled (completed ÷ completed + declined). **Rising Star**: joined within 120 days with ≥ 3 reviews averaging ≥ 4.5. **Customer Favourite**: saved by ≥ 10 shoppers. Every threshold is editable; admins can award or revoke any badge by hand, which locks it against the nightly job until they return it to automatic.
+- **Price history.** Every price change is recorded (`product_price_history`, one row per product per day). Product pages chart 1, 3 or 6 months with the low, high and 30-day average and tell shoppers when a price is below its average. Basket Buddy lists the biggest recent price drops.
+- **Seasonal calendar** (`/seasonal-calendar`). A month-by-month harvest calendar for Sindh (31 crops seeded, peak months highlighted) with a month dial, “coming next month / last chance” lists and a full grid. Admins manage it under *Admin → Seasonal calendar*; product pages show an *In season / Peak season* chip.
+- **Photo reviews.** Up to 4 photos per review, compressed in the browser and re-encoded on the server (EXIF/GPS stripped). Reviews show a star histogram and a *With photos* filter with a keyboard-friendly lightbox. Admins can hide or delete single photos.
+- **Back-in-stock alerts.** *Notify me when it’s back* on any sold-out product sends one in-app notification and one e-mail when the farmer restocks (including the weekly template and the Monday restock job), then switches off.
 
 ## SEO, performance & accessibility
 
@@ -378,12 +433,10 @@ docs/images/                                screenshots and diagrams (guides liv
 - **Licence:** GleanGrid is open source under the [MIT licence](LICENSE.txt). Third-party assets keep their own licences (see Credits).
 - **Wiki:** longer guides for each role, the architecture and the API surface live in the [project wiki](https://github.com/ahmershahdev/GleanGrid/wiki).
 
-## Team & credits
+## Author & credits
 
-| | Role |
-|---|---|
-| **Syed Ahmer Shah** | Software Engineer & Full Stack Developer — built the website end to end · [ahmershah.dev](https://ahmershah.dev/) · [GitHub](https://github.com/ahmershahdev) · [LinkedIn](https://linkedin.com/in/syedahmershah) |
-| **Syed Hassan** | Full Stack Developer |
+GleanGrid was designed and built solely by **Syed Ahmer Shah** — Software Engineer & Full Stack Developer, Hyderabad, Sindh — covering research, UI/UX, frontend, backend, database, payments, security, DevOps and documentation.
+[ahmershah.dev](https://ahmershah.dev/) · [GitHub](https://github.com/ahmershahdev) · [LinkedIn](https://linkedin.com/in/syedahmershah)
 
 Support: **support@ahmershah.dev** · **+92 370 4831994** · Hyderabad, Sindh, Pakistan
 

@@ -1,5 +1,5 @@
 import { useForm } from '@inertiajs/react';
-import { BellRing, Database, ShieldAlert, UserPlus } from 'lucide-react';
+import { BellRing, CreditCard, Database, ShieldAlert, UserPlus } from 'lucide-react';
 import { Button, Card, Input, PageHeader, Stat } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -83,6 +83,19 @@ export default function AdminSettings({ settings, updated, summary }) {
                         <Toggle checked={form.data.farmer_registration_open} onChange={(v) => form.setData('farmer_registration_open', v)} label={t('settings.farmer_signups', {}, 'New farmer stalls can register')} hint={t('settings.farmer_signups_hint', {}, 'Pause while you work through a backlog of stall approvals.')} />
                     </Card>
                 </div>
+
+                <Card className="space-y-3 p-6 md:p-8 lg:col-span-2">
+                    <h2 className="font-display flex items-center gap-2 text-2xl">
+                        <CreditCard className="size-5" /> {t('settings.payments_title')}
+                    </h2>
+                    <p className="text-sm text-ink-soft">{t('settings.payments_hint')}</p>
+                    <div className="grid gap-3 md:grid-cols-2">
+                        {['cash', 'easypaisa', 'jazzcash', 'card'].map((m) => (
+                            <Toggle key={m} checked={form.data[`payments_${m}_enabled`]} onChange={(v) => form.setData(`payments_${m}_enabled`, v)} label={t(`pay.${m}`)} hint={t(`pay.${m}_hint`)} />
+                        ))}
+                    </div>
+                    <Input label={t('settings.window')} min={5} max={120} {...num('payment_window_minutes')} />
+                </Card>
 
                 <div className="flex justify-end gap-3 lg:col-span-2">
                     <Button variant="ghost" onClick={() => form.reset()} disabled={!form.isDirty}>

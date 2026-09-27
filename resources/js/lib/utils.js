@@ -11,6 +11,14 @@ export const ORDER_STATUS_STYLE = {
     declined: 'bg-danger/10 text-danger ring-danger/25',
     cancelled: 'bg-ink/5 text-ink-soft ring-line-strong',
     no_show: 'bg-danger/10 text-danger ring-danger/25',
+    pending: 'bg-sun/20 text-[color:var(--warning)] ring-sun/40',
+    processing: 'bg-brand-soft text-brand ring-brand/25',
+    paid: 'bg-success/15 text-success ring-success/30',
+    unpaid: 'bg-ink/5 text-ink-soft ring-line-strong',
+    failed: 'bg-danger/10 text-danger ring-danger/25',
+    expired: 'bg-ink/5 text-ink-soft ring-line-strong',
+    refunded: 'bg-lime/30 text-forest dark:text-lime ring-lime/60',
+    partially_refunded: 'bg-lime/30 text-forest dark:text-lime ring-lime/60',
 };
 
 export const PRODUCT_STATUS_STYLE = {

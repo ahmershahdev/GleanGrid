@@ -18,6 +18,7 @@ export default function AdminOrderShow({ order, history, audit }) {
             <div className="mt-3 flex flex-wrap items-center gap-3">
                 <h1 className="font-display font-mono text-3xl md:text-4xl">{order.code}</h1>
                 <StatusBadge status={order.status} />
+                    {order.payment_method && order.payment_method !== 'cash' && <StatusBadge status={order.payment_status === 'paid' ? 'paid' : order.payment_status} />}
             </div>
             <p className="mt-1 text-sm text-ink-soft">
                 {order.customer?.name} → {order.farmer?.stall_name} · {order.market?.name} · {date(order.pickup_date, { weekday: 'short', day: 'numeric', month: 'short' })} {time(order.pickup_starts_at)}–{time(order.pickup_ends_at)}

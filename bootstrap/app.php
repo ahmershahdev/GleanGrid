@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureEmailVerified;
 use App\Http\Middleware\EnsureFarmerApproved;
+use App\Http\Middleware\EnsureProfileComplete;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\PathFilterRoutes;
@@ -33,17 +34,19 @@ return Application::configure(basePath: dirname(__DIR__))
             SetLocale::class,
             HandleInertiaRequests::class,
         ]);
-        $middleware->validateCsrfTokens(except: ['webhooks/resend/inbound']);
+        $middleware->validateCsrfTokens(except: ['webhooks/resend/inbound', 'payments/callback/*']);
         $middleware->alias([
             'role' => EnsureRole::class,
             'farmer.approved' => EnsureFarmerApproved::class,
             'verified' => EnsureEmailVerified::class,
+            'onboarded' => EnsureProfileComplete::class,
             'filters' => PathFilterRoutes::class,
         ]);
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo(fn (Request $request) => route($request->user()->dashboardRoute()));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->dontFlash(['current_password', 'password', 'password_confirmation', 'card_number', 'card_cvc', 'card_expiry', 'card_name', 'msisdn']);
         $exceptions->map(UniqueConstraintViolationException::class, function (UniqueConstraintViolationException $e) {
             $field = collect(['email', 'username', 'code', 'slug', 'stall_name', 'name'])->first(fn ($f) => str_contains($e->getMessage(), $f)) ?? 'form';
 

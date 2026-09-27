@@ -22,6 +22,7 @@ const NAV = [
     { key: 'markets', route: 'markets.index', match: 'markets.*' },
     { key: 'farmers', route: 'farmers.index', match: 'farmers.*' },
     { key: 'produce', route: 'products.index', match: 'products.*' },
+    { key: 'seasons', route: 'seasons', match: 'seasons' },
     { key: 'about', route: 'about', match: 'about' },
     { key: 'contact', route: 'contact', match: 'contact' },
 ];

@@ -251,3 +251,7 @@ html.lenis, html.lenis body { height: auto; }
 html[data-header='hidden'] .gg-under-header { top: 0; }
 [data-floating] { transition: translate 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
 @media (max-width: 1023px) { html.has-dock [data-floating] { translate: 0 -5.25rem; } }
+
+.gg-medal::after { content: ''; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.75) 50%, transparent 65%); transform: translateX(-120%); animation: gg-shine 3.2s ease-in-out infinite; }
+@keyframes gg-shine { 0%, 55% { transform: translateX(-120%); } 85%, 100% { transform: translateX(120%); } }
+@media (prefers-reduced-motion: reduce) { .gg-medal::after { animation: none; } }

@@ -3,16 +3,24 @@
 use App\Models\Order;
 use App\Models\Product;
 use App\Notifications\PlatformNotification;
+use App\Services\BadgeService;
+use App\Services\PaymentService;
 use App\Support\Settings;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('gleangrid:restock-weekly', function () {
-    $count = Product::whereNull('removed_at')->where('weekly_quantity', '>', 0)
-        ->where('status', '!=', 'unavailable')
-        ->whereHas('farmer', fn ($q) => $q->where('status', 'approved'))
-        ->update(['stock_quantity' => DB::raw('weekly_quantity'), 'status' => 'available', 'updated_at' => now()]);
+    $count = DB::transaction(function () {
+        $scope = fn () => Product::whereNull('removed_at')->where('weekly_quantity', '>', 0)
+            ->where('status', '!=', 'unavailable')
+            ->whereHas('farmer', fn ($q) => $q->where('status', 'approved'));
+        $revived = $scope()->where(fn ($q) => $q->where('status', 'sold_out')->orWhere('stock_quantity', 0))->lockForUpdate()->pluck('id');
+        $count = $scope()->update(['stock_quantity' => DB::raw('weekly_quantity'), 'status' => 'available', 'updated_at' => now()]);
+        Product::announceRestock($revived);
+
+        return $count;
+    });
 
     $this->info("Restocked {$count} products from their weekly templates.");
 })->purpose('Reset product stock to each farmer\'s weekly template');
@@ -51,3 +59,16 @@ Artisan::command('gleangrid:send-pickup-reminders {--force : Send now, whatever 
 })->purpose('E-mail tomorrow\'s pickup reminders');
 
 Schedule::command('gleangrid:send-pickup-reminders')->hourly()->withoutOverlapping();
+
+Artisan::command('gleangrid:expire-payments', function (PaymentService $payments) {
+    $this->info('Closed '.$payments->expireStale().' unpaid checkouts.');
+})->purpose('Release stock held by online checkouts that were never paid');
+
+Schedule::command('gleangrid:expire-payments')->everyMinute()->withoutOverlapping();
+
+Artisan::command('gleangrid:badges', function (BadgeService $badges) {
+    $s = $badges->recompute();
+    $this->info("Badges: {$s['awarded']} awarded, {$s['revoked']} revoked, {$s['kept']} kept.");
+})->purpose('Recalculate Top Rated / Reliable / Rising Star / Customer Favourite stall badges');
+
+Schedule::command('gleangrid:badges')->dailyAt('03:15')->withoutOverlapping();

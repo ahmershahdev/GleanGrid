@@ -1,3 +1,4 @@
+import { StallBadges } from '@/Components/Badges';
 import { Link } from '@inertiajs/react';
 import { motion } from 'motion/react';
 import { ArrowUpRight, Clock, MapPin, Star, Store } from 'lucide-react';
@@ -100,6 +101,7 @@ export function FarmerCard({ farmer, className }) {
                 <Link href={route('farmers.show', farmer.slug)} className="font-display text-xl leading-tight font-medium hover:underline">
                     {farmer.stall_name}
                 </Link>
+                <StallBadges farmer={farmer} limit={2} className="mt-2" />
                 {farmer.tagline && <p className="mt-1.5 line-clamp-2 text-sm text-ink-soft">{farmer.tagline}</p>}
                 <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-1 pt-4 text-xs text-ink-soft">
                     {farmer.rating_count > 0 && (

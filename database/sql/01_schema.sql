@@ -206,6 +206,35 @@ CREATE TABLE `family_links` (
   CONSTRAINT `chk_family_self` CHECK (`owner_id` <> `member_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `farmer_badges`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `farmer_badges` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `farmer_profile_id` bigint(20) unsigned NOT NULL,
+  `badge` varchar(30) NOT NULL,
+  `source` varchar(10) NOT NULL DEFAULT 'auto',
+  `locked` tinyint(1) NOT NULL DEFAULT 0,
+  `reason` varchar(190) DEFAULT NULL,
+  `metrics` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`metrics`)),
+  `awarded_by` bigint(20) unsigned DEFAULT NULL,
+  `awarded_at` datetime NOT NULL,
+  `revoked_at` datetime DEFAULT NULL,
+  `revoked_by` bigint(20) unsigned DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `farmer_badges_farmer_profile_id_badge_unique` (`farmer_profile_id`,`badge`),
+  KEY `farmer_badges_awarded_by_foreign` (`awarded_by`),
+  KEY `farmer_badges_revoked_by_foreign` (`revoked_by`),
+  KEY `farmer_badges_badge_revoked_at_index` (`badge`,`revoked_at`),
+  CONSTRAINT `farmer_badges_awarded_by_foreign` FOREIGN KEY (`awarded_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `farmer_badges_farmer_profile_id_foreign` FOREIGN KEY (`farmer_profile_id`) REFERENCES `farmer_profiles` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `farmer_badges_revoked_by_foreign` FOREIGN KEY (`revoked_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `chk_badge_key` CHECK (`badge` in ('top_rated','reliable','rising_star','customer_favourite')),
+  CONSTRAINT `chk_badge_source` CHECK (`source` in ('auto','manual'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `farmer_market`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -434,6 +463,9 @@ CREATE TABLE `orders` (
   `subtotal` decimal(10,2) DEFAULT NULL,
   `discount_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
   `coupon_code` varchar(30) DEFAULT NULL,
+  `payment_id` bigint(20) unsigned DEFAULT NULL,
+  `payment_method` varchar(20) NOT NULL DEFAULT 'cash',
+  `payment_status` varchar(20) NOT NULL DEFAULT 'unpaid',
   `total_amount` decimal(10,2) NOT NULL,
   `items_count` int(10) unsigned NOT NULL,
   `customer_note` text DEFAULT NULL,
@@ -458,14 +490,19 @@ CREATE TABLE `orders` (
   KEY `orders_created_at_index` (`created_at`),
   KEY `orders_completed_at_index` (`completed_at`),
   KEY `orders_reminder_due` (`status`,`pickup_date`,`reminder_sent_at`),
+  KEY `orders_payment_id_foreign` (`payment_id`),
+  KEY `orders_payment_state` (`payment_status`,`status`),
   CONSTRAINT `orders_customer_id_foreign` FOREIGN KEY (`customer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `orders_farmer_profile_id_foreign` FOREIGN KEY (`farmer_profile_id`) REFERENCES `farmer_profiles` (`id`) ON DELETE CASCADE,
   CONSTRAINT `orders_market_id_foreign` FOREIGN KEY (`market_id`) REFERENCES `markets` (`id`),
+  CONSTRAINT `orders_payment_id_foreign` FOREIGN KEY (`payment_id`) REFERENCES `payments` (`id`) ON DELETE SET NULL,
   CONSTRAINT `orders_pickup_slot_id_foreign` FOREIGN KEY (`pickup_slot_id`) REFERENCES `pickup_slots` (`id`) ON DELETE SET NULL,
   CONSTRAINT `chk_order_total` CHECK (`total_amount` >= 0),
   CONSTRAINT `chk_order_window` CHECK (`pickup_ends_at` > `pickup_starts_at`),
   CONSTRAINT `chk_order_discount` CHECK (`discount_amount` >= 0),
-  CONSTRAINT `chk_order_status` CHECK (`status` in ('placed','accepted','ready','completed','declined','cancelled','no_show'))
+  CONSTRAINT `chk_order_status` CHECK (`status` in ('placed','accepted','ready','completed','declined','cancelled','no_show')),
+  CONSTRAINT `chk_order_payment_method` CHECK (`payment_method` in ('cash','easypaisa','jazzcash','card')),
+  CONSTRAINT `chk_order_payment_status` CHECK (`payment_status` in ('unpaid','pending','paid','refunded','failed'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -512,6 +549,66 @@ CREATE TABLE `password_reset_tokens` (
   PRIMARY KEY (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `payment_events`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `payment_events` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `payment_id` bigint(20) unsigned NOT NULL,
+  `user_id` bigint(20) unsigned DEFAULT NULL,
+  `type` varchar(30) NOT NULL,
+  `status` varchar(20) NOT NULL,
+  `message` varchar(190) DEFAULT NULL,
+  `idempotency_key` varchar(64) DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `payment_events_idempotency` (`payment_id`,`idempotency_key`),
+  KEY `payment_events_user_id_foreign` (`user_id`),
+  KEY `payment_events_payment_id_created_at_index` (`payment_id`,`created_at`),
+  CONSTRAINT `payment_events_payment_id_foreign` FOREIGN KEY (`payment_id`) REFERENCES `payments` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `payment_events_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `payments`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `payments` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `reference` varchar(24) NOT NULL,
+  `user_id` bigint(20) unsigned NOT NULL,
+  `method` varchar(20) NOT NULL,
+  `provider` varchar(20) NOT NULL DEFAULT 'sandbox',
+  `status` varchar(20) NOT NULL DEFAULT 'pending',
+  `amount` decimal(10,2) NOT NULL,
+  `refunded_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `currency` char(3) NOT NULL DEFAULT 'PKR',
+  `provider_ref` varchar(64) DEFAULT NULL,
+  `attempts` tinyint(3) unsigned NOT NULL DEFAULT 0,
+  `card_brand` varchar(20) DEFAULT NULL,
+  `card_last4` char(4) DEFAULT NULL,
+  `wallet_msisdn` varchar(20) DEFAULT NULL,
+  `failure_reason` varchar(160) DEFAULT NULL,
+  `expires_at` datetime NOT NULL,
+  `processing_started_at` datetime DEFAULT NULL,
+  `paid_at` datetime DEFAULT NULL,
+  `failed_at` datetime DEFAULT NULL,
+  `refunded_at` datetime DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `payments_reference_unique` (`reference`),
+  UNIQUE KEY `payments_provider_ref_unique` (`provider_ref`),
+  KEY `payments_user_id_status_index` (`user_id`,`status`),
+  KEY `payments_status_expires_at_index` (`status`,`expires_at`),
+  KEY `payments_created_at_index` (`created_at`),
+  CONSTRAINT `payments_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `chk_payment_status` CHECK (`status` in ('pending','processing','paid','failed','expired','refunded','partially_refunded')),
+  CONSTRAINT `chk_payment_method` CHECK (`method` in ('easypaisa','jazzcash','card')),
+  CONSTRAINT `chk_payment_amount` CHECK (`amount` > 0 and `refunded_amount` >= 0 and `refunded_amount` <= `amount`),
+  CONSTRAINT `chk_payment_attempts` CHECK (`attempts` <= 20)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `pickup_slots`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -534,6 +631,21 @@ CREATE TABLE `pickup_slots` (
   CONSTRAINT `chk_slot_day` CHECK (`day_of_week` between 0 and 6),
   CONSTRAINT `chk_slot_window` CHECK (`ends_at` > `starts_at`),
   CONSTRAINT `chk_slot_capacity` CHECK (`capacity` > 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `product_price_history`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `product_price_history` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `product_id` bigint(20) unsigned NOT NULL,
+  `price` decimal(10,2) NOT NULL,
+  `recorded_on` date NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `product_price_history_product_id_recorded_on_unique` (`product_id`,`recorded_on`),
+  KEY `product_price_history_recorded_on_index` (`recorded_on`),
+  CONSTRAINT `product_price_history_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `chk_price_history_price` CHECK (`price` >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `products`;
@@ -594,6 +706,24 @@ CREATE TABLE `reports` (
   CONSTRAINT `reports_generated_by_foreign` FOREIGN KEY (`generated_by`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `review_photos`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `review_photos` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `review_id` bigint(20) unsigned NOT NULL,
+  `path` varchar(255) NOT NULL,
+  `width` smallint(5) unsigned DEFAULT NULL,
+  `height` smallint(5) unsigned DEFAULT NULL,
+  `sort` tinyint(3) unsigned NOT NULL DEFAULT 0,
+  `is_hidden` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `review_photos_review_id_is_hidden_sort_index` (`review_id`,`is_hidden`,`sort`),
+  CONSTRAINT `review_photos_review_id_foreign` FOREIGN KEY (`review_id`) REFERENCES `reviews` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `reviews`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -620,6 +750,30 @@ CREATE TABLE `reviews` (
   CONSTRAINT `reviews_order_id_foreign` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE SET NULL,
   CONSTRAINT `reviews_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `chk_review_rating` CHECK (`rating` between 1 and 5)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `seasonal_produce`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `seasonal_produce` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(80) NOT NULL,
+  `slug` varchar(100) NOT NULL,
+  `category_id` bigint(20) unsigned DEFAULT NULL,
+  `image` varchar(60) DEFAULT NULL,
+  `months` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`months`)),
+  `peak_months` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`peak_months`)),
+  `search` varchar(60) DEFAULT NULL,
+  `notes` varchar(255) DEFAULT NULL,
+  `sort_order` smallint(5) unsigned NOT NULL DEFAULT 0,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `seasonal_produce_slug_unique` (`slug`),
+  KEY `seasonal_produce_category_id_foreign` (`category_id`),
+  KEY `seasonal_produce_is_active_index` (`is_active`),
+  CONSTRAINT `seasonal_produce_category_id_foreign` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `sessions`;
@@ -652,6 +806,42 @@ CREATE TABLE `settings` (
   CONSTRAINT `chk_settings_key` CHECK (`key` regexp '^[a-z_]+$')
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `social_accounts`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `social_accounts` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) unsigned NOT NULL,
+  `provider` varchar(20) NOT NULL,
+  `provider_user_id` varchar(191) NOT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  `last_used_at` datetime DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `social_accounts_provider_provider_user_id_unique` (`provider`,`provider_user_id`),
+  UNIQUE KEY `social_accounts_user_id_provider_unique` (`user_id`,`provider`),
+  CONSTRAINT `social_accounts_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `chk_social_provider` CHECK (`provider` in ('google','facebook'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `stock_alerts`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `stock_alerts` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) unsigned NOT NULL,
+  `product_id` bigint(20) unsigned NOT NULL,
+  `notified_at` datetime DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `stock_alerts_user_id_product_id_unique` (`user_id`,`product_id`),
+  KEY `stock_alerts_product_id_notified_at_index` (`product_id`,`notified_at`),
+  CONSTRAINT `stock_alerts_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `stock_alerts_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `users`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -660,8 +850,8 @@ CREATE TABLE `users` (
   `name` varchar(255) NOT NULL,
   `username` varchar(50) NOT NULL,
   `email` varchar(100) NOT NULL,
-  `phone` varchar(30) NOT NULL,
-  `address` text NOT NULL,
+  `phone` varchar(30) DEFAULT NULL,
+  `address` text DEFAULT NULL,
   `city` varchar(80) DEFAULT NULL,
   `role` varchar(20) NOT NULL DEFAULT 'customer',
   `status` varchar(20) NOT NULL DEFAULT 'active',
@@ -669,7 +859,7 @@ CREATE TABLE `users` (
   `locale` varchar(8) NOT NULL DEFAULT 'en',
   `avatar` varchar(255) DEFAULT NULL,
   `email_verified_at` timestamp NULL DEFAULT NULL,
-  `password` varchar(255) NOT NULL,
+  `password` varchar(255) DEFAULT NULL,
   `password_changed_at` timestamp NULL DEFAULT NULL,
   `last_login_at` timestamp NULL DEFAULT NULL,
   `anonymized_at` datetime DEFAULT NULL,

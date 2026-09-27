@@ -1,6 +1,7 @@
 import { usePage } from '@inertiajs/react';
 import { useCallback, useEffect, useSyncExternalStore } from 'react';
 import baseEn, { additions as enAdditions } from '@/i18n/en';
+import features from '@/i18n/features.en';
 
 const loaders = {
     ur: () => import('@/i18n/ur'),
@@ -19,7 +20,7 @@ function deepMerge(base, extra = {}) {
     return out;
 }
 
-const en = deepMerge(baseEn, enAdditions);
+const en = deepMerge(deepMerge(baseEn, enAdditions), features);
 const dictionaries = { en };
 const pending = {};
 let version = 0;

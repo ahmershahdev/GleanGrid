@@ -1,4 +1,7 @@
-import { useForm, usePage } from '@inertiajs/react';
+import { router, useForm, usePage } from '@inertiajs/react';
+import { motion } from 'motion/react';
+import { FacebookIcon } from '@/Components/icons';
+import { GoogleMark } from '@/Components/SocialButtons';
 import { BadgeCheck, CircleAlert, Database, Download, Laptop, LogOut, ShieldCheck, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import ImagePicker from '@/Components/ImagePicker';
@@ -6,12 +9,12 @@ import { useUnsavedGuard } from '@/lib/confirm';
 import { Avatar, Button, buttonClass, Card, Input, PageHeader, Select, Textarea, PasswordInput } from '@/Components/ui';
 import { useFormat, useT } from '@/lib/i18n';
 
-export default function Profile({ profile, security }) {
+export default function Profile({ profile, security, connections = { linked: [], available: {}, has_password: true } }) {
     const t = useT();
     const { auth, app } = usePage().props;
     const form = useForm({ ...profile, city: profile.city ?? '', avatar: null, remove_avatar: false });
     const pwd = useForm({ current_password: '', password: '', password_confirmation: '' });
-    const others = useForm({ password: '' });
+    const others = useForm({ password: '', confirm: '' });
     const fmt = useFormat();
     const field = (f, name) => ({ value: f.data[name] ?? '', onChange: (e) => f.setData(name, e.target.value), error: f.errors[name] });
 
@@ -75,8 +78,12 @@ export default function Profile({ profile, security }) {
                     }}
                     className="h-fit space-y-5 p-6 md:p-8"
                 >
-                    <h2 className="font-display text-2xl">{t('profile.password_title')}</h2>
-                    <PasswordInput label={t('profile.current_password')} placeholder={t('ph.password_current')} {...field(pwd, 'current_password')} autoComplete="current-password" required />
+                    <h2 className="font-display text-2xl">{connections.has_password ? t('profile.password_title') : t('oauth.set_password')}</h2>
+                    {connections.has_password ? (
+                        <PasswordInput label={t('profile.current_password')} placeholder={t('ph.password_current')} {...field(pwd, 'current_password')} autoComplete="current-password" required />
+                    ) : (
+                        <p className="rounded-2xl bg-lime/20 p-3 text-sm text-ink-soft">{t('oauth.set_password_hint')}</p>
+                    )}
                     <PasswordInput meter label={t('fields.password')} placeholder={t('ph.password_new')} {...field(pwd, 'password')} autoComplete="new-password" hint={t('auth.password_hint')} required />
                     <PasswordInput label={t('fields.password_confirm')} placeholder={t('ph.password_confirm')} {...field(pwd, 'password_confirmation')} autoComplete="new-password" required />
                     <Button type="submit" variant="outline" loading={pwd.processing}>
@@ -84,6 +91,8 @@ export default function Profile({ profile, security }) {
                     </Button>
                 </Card>
             </div>
+
+            <Connections connections={connections} />
 
             <section id="security" className="mt-6 scroll-mt-24">
                 <Card className="p-6 md:p-8">
@@ -126,7 +135,11 @@ export default function Profile({ profile, security }) {
                                     }}
                                     className="mt-4 flex flex-wrap items-end gap-3"
                                 >
-                                    <PasswordInput wrapperClass="min-w-56 flex-1" label={t('security.confirm_password')} placeholder={t('ph.password_current')} value={others.data.password} onChange={(e) => others.setData('password', e.target.value)} error={others.errors.password} autoComplete="current-password" required />
+                                    {connections.has_password ? (
+                                        <PasswordInput wrapperClass="min-w-56 flex-1" label={t('security.confirm_password')} placeholder={t('ph.password_current')} value={others.data.password} onChange={(e) => others.setData('password', e.target.value)} error={others.errors.password} autoComplete="current-password" required />
+                                    ) : (
+                                        <Input wrapperClass="min-w-56 flex-1" label={t('oauth.no_password_confirm')} value={others.data.confirm ?? ''} onChange={(e) => others.setData('confirm', e.target.value)} error={others.errors.confirm} autoComplete="off" required />
+                                    )}
                                     <Button type="submit" variant="outline" loading={others.processing} className="h-12">
                                         <LogOut className="size-4" /> {t('security.logout_others')}
                                     </Button>
@@ -152,13 +165,56 @@ export default function Profile({ profile, security }) {
                     </div>
                 </Card>
 
-                <YourData />
+                <YourData hasPassword={connections.has_password} />
             </section>
         </>
     );
 }
 
-function YourData() {
+function Connections({ connections }) {
+    const t = useT();
+    const { relative } = useFormat();
+    const providers = [
+        ['google', 'Google', GoogleMark],
+        ['facebook', 'Facebook', (p) => <FacebookIcon {...p} className="size-5 text-[#1877F2]" />],
+    ];
+    return (
+        <Card className="mt-6 p-6 md:p-8">
+            <h2 className="font-display text-2xl">{t('oauth.connections')}</h2>
+            <p className="mt-1 text-sm text-ink-soft">{t('oauth.connections_sub')}</p>
+            <div className="mt-6 grid gap-3 md:grid-cols-2">
+                {providers.map(([key, name, Icon], i) => {
+                    const linked = connections.linked.find((l) => l.provider === key);
+                    const ready = connections.available[key];
+                    return (
+                        <motion.div key={key} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }} className="flex items-center gap-4 rounded-2xl border border-line p-4">
+                            <span className="flex size-11 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-line">
+                                <Icon className="size-5" />
+                            </span>
+                            <div className="min-w-0 flex-1">
+                                <p className="font-medium">{name}</p>
+                                <p className="truncate text-xs text-ink-soft">{linked ? `${t('oauth.connected')}${linked.email ? ` · ${linked.email}` : ''}${linked.last_used_at ? ` · ${t('oauth.last_used', { when: relative(linked.last_used_at) })}` : ''}` : t('oauth.not_connected')}</p>
+                            </div>
+                            {linked ? (
+                                <Button size="sm" variant="ghost" className="text-danger" onClick={() => router.delete(route('social.unlink', key), { preserveScroll: true })}>
+                                    {t('oauth.disconnect')}
+                                </Button>
+                            ) : ready ? (
+                                <a href={route('social.link', key)} className={buttonClass('outline', 'sm')}>
+                                    {t('oauth.connect')}
+                                </a>
+                            ) : (
+                                <span className="text-xs text-ink-faint">—</span>
+                            )}
+                        </motion.div>
+                    );
+                })}
+            </div>
+        </Card>
+    );
+}
+
+function YourData({ hasPassword = true }) {
     const t = useT();
     const { auth } = usePage().props;
     const [open, setOpen] = useState(false);
@@ -194,10 +250,10 @@ function YourData() {
                                 del.delete(route('profile.destroy'), { preserveScroll: true });
                             }}
                         >
-                            <PasswordInput label={t('fields.password')} value={del.data.password} onChange={(e) => del.setData('password', e.target.value)} error={del.errors.password} autoComplete="current-password" required />
+                            {hasPassword && <PasswordInput label={t('fields.password')} value={del.data.password} onChange={(e) => del.setData('password', e.target.value)} error={del.errors.password} autoComplete="current-password" required />}
                             <Input label={t('data.type_delete', {}, 'Type DELETE to confirm')} value={del.data.confirm} onChange={(e) => del.setData('confirm', e.target.value)} error={del.errors.confirm} autoComplete="off" required />
                             <div className="flex gap-2">
-                                <Button type="submit" variant="danger" size="sm" loading={del.processing} disabled={del.data.confirm !== 'DELETE' || !del.data.password}>
+                                <Button type="submit" variant="danger" size="sm" loading={del.processing} disabled={del.data.confirm !== 'DELETE' || (hasPassword && !del.data.password)}>
                                     {t('data.delete_forever', {}, 'Delete forever')}
                                 </Button>
                                 <Button variant="ghost" size="sm" onClick={() => (setOpen(false), del.reset())}>

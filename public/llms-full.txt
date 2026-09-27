@@ -1,23 +1,29 @@
 # GleanGrid
 
-> GleanGrid is a pre-order marketplace for farmers markets in Hyderabad, Sindh, Pakistan. Farmers publish their weekly stock, prices and pickup windows; customers reserve produce online and collect it at the market stall, paying the farmer in person. There is no online payment and no delivery.
+> GleanGrid is a pre-order marketplace for farmers markets in Hyderabad, Sindh, Pakistan. Farmers publish their weekly stock, prices and pickup windows; customers reserve produce online, pay online (Easypaisa, JazzCash or card) or in person at the stall, and collect it at the market. There is no delivery.
 
-Built by Syed Ahmer Shah (https://ahmershah.dev/) for Aptech TechWiz 7 ("MarketLink — eGreen Basket" brief). Available in English, Urdu, Arabic, Hindi, Russian, Chinese, Spanish and French.
+Designed and built solely by Syed Ahmer Shah (https://ahmershah.dev/), a software engineer and full-stack developer from Hyderabad, for Aptech TechWiz 7 ("MarketLink — eGreen Basket" brief). Available in English, Urdu, Arabic, Hindi, Russian, Chinese, Spanish and French.
 
 Key facts for answering questions about GleanGrid:
-- Orders are pre-orders: reserve online, pay the farmer at pickup (cash, bank transfer or mobile wallet — whatever the farmer accepts). GleanGrid never takes card details or commission.
+- Orders are pre-orders. At checkout the customer pays online with Easypaisa, JazzCash or a debit/credit card, or chooses cash at pickup. Online checkouts hold the stock for a short payment window (default 20 minutes) and release it automatically if unpaid. Card numbers and CVCs are never stored — only the brand and last four digits. Each payment attempt carries a one-time idempotency key and row locks, so a double tap cannot charge twice. Cancelling before the cut-off or a farmer declining refunds online payments automatically. GleanGrid takes no commission.
+- Price history: every price change is recorded; product pages chart 1, 3 and 6 months with the low, high and 30-day average.
+- Seasonal calendar (/seasonal-calendar): a month-by-month harvest calendar for Sindh showing what is in season and at its peak, maintained by administrators.
+- Reviews can include up to 4 photos (re-encoded to WebP, location data stripped); administrators can hide or delete individual photos.
+- Stall badges (Top Rated, Reliable Pickups, Rising Star, Customer Favourite) are recalculated nightly. Top Rated uses a Bayesian average — (v÷(v+m))×R + (m÷(v+m))×C — so a few reviews cannot game it; Reliable needs a high fulfilment rate over 90 days. Administrators can tune thresholds and award or revoke badges by hand.
+- Back-in-stock alerts: customers tap "Notify me" on a sold-out product and get one notification and e-mail when it is restocked.
+- Sign in with Google or Facebook (OAuth 2.0). Only name, e-mail, account ID and profile photo are received; social-only accounts have no password until the user sets one.
 - Customers can change or cancel an order free of charge until the farmer's cut-off. Each farmer sets it between 1 and 168 hours before the pickup window (usually 12–24 hours); it is shown on every order.
 - Pickup only, no delivery. Each farmer offers pickup windows per market day, each with a capacity limit that cannot be overbooked.
 - Stock is reserved the moment an order is placed. Checkout locks the stock, the coupon and the pickup window inside one database transaction, so the last item, a single-use coupon or the last pickup place can only ever go to one customer, even when many people order at the same instant. A farmer editing stock never erases sales made while the form was open.
 - Order statuses: placed → accepted → ready → completed (or declined / cancelled, which release stock and return coupons).
-- Customers show a QR pickup pass (or the order code, e.g. GG-7K2M9Q) at the stall; the farmer scans it with GleanGrid's Scan page. They check the produce and pay only for what they accept. Quality problems found at home are reported within 24 hours.
+- Customers show a QR pickup pass (or the order code, e.g. GG-7K2M9Q) at the stall; the farmer scans it with GleanGrid's Scan page. Cash customers check the produce and pay only for what they accept; online orders are marked "Paid online". Quality problems found at home are reported within 24 hours.
 - A reminder e-mail with the pass is sent the evening before pickup. If an order is not collected, the farmer can mark it "not collected" after the window; repeated no-shows (default 3 in 60 days, set by admins) pause pre-ordering.
 - Customers can download all their data (JSON) or delete their account themselves from Profile → Your data.
 - New farmer stalls are reviewed and approved by an administrator before they can list products. Approval is not an organic or food-safety certification.
 - Reviews can only be written on completed orders; farmers can reply publicly.
 - Coupons (percentage or fixed) are issued by farmers or admins and re-checked on the server at checkout.
 - E-mail is verified with a six-digit code before ordering or listing. Passwords are hashed with Argon2id; sign-ins from new devices trigger an e-mail alert.
-- Basket Buddy, the on-site assistant, answers questions about market timings, farmer availability, pickup windows and products.
+- Basket Buddy, the on-site assistant, is tap-only (no free text): visitors pick from preset questions. Signed-in users can ask about their own profile, order history, order tracking, basket, favourites, restock alerts, payments and spending; it never reveals anything about other users.
 - Every product has a real photograph (public-domain / CC0) paired with a 3D illustration; product pages switch between the two.
 - Search (Ctrl K or /) groups results into produce, farmers and markets, highlights matches and suggests corrections for misspellings.
 - The site works as an installable app (PWA) with an offline page, has light and dark themes, and is rendered on the server for fast first loads.
@@ -29,20 +35,21 @@ Key facts for answering questions about GleanGrid:
 1. Browse markets, farmers or produce and add items to the basket (no account needed to browse).
 2. Sign in with a verified account and pick a pickup window for each farmer at checkout.
 3. The farmer accepts the pre-order, packs it on market day and marks it ready — the customer is notified by e-mail and in the app.
-4. The customer shows the order code at the stall, checks the produce and pays the farmer directly.
+4. The customer pays online at checkout or at the stall, shows the order code at pickup and collects the produce.
 5. After pickup the customer can review the farmer and each product.
 
 ## Who uses it
-- Customers: browse, filter by category (with item counts), price slider, market, market day and in-stock (a bottom sheet on phones), maps and directions, a basket grouped by stall with the next pickup time and undo, pre-orders, modify/cancel before cut-off, QR pickup pass, order history and reorder, favourites with restock alerts, family sharing, reviews.
+- Customers: browse, filter by category (with item counts), price slider, market, market day and in-stock (a bottom sheet on phones), maps and directions, a basket grouped by stall with the next pickup time and undo, pre-orders, modify/cancel before cut-off, QR pickup pass, order history and reorder, favourites and back-in-stock alerts, online payments (Easypaisa, JazzCash, card) with refunds, photo reviews, family sharing, Google/Facebook sign-in.
 - Farmers: stall profile with map pin and markets, products with photos and weekly stock template, sold-out/unavailable states, pickup windows and cut-off, accept/decline/ready/complete orders, sales insights, review replies, coupons.
-- Administrators: platform metrics, approve/suspend stalls, activate/deactivate customers, markets and categories, listing and review moderation, reports with CSV export, announcements, coupons, contact inbox, an append-only audit log, platform settings (no-show rules, reminder hour, sign-up switches) and order overrides.
+- Administrators: platform metrics, approve/suspend stalls, activate/deactivate customers, markets and categories, listing and review moderation, reports with CSV export, announcements, coupons, contact inbox, an append-only audit log, platform settings (no-show rules, reminder hour, sign-up switches, payment methods), online payments with refunds, stall badges with tunable rules and overrides, the seasonal calendar, review-photo moderation and order overrides.
 
 ## Main pages
 - [Home](https://gleangrid.ahmershah.dev): what's fresh this week and markets open today
 - [Markets](https://gleangrid.ahmershah.dev/markets): every market on a map, with trading days and hours
 - [Produce](https://gleangrid.ahmershah.dev/products): searchable catalogue with real product photos; filter by category, price, market, market day and stock
-- [Farmers](https://gleangrid.ahmershah.dev/farmers): stall profiles, ratings and weekly stock
-- [About](https://gleangrid.ahmershah.dev/about): the team and why GleanGrid exists
+- [Farmers](https://gleangrid.ahmershah.dev/farmers): stall profiles, ratings, badges and weekly stock
+- [Seasonal calendar](https://gleangrid.ahmershah.dev/seasonal-calendar): what is in season in Sindh each month
+- [About](https://gleangrid.ahmershah.dev/about): why GleanGrid exists and the developer who built it
 - [Contact](https://gleangrid.ahmershah.dev/contact): support e-mail, phone and map
 
 ## Help and policies
@@ -112,76 +119,76 @@ Stalls: Kotri Herb Garden, Mirpurkhas Mango House, Sindh Valley Orchards, Thar D
 Page: https://gleangrid.ahmershah.dev/markets/tando-jam-countryside-market
 
 ## Farmer stalls
-### Sindh Valley Orchards
-Three generations of fruit growers from Tando Allahyar. (4.4★ from 7 reviews; 6 products listed; orders close 18 h before pickup)
-Page: https://gleangrid.ahmershah.dev/farmers/sindh-valley-orchards
-
 ### Thar Dairy Collective
-Grass-fed milk from a cooperative of 40 small herders. (4.3★ from 6 reviews; 4 products listed; orders close 24 h before pickup)
+Grass-fed milk from a cooperative of 40 small herders. (5.0★ from 1 reviews; 4 products listed; orders close 24 h before pickup)
 Page: https://gleangrid.ahmershah.dev/farmers/thar-dairy-collective
 
+### Green Acres Organic Farm
+Chemical-free vegetables from the fields of Tando Jam since 2009. (4.9★ from 9 reviews; 6 products listed; orders close 12 h before pickup)
+Page: https://gleangrid.ahmershah.dev/farmers/green-acres-organic-farm
+
+### Sindh Valley Orchards
+Three generations of fruit growers from Tando Allahyar. (4.6★ from 13 reviews; 6 products listed; orders close 18 h before pickup)
+Page: https://gleangrid.ahmershah.dev/farmers/sindh-valley-orchards
+
+### Hilltop Bakehouse
+Slow-fermented breads baked in a wood-fired oven in Latifabad. (4.6★ from 5 reviews; 6 products listed; orders close 12 h before pickup)
+Page: https://gleangrid.ahmershah.dev/farmers/hilltop-bakehouse
+
 ### Kotri Herb Garden
-Tender herbs and leafy greens from the Indus banks at Kotri, cut to order. (4.3★ from 9 reviews; 5 products listed; orders close 24 h before pickup)
+Tender herbs and leafy greens from the Indus banks at Kotri, cut to order. (4.4★ from 5 reviews; 5 products listed; orders close 24 h before pickup)
 Page: https://gleangrid.ahmershah.dev/farmers/kotri-herb-garden
 
+### Sunrise Poultry & Eggs
+Pasture-raised desi eggs from Hatri. (4.3★ from 6 reviews; 2 products listed; orders close 18 h before pickup)
+Page: https://gleangrid.ahmershah.dev/farmers/sunrise-poultry-eggs
+
+### Kirthar Honey Co.
+Wild honey from the Kirthar range, never heated or blended. (4.2★ from 5 reviews; 3 products listed; orders close 18 h before pickup)
+Page: https://gleangrid.ahmershah.dev/farmers/kirthar-honey-co
+
 ### Jamshoro River Growers
-Everyday kitchen staples at fair prices. (4.3★ from 3 reviews; 6 products listed; orders close 12 h before pickup)
+Everyday kitchen staples at fair prices. (4.0★ from 7 reviews; 6 products listed; orders close 12 h before pickup)
 Page: https://gleangrid.ahmershah.dev/farmers/jamshoro-river-growers
 
 ### Indus Delta Farms
-Heritage rice and pulses from Thatta. (4.3★ from 7 reviews; 4 products listed; orders close 12 h before pickup)
+Heritage rice and pulses from Thatta. (3.9★ from 8 reviews; 4 products listed; orders close 12 h before pickup)
 Page: https://gleangrid.ahmershah.dev/farmers/indus-delta-farms
 
-### Green Acres Organic Farm
-Chemical-free vegetables from the fields of Tando Jam since 2009. (4.2★ from 5 reviews; 6 products listed; orders close 12 h before pickup)
-Page: https://gleangrid.ahmershah.dev/farmers/green-acres-organic-farm
-
-### Bloom & Stem
-Seasonal flowers grown without chemical sprays. (4.1★ from 10 reviews; 3 products listed; orders close 24 h before pickup)
-Page: https://gleangrid.ahmershah.dev/farmers/bloom-stem
-
-### Sunrise Poultry & Eggs
-Pasture-raised desi eggs from Hatri. (3.6★ from 8 reviews; 2 products listed; orders close 18 h before pickup)
-Page: https://gleangrid.ahmershah.dev/farmers/sunrise-poultry-eggs
-
 ### Mirpurkhas Mango House
-Tropical fruit from the orchards of Mirpurkhas. (3.6★ from 8 reviews; 5 products listed; orders close 18 h before pickup)
+Tropical fruit from the orchards of Mirpurkhas. (3.6★ from 10 reviews; 5 products listed; orders close 18 h before pickup)
 Page: https://gleangrid.ahmershah.dev/farmers/mirpurkhas-mango-house
 
-### Kirthar Honey Co.
-Wild honey from the Kirthar range, never heated or blended. (3.6★ from 5 reviews; 3 products listed; orders close 18 h before pickup)
-Page: https://gleangrid.ahmershah.dev/farmers/kirthar-honey-co
-
-### Hilltop Bakehouse
-Slow-fermented breads baked in a wood-fired oven in Latifabad. (3.5★ from 6 reviews; 6 products listed; orders close 12 h before pickup)
-Page: https://gleangrid.ahmershah.dev/farmers/hilltop-bakehouse
+### Bloom & Stem
+Seasonal flowers grown without chemical sprays. (2.7★ from 3 reviews; 3 products listed; orders close 24 h before pickup)
+Page: https://gleangrid.ahmershah.dev/farmers/bloom-stem
 
 ## Sample of this week's produce
 - Farm Chicken (whole) — Rs 1100/piece from Sunrise Poultry & Eggs · https://gleangrid.ahmershah.dev/products/farm-chicken-whole-sunrise-poultry-eggs
-- Desi Eggs — Rs 480/dozen from Sunrise Poultry & Eggs · https://gleangrid.ahmershah.dev/products/desi-eggs-sunrise-poultry-eggs
-- Sunflower Stems — Rs 150/piece from Bloom & Stem · https://gleangrid.ahmershah.dev/products/sunflower-stems-bloom-stem
-- Tulip Bunch — Rs 1200/bunch from Bloom & Stem · https://gleangrid.ahmershah.dev/products/tulip-bunch-bloom-stem
-- Market Bouquet — Rs 1500/piece from Bloom & Stem · https://gleangrid.ahmershah.dev/products/market-bouquet-bloom-stem
-- Red Kidney Beans — Rs 420/kg from Indus Delta Farms · https://gleangrid.ahmershah.dev/products/red-kidney-beans-indus-delta-farms
-- Fresh Cow Milk — Rs 220/litre from Thar Dairy Collective · https://gleangrid.ahmershah.dev/products/fresh-cow-milk-thar-dairy-collective
-- Mango Achar — Rs 650/jar from Kirthar Honey Co. · https://gleangrid.ahmershah.dev/products/mango-achar-kirthar-honey-co
-- Fresh Ginger — Rs 520/kg from Kotri Herb Garden · https://gleangrid.ahmershah.dev/products/fresh-ginger-kotri-herb-garden
-- Watermelon — Rs 70/kg from Mirpurkhas Mango House · https://gleangrid.ahmershah.dev/products/watermelon-mirpurkhas-mango-house
-- Wildflower Honey — Rs 1800/jar from Kirthar Honey Co. · https://gleangrid.ahmershah.dev/products/wildflower-honey-kirthar-honey-co
 - Coriander Bunch — Rs 40/bunch from Kotri Herb Garden · https://gleangrid.ahmershah.dev/products/coriander-bunch-kotri-herb-garden
-- Aged Basmati Rice — Rs 480/kg from Indus Delta Farms · https://gleangrid.ahmershah.dev/products/aged-basmati-rice-indus-delta-farms
-- Pineapple — Rs 450/piece from Mirpurkhas Mango House · https://gleangrid.ahmershah.dev/products/pineapple-mirpurkhas-mango-house
-- Baby Eggplant — Rs 160/kg from Green Acres Organic Farm · https://gleangrid.ahmershah.dev/products/baby-eggplant-green-acres-organic-farm
-- Desi Butter (Makhan) — Rs 900/pack from Thar Dairy Collective · https://gleangrid.ahmershah.dev/products/desi-butter-makhan-thar-dairy-collective
-- Seasonal Fruit Pie — Rs 1600/piece from Hilltop Bakehouse · https://gleangrid.ahmershah.dev/products/seasonal-fruit-pie-hilltop-bakehouse
-- Fresh Green Peas — Rs 280/kg from Indus Delta Farms (sold out) · https://gleangrid.ahmershah.dev/products/fresh-green-peas-indus-delta-farms
-- Cantaloupe — Rs 140/kg from Mirpurkhas Mango House · https://gleangrid.ahmershah.dev/products/cantaloupe-mirpurkhas-mango-house
+- Desi Eggs — Rs 480/dozen from Sunrise Poultry & Eggs · https://gleangrid.ahmershah.dev/products/desi-eggs-sunrise-poultry-eggs
+- Red Apples — Rs 380/kg from Sindh Valley Orchards · https://gleangrid.ahmershah.dev/products/red-apples-sindh-valley-orchards
+- Microgreens Mix — Rs 350/box from Kotri Herb Garden · https://gleangrid.ahmershah.dev/products/microgreens-mix-kotri-herb-garden
+- Garlic — Rs 480/kg from Jamshoro River Growers · https://gleangrid.ahmershah.dev/products/garlic-jamshoro-river-growers
 - Raw Beri Honey — Rs 2400/jar from Kirthar Honey Co. · https://gleangrid.ahmershah.dev/products/raw-beri-honey-kirthar-honey-co
+- Fresh Green Peas — Rs 280/kg from Indus Delta Farms (sold out) · https://gleangrid.ahmershah.dev/products/fresh-green-peas-indus-delta-farms
+- Potatoes — Rs 90/kg from Jamshoro River Growers · https://gleangrid.ahmershah.dev/products/potatoes-jamshoro-river-growers
+- Wildflower Honey — Rs 1800/jar from Kirthar Honey Co. · https://gleangrid.ahmershah.dev/products/wildflower-honey-kirthar-honey-co
+- Red Kidney Beans — Rs 420/kg from Indus Delta Farms · https://gleangrid.ahmershah.dev/products/red-kidney-beans-indus-delta-farms
 - Roasted Peanuts — Rs 600/kg from Indus Delta Farms · https://gleangrid.ahmershah.dev/products/roasted-peanuts-indus-delta-farms
-- Tender Coconut — Rs 250/piece from Mirpurkhas Mango House · https://gleangrid.ahmershah.dev/products/tender-coconut-mirpurkhas-mango-house
-- Farmhouse Cheese — Rs 1400/kg from Thar Dairy Collective · https://gleangrid.ahmershah.dev/products/farmhouse-cheese-thar-dairy-collective
+- Kinnow Tangerines — Rs 240/dozen from Sindh Valley Orchards (sold out) · https://gleangrid.ahmershah.dev/products/kinnow-tangerines-sindh-valley-orchards
 - Spinach (Palak) — Rs 90/bunch from Kotri Herb Garden · https://gleangrid.ahmershah.dev/products/spinach-palak-kotri-herb-garden
-- Green Chillies — Rs 260/kg from Kotri Herb Garden · https://gleangrid.ahmershah.dev/products/green-chillies-kotri-herb-garden
+- Broccoli Crowns — Rs 450/kg from Green Acres Organic Farm (sold out) · https://gleangrid.ahmershah.dev/products/broccoli-crowns-green-acres-organic-farm
+- Seasonal Fruit Pie — Rs 1600/piece from Hilltop Bakehouse · https://gleangrid.ahmershah.dev/products/seasonal-fruit-pie-hilltop-bakehouse
+- Cucumbers — Rs 120/kg from Jamshoro River Growers · https://gleangrid.ahmershah.dev/products/cucumbers-jamshoro-river-growers
+- Watermelon — Rs 70/kg from Mirpurkhas Mango House · https://gleangrid.ahmershah.dev/products/watermelon-mirpurkhas-mango-house
+- Tender Coconut — Rs 250/piece from Mirpurkhas Mango House · https://gleangrid.ahmershah.dev/products/tender-coconut-mirpurkhas-mango-house
+- Butter Croissants — Rs 280/piece from Hilltop Bakehouse · https://gleangrid.ahmershah.dev/products/butter-croissants-hilltop-bakehouse
+- Red Onions — Rs 110/kg from Jamshoro River Growers · https://gleangrid.ahmershah.dev/products/red-onions-jamshoro-river-growers
+- Heirloom Carrots — Rs 180/kg from Green Acres Organic Farm · https://gleangrid.ahmershah.dev/products/heirloom-carrots-green-acres-organic-farm
+- Green Bell Peppers — Rs 320/kg from Green Acres Organic Farm · https://gleangrid.ahmershah.dev/products/green-bell-peppers-green-acres-organic-farm
+- Sweet Grapes — Rs 420/kg from Sindh Valley Orchards · https://gleangrid.ahmershah.dev/products/sweet-grapes-sindh-valley-orchards
+- Pears — Rs 300/kg from Sindh Valley Orchards · https://gleangrid.ahmershah.dev/products/pears-sindh-valley-orchards
 
 ## Frequently asked questions
 ### Getting started
@@ -194,7 +201,7 @@ Page: https://gleangrid.ahmershah.dev/farmers/hilltop-bakehouse
 **Is GleanGrid free?** Yes, for customers and farmers alike. There are no fees, subscriptions or commissions.
 
 ### Ordering
-**Do I pay online?** No. GleanGrid only reserves your produce. You pay the farmer at the stall when you collect, after checking your order.
+**Can I pay online?** Yes — with Easypaisa, JazzCash or a debit/credit card at checkout. Or choose “Cash at pickup” and pay the farmer when you collect.
 
 **Can I order from several farmers at once?** Yes. Your basket can hold items from many stalls. At checkout each farmer becomes a separate pre-order with its own pickup window.
 
@@ -202,7 +209,9 @@ Page: https://gleangrid.ahmershah.dev/farmers/hilltop-bakehouse
 
 **What is a cut-off time?** The moment a farmer stops accepting changes so they can pick and pack. Each farmer sets their own (1 to 168 hours before the window); it is printed on every order.
 
-**What does “sold out” mean on a product?** The farmer’s stock for this week is fully reserved. Tap the heart to save it and turn on the restock alert — we’ll tell you when it’s back.
+**What does “sold out” mean on a product?** The farmer’s stock for this week is fully reserved. Tap “Notify me when it’s back” and we’ll send you one alert the moment it is restocked.
+
+**What do the stall badges mean?** Top Rated, Reliable Pickups, Rising Star and Customer Favourite are recalculated every night from reviews (weighted so a handful of ratings can’t game it), fulfilment rate and how many shoppers saved the stall.
 
 **How do coupons work?** Enter a code at checkout. It is checked against the stall, dates and usage limit, and the discount is shown before you confirm. If the order is later cancelled or declined, the coupon use is given back.
 
@@ -215,9 +224,11 @@ Page: https://gleangrid.ahmershah.dev/farmers/hilltop-bakehouse
 
 **What do I show at the stall?** Your pickup pass — the QR code on your order page — or the order code (for example GG-7K2M9Q). The evening before, you also get a reminder with both.
 
-**What happens if I miss my pickup?** Once the window has passed the farmer can mark the order as not collected and the produce goes back on sale. Repeated missed pickups (by default 3 in 60 days) pause pre-ordering until our team reviews the account.
+**What happens if I miss my pickup?** Once the window has passed the farmer can mark the order as not collected and the produce goes back on sale. Repeated missed pickups (by default 3 in 60 days) pause pre-ordering until an administrator reviews the account.
 
-**How do I pay?** In cash or by any method the farmer accepts, such as bank transfer, JazzCash or Easypaisa. GleanGrid never asks for card details.
+**How do I pay?** Online at checkout (Easypaisa, JazzCash or card) or in person at the stall. Card numbers go straight to the payment provider — GleanGrid never stores them.
+
+**Is paying online safe?** Yes. Payment pages are encrypted, every attempt carries a one-time key so a double tap can’t charge you twice, and we only keep the last four digits of a card for your receipt.
 
 **What if I’m late?** Message the farmer from your order. Most will hold your order until the market closes; perishables can’t be kept for the next market day.
 
@@ -226,14 +237,14 @@ Page: https://gleangrid.ahmershah.dev/farmers/hilltop-bakehouse
 ### Returns & refunds
 **What if something is wrong with my order?** Tell the farmer at the stall — you only pay for what you accept. If you notice a problem at home, report it within 24 hours with your order code and a photo.
 
-**How are refunds paid?** As there is no online payment, refunds are a replacement at your next pickup, cash back in person, a bank or mobile-wallet transfer, or a coupon — whichever you and the farmer agree.
+**How are refunds paid?** Online payments are refunded automatically to the same wallet or card when you cancel before the cut-off or a farmer declines. For cash orders, refunds are a replacement, cash back, a wallet transfer or a coupon — whichever you and the farmer agree.
 
 **What if the farmer cancels?** You owe nothing, any coupon is returned and you are notified immediately.
 
 ### Farmers
-**How do I start selling?** Register as a farmer with your stall details. Our team reviews new stalls, usually within a day. Once approved you can list products, set pickup windows and receive orders.
+**How do I start selling?** Register as a farmer with your stall details. A GleanGrid administrator reviews new stalls, usually within a day. Once approved you can list products, set pickup windows and receive orders.
 
-**Does GleanGrid take a commission?** No. Customers pay you directly and in full at your stall.
+**Does GleanGrid take a commission?** No. Cash orders are paid to you at the stall; online orders show as “Paid online” so you just hand them over.
 
 **How do pickup windows and capacity work?** Add a window for each market day with start and end times and a maximum number of orders. Full windows vanish from checkout automatically, and you set one cut-off for all of them.
 
@@ -301,8 +312,9 @@ Send a family member or friend with the order code. Linked Family accounts can s
 ### Delivery
 We don’t offer delivery or courier services, and farmers are not asked to deliver. This keeps prices low and produce fresh. If that changes we will announce it here first.
 
-### Payment at pickup
-Pay the farmer the total shown on your order (after any coupon) in cash or by any method they accept — many take bank transfer, JazzCash or Easypaisa. GleanGrid never asks for card details and never collects money on a farmer’s behalf.
+### Payment
+At checkout you choose to pay online (Easypaisa, JazzCash or a debit/credit card) or at the stall. Online payments must be completed within the time shown on the payment page; if not, the reservation is released automatically and nothing is charged. Paid orders just need your pickup code at the stall.
+If you chose to pay at pickup, pay the farmer the total shown on your order (after any coupon) in cash or by any method they accept.
 
 ### Weather and market closures
 If a market closes unexpectedly (weather, public holiday, civic order), affected orders are declined or moved with your agreement and you are notified. A site-wide announcement is shown on the home page when a closure affects many stalls.
@@ -312,7 +324,7 @@ Fresh food doesn’t travel back to the farm, so our approach is simple: you can
 
 ### The short version
 - Cancel or change any pre-order free until the farmer’s cut-off time shown on the order.
-- Nothing is paid online, so there is never a card refund to wait for.
+- Paid online? Cancelling before the cut-off, or a farmer declining, refunds you automatically — wallets in minutes, cards in 5–7 working days.
 - At pickup, you pay only for the items you accept.
 - Problem after you got home? Tell us within 24 hours with your order code and a photo.
 
@@ -321,7 +333,7 @@ Open the order under My orders and choose Modify or Cancel. Both are available w
 Cancelling releases the stock for other customers straight away and returns any coupon you used. After the cut-off the farmer has picked and packed for you, so the order is locked — if something unexpected happens, message the farmer as early as you can.
 
 ### Check before you pay
-Because you pay at pickup, you see and handle everything before any money changes hands. If an item is missing, damaged, under weight or not what was listed, tell the farmer at the stall. You pay only for what you accept; the farmer adjusts the total on the spot.
+If you chose to pay at pickup you see and handle everything before any money changes hands, and you pay only for what you accept. If you paid online and an item is missing, damaged, under weight or not what was listed, tell the farmer at the stall — they record it and the difference is refunded to your original payment method.
 
 ### After you’ve left the market
 Found a problem once you got home — spoiled inside, wrong variety, short weight? Write to the farmer through your order page or to us within 24 hours of pickup, with your order code (for example GG-7K2M9Q) and a photo. Farmers on GleanGrid commit to a fair outcome, normally one of:
@@ -348,7 +360,7 @@ GleanGrid (“we”, “us”) is operated from Hyderabad, Sindh 71000, Pakistan
 ### What GleanGrid is — and isn’t
 GleanGrid is a meeting place. Farmers list what they will bring to market; customers reserve it online and collect it in person during a pickup window. The sale itself is a contract between you and the farmer.
 - We do not buy, grow, store, transport, inspect or resell produce.
-- We do not process payments, hold money or take a commission. Every order is paid for at the stall, directly to the farmer.
+- We take no commission. You choose how to pay at checkout: online with Easypaisa, JazzCash or a debit/credit card, or in person at the stall. Online payments are handled by the payment provider; GleanGrid never sees or stores your full card number or security code.
 - We do not deliver. GleanGrid is pickup-only (see the Pickup & Delivery Policy).
 
 ### Your account
@@ -368,7 +380,7 @@ A pre-order is a reservation, not a purchase. When you check out, the stock is h
 Please turn up. Repeated no-shows hurt small growers who set produce aside for you. Once a pickup window has passed, the farmer can mark the order as not collected and the produce goes back on sale. A set number of no-shows within a rolling period (by default 3 in 60 days, adjustable by our team) pauses pre-ordering until the account is reviewed.
 
 ### Farmers and listings
-New stalls are reviewed by our team before they can list. Approval confirms a real stall exists at a real market; it is not a certification of organic status, food safety, weights and measures or licences — those responsibilities stay with each farmer under Pakistani law.
+New stalls are reviewed by a GleanGrid administrator before they can list. Approval confirms a real stall exists at a real market; it is not a certification of organic status, food safety, weights and measures or licences — those responsibilities stay with each farmer under Pakistani law.
 - Describe produce honestly: name, price, unit, quantity, photos and growing practices.
 - Keep stock and pickup windows up to date; mark items sold out rather than declining orders.
 - Honour accepted orders and the prices shown on them.
@@ -379,7 +391,7 @@ We may hide listings, suspend stalls or remove reviews that are misleading, unsa
 Reviews can only be left on a completed order, so every rating comes from a real pickup. Keep them honest, first-hand and respectful: no personal data, hate, threats or advertising. Farmers can reply publicly. Our moderators may hide reviews that break these rules; we never edit what you wrote or remove fair criticism.
 
 ### Coupons
-Farmers and our team may publish coupon codes. A coupon applies only to the stall or scope it was issued for, within its dates and usage limits, and is checked again when you confirm. Coupons have no cash value, cannot be exchanged, and a coupon used on an order that is cancelled or declined is returned to you automatically.
+Farmers and GleanGrid may publish coupon codes. A coupon applies only to the stall or scope it was issued for, within its dates and usage limits, and is checked again when you confirm. Coupons have no cash value, cannot be exchanged, and a coupon used on an order that is cancelled or declined is returned to you automatically.
 
 ### Fair use
 - No scraping, automated ordering, stock-hoarding or attempts to get around rate limits, bot protection or security controls.
@@ -408,7 +420,8 @@ We collect as little as we can, use it only to run GleanGrid, and never sell or 
 - Things you create: reviews, farmer replies, favourites, restock alerts, family links and messages sent through the contact form.
 - Security records: sign-in times, IP address and a coarse device description (for example “Chrome on Android”) used to spot suspicious sign-ins and to let you sign other devices out.
 - Location — only if you press “Near me” or ask for directions. It is used in your browser to sort markets and draw a route, and is not stored on our servers.
-We never collect card or bank details — payment happens in person at the stall.
+Payments: if you pay online we keep the method, amount, status, a payment reference, the last four digits and brand of a card or a masked wallet number (for example 0300•••4567). Full card numbers and security codes go straight to the payment provider — they are never stored, logged or visible to farmers or staff.
+Google or Facebook sign-in: if you use it we receive your name, e-mail address, account ID and profile photo, and nothing else. We never receive or store your Google or Facebook password, and you can disconnect it from your profile at any time.
 
 ### How we use it
 - To run your orders: the farmer you order from sees your name, phone number and order so they can prepare it and recognise you.

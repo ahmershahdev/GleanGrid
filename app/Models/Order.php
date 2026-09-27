@@ -24,7 +24,7 @@ class Order extends Model
     protected $fillable = [
         'code', 'customer_id', 'farmer_profile_id', 'market_id', 'pickup_slot_id', 'pickup_date',
         'pickup_starts_at', 'pickup_ends_at', 'cutoff_at', 'status', 'subtotal', 'discount_amount', 'coupon_code', 'total_amount', 'items_count',
-        'customer_note', 'farmer_note', 'accepted_at', 'ready_at', 'completed_at', 'cancelled_at', 'declined_at', 'no_show_at', 'reminder_sent_at',
+        'customer_note', 'farmer_note', 'payment_id', 'payment_method', 'payment_status', 'accepted_at', 'ready_at', 'completed_at', 'cancelled_at', 'declined_at', 'no_show_at', 'reminder_sent_at',
     ];
 
     protected function casts(): array
@@ -48,6 +48,21 @@ class Order extends Model
     public function getRouteKeyName(): string
     {
         return 'code';
+    }
+
+    public function payment(): BelongsTo
+    {
+        return $this->belongsTo(Payment::class);
+    }
+
+    public function isPaidOnline(): bool
+    {
+        return $this->payment_method !== 'cash';
+    }
+
+    public function awaitingPayment(): bool
+    {
+        return $this->isPaidOnline() && $this->payment_status === 'pending';
     }
 
     public function couponRedemption(): HasOne

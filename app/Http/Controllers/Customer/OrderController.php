@@ -38,10 +38,15 @@ class OrderController extends Controller
     public function show(Request $request, Order $order): Response
     {
         $this->authorizeView($request, $order);
-        $order->load('farmer', 'market', 'items.product', 'reviews', 'customer:id,name');
+        $order->load('farmer', 'market', 'items.product', 'reviews', 'customer:id,name', 'payment');
 
         return Inertia::render('Customer/Orders/Show', [
-            'order' => [...$order->toArray(), 'editable' => $order->isEditableByCustomer()],
+            'order' => [
+                ...$order->toArray(),
+                'editable' => $order->isEditableByCustomer() && ! $order->awaitingPayment(),
+                'modifiable' => $order->isEditableByCustomer() && ! $order->isPaidOnline(),
+                'payment' => $order->payment?->only('reference', 'status', 'method', 'card_brand', 'card_last4', 'wallet_msisdn', 'amount', 'refunded_amount'),
+            ],
             'isOwner' => $order->customer_id === $request->user()->id,
             'reviewed' => $order->reviews->map(fn ($r) => $r->reviewable_type.':'.$r->reviewable_id),
             'history' => $order->statusHistory(),

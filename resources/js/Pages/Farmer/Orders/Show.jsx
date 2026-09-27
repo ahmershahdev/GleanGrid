@@ -28,6 +28,7 @@ export default function FarmerOrderShow({ order, history = [], customerNoShows =
                 <div className="flex items-center gap-3">
                     <h1 className="font-display font-mono text-3xl md:text-4xl">{order.code}</h1>
                     <StatusBadge status={order.status} />
+                    {order.payment_method && order.payment_method !== 'cash' && <StatusBadge status={order.payment_status === 'paid' ? 'paid' : order.payment_status} />}
                 </div>
                 <div className="flex gap-2 print:hidden">
                     <Button variant="outline" size="sm" onClick={() => window.print()}>
@@ -81,7 +82,7 @@ export default function FarmerOrderShow({ order, history = [], customerNoShows =
                         </dl>
                     )}
                     <div className="mt-4 flex items-end justify-between border-t border-line pt-4">
-                        <span className="text-ink-soft">{t('forders.collect')}</span>
+                        <span className="text-ink-soft">{order.payment_status === 'paid' ? t('pay.paid_online') : t('forders.collect')}</span>
                         <span className="font-display text-3xl">{money(order.total_amount)}</span>
                     </div>
                     {order.customer_note && <p className="mt-4 rounded-2xl bg-sun/15 p-3 text-sm">📝 {order.customer_note}</p>}

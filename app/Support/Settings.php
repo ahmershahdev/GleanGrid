@@ -14,6 +14,18 @@ class Settings
         'customer_registration_open' => [true, 'bool'],
         'farmer_registration_open' => [true, 'bool'],
         'max_open_orders_per_customer' => [20, 'int', 1, 200],
+        'payments_cash_enabled' => [true, 'bool'],
+        'payments_easypaisa_enabled' => [true, 'bool'],
+        'payments_jazzcash_enabled' => [true, 'bool'],
+        'payments_card_enabled' => [true, 'bool'],
+        'payment_window_minutes' => [20, 'int', 5, 120],
+        'badge_prior_weight' => [5, 'int', 0, 50],
+        'badge_top_rated_min_score' => [4.5, 'float', 3, 5],
+        'badge_top_rated_min_reviews' => [5, 'int', 1, 500],
+        'badge_reliable_min_orders' => [10, 'int', 1, 1000],
+        'badge_reliable_min_rate' => [95, 'int', 50, 100],
+        'badge_rising_days' => [120, 'int', 7, 730],
+        'badge_favourite_min' => [10, 'int', 1, 10000],
     ];
 
     public static function all(): array
@@ -44,13 +56,23 @@ class Settings
         Cache::forget('gg.settings');
     }
 
-    public static function rules(): array
+    public static function rules(?string $prefix = null, bool $except = false): array
     {
-        return collect(self::SCHEMA)->map(fn ($spec) => $spec[1] === 'bool' ? ['required', 'boolean'] : ['required', 'integer', "min:{$spec[2]}", "max:{$spec[3]}"])->all();
+        return collect(self::SCHEMA)
+            ->filter(fn ($spec, $key) => $prefix === null || str_starts_with($key, $prefix) !== $except)
+            ->map(fn ($spec) => match ($spec[1]) {
+                'bool' => ['required', 'boolean'],
+                'float' => ['required', 'numeric', "min:{$spec[2]}", "max:{$spec[3]}"],
+                default => ['required', 'integer', "min:{$spec[2]}", "max:{$spec[3]}"],
+            })->all();
     }
 
     private static function cast(mixed $value, string $type): mixed
     {
-        return $type === 'bool' ? filter_var($value, FILTER_VALIDATE_BOOLEAN) : (int) $value;
+        return match ($type) {
+            'bool' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
+            'float' => round((float) $value, 2),
+            default => (int) $value,
+        };
     }
 }

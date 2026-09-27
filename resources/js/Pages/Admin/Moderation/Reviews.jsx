@@ -35,6 +35,23 @@ export default function ModerateReviews({ reviews, filters }) {
                             <Stars value={r.rating} />
                         </div>
                         {r.comment && <p className="mt-3 text-ink-soft">{r.comment}</p>}
+                        {r.photos?.length > 0 && (
+                            <div className="mt-3 flex flex-wrap gap-2">
+                                {r.photos.map((p) => (
+                                    <div key={p.id} className={cn('group relative size-24 overflow-hidden rounded-2xl ring-1 ring-line', p.is_hidden && 'opacity-40 grayscale')}>
+                                        <img src={p.url} alt="" loading="lazy" className="size-full object-cover" />
+                                        <div className="absolute inset-x-1 bottom-1 flex justify-center gap-1 opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100">
+                                            <button type="button" onClick={() => router.patch(route('admin.moderation.photos.toggle', p.id), {}, { preserveScroll: true })} className="rounded-full bg-soil/80 p-1.5 text-white" aria-label={p.is_hidden ? t('moderation.restore') : t('moderation.hide')}>
+                                                {p.is_hidden ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
+                                            </button>
+                                            <button type="button" onClick={() => router.delete(route('admin.moderation.photos.destroy', p.id), { preserveScroll: true })} className="rounded-full bg-danger/90 p-1.5 text-white" aria-label={t('common.delete')}>
+                                                <Trash2 className="size-3.5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                         {r.is_hidden && <p className="mt-2 text-xs text-danger">{t('moderation.hidden_reason', { reason: r.hidden_reason })}</p>}
                         <div className="mt-4 flex gap-2">
                             {r.is_hidden ? (

@@ -20,6 +20,8 @@ class FarmerProfile extends Model
 
     protected $appends = ['logo_url', 'cover_url'];
 
+    protected $with = ['activeBadges:id,farmer_profile_id,badge'];
+
     protected function casts(): array
     {
         return [
@@ -64,6 +66,16 @@ class FarmerProfile extends Model
     public function reviews(): MorphMany
     {
         return $this->morphMany(Review::class, 'reviewable');
+    }
+
+    public function badges(): HasMany
+    {
+        return $this->hasMany(FarmerBadge::class);
+    }
+
+    public function activeBadges(): HasMany
+    {
+        return $this->badges()->whereNull('revoked_at');
     }
 
     public function isApproved(): bool

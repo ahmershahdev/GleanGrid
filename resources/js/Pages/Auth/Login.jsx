@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { ShieldCheck, Store, UserRound } from 'lucide-react';
 import { Button, Checkbox, Input, PasswordInput } from '@/Components/ui';
 import AuthLayout from '@/Layouts/AuthLayout';
+import SocialButtons from '@/Components/SocialButtons';
 import { BotFields, useBotGuard } from '@/lib/botguard';
 import { useT } from '@/lib/i18n';
 
@@ -32,6 +33,7 @@ export default function Login() {
 
     return (
         <AuthLayout title={t('auth.login_title')} subtitle={t('auth.login_sub')}>
+            <SocialButtons />
             <form onSubmit={submit} className="space-y-5">
                 <Input label={t('auth.login_field')} placeholder={t('ph.login')} value={form.data.login} onChange={(e) => form.setData('login', e.target.value)} error={form.errors.login} autoComplete="username" autoFocus required />
                 <PasswordInput label={t('fields.password')} placeholder={t('ph.password')} value={form.data.password} onChange={(e) => form.setData('password', e.target.value)} error={form.errors.password} autoComplete="current-password" required />

@@ -1,52 +1,92 @@
 import { Link } from '@inertiajs/react';
-import { ArrowRight, Globe, UserRound } from 'lucide-react';
+import { motion, useScroll, useSpring, useTransform } from 'motion/react';
+import { ArrowRight, Code2, CreditCard, Database, Globe, Palette, Quote, Rocket, ShieldCheck } from 'lucide-react';
+import { useRef } from 'react';
 import { GithubIcon, LinkedinIcon } from '@/Components/icons';
 import FieldsReel from '@/Components/FieldsReel';
-import { CountUp, Parallax, Reveal, SplitWords } from '@/Components/motion';
+import { CountUp, Marquee, Parallax, Reveal, SplitWords } from '@/Components/motion';
 import { buttonClass } from '@/Components/ui';
 import { useT } from '@/lib/i18n';
-import { produceImage } from '@/lib/utils';
+import { prefersReducedMotion, produceImage } from '@/lib/utils';
 
-const TEAM = [
-    {
-        name: 'Syed Ahmer Shah',
-        role: 'about.role_ahmer',
-        work: 'about.work_ahmer',
-        photo: '/images/team/syed-ahmer-shah.webp',
-        links: [
-            ['Portfolio', 'https://ahmershah.dev/', Globe],
-            ['GitHub', 'https://github.com/ahmershahdev', GithubIcon],
-            ['LinkedIn', 'https://linkedin.com/in/syedahmershah', LinkedinIcon],
-        ],
-    },
-    { name: 'Syed Hassan', role: 'about.role_hassan', work: null, photo: null, links: [] },
+const LINKS = [
+    ['Portfolio', 'https://ahmershah.dev/', Globe],
+    ['GitHub', 'https://github.com/ahmershahdev', GithubIcon],
+    ['LinkedIn', 'https://linkedin.com/in/syedahmershah', LinkedinIcon],
 ];
 
-function GuestPortrait({ name }) {
-    const initials = name.split(' ').map((p) => p[0]).slice(-2).join('');
+const CRAFT = [
+    ['design', Palette, 'leafy_green'],
+    ['frontend', Code2, 'sunflower'],
+    ['backend', Database, 'sheaf_of_rice'],
+    ['payments', CreditCard, 'honey_pot'],
+    ['security', ShieldCheck, 'seedling'],
+    ['ops', Rocket, 'tractor'],
+];
+
+const STACK = ['Laravel 12', 'PHP 8.3', 'MySQL 8', 'React 19', 'Inertia 3', 'Tailwind CSS 4', 'Motion', 'Recharts', 'Leaflet', 'Socialite', 'Argon2id', 'Playwright', 'PHPUnit', 'GitHub Actions', 'Vite 8', 'PWA'];
+
+function OrbitText({ text }) {
+    const chars = `${text} · `.repeat(2).split('');
     return (
-        <div className="relative flex size-full items-center justify-center overflow-hidden bg-gradient-to-br from-brand-soft via-bg to-lime/30" role="img" aria-label={`${name} — photo coming soon`}>
-            <svg className="absolute inset-0 size-full text-brand/10" aria-hidden="true">
-                <defs>
-                    <pattern id="rows" width="28" height="28" patternUnits="userSpaceOnUse" patternTransform="rotate(-12)">
-                        <path d="M0 14h28" stroke="currentColor" strokeWidth="1.5" />
-                    </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#rows)" />
-            </svg>
-            <div className="relative flex flex-col items-center">
-                <div className="flex size-32 items-center justify-center rounded-full border border-line-strong bg-elev/80 shadow-soft backdrop-blur">
-                    <UserRound className="size-14 text-ink-faint" strokeWidth={1.25} />
-                </div>
-                <span className="font-display mt-5 text-5xl font-light text-brand/70" aria-hidden="true">
-                    {initials}
+        <div className="gg-orbit pointer-events-none absolute -end-10 -top-10 size-40 md:size-48" aria-hidden="true">
+            {chars.map((c, i) => (
+                <span key={i} className="absolute start-1/2 top-0 h-1/2 origin-bottom font-mono text-[10px] tracking-widest text-ink uppercase" style={{ transform: `rotate(${(i / chars.length) * 360}deg)` }}>
+                    {c}
                 </span>
-            </div>
+            ))}
+            <span className="absolute inset-[34%] rounded-full bg-lime" />
+            <img src={produceImage('mango')} alt="" className="absolute inset-[38%] size-[24%]" />
         </div>
     );
 }
 
-export default function About({ stats }) {
+function Portrait() {
+    const ref = useRef(null);
+    const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] });
+    const y = useTransform(scrollYProgress, [0, 1], ['-8%', '8%']);
+    const reduced = prefersReducedMotion();
+    return (
+        <div ref={ref} className="relative">
+            <motion.div
+                initial={reduced ? false : { clipPath: 'inset(18% 18% 18% 18% round 200px)' }}
+                whileInView={{ clipPath: 'inset(0% 0% 0% 0% round 44px)' }}
+                viewport={{ once: true, margin: '-80px' }}
+                transition={{ duration: 1.3, ease: [0.16, 1, 0.3, 1] }}
+                className="relative aspect-[4/5] overflow-hidden rounded-[44px] bg-brand-soft"
+            >
+                <motion.img src="/images/team/syed-ahmer-shah.webp" alt="Syed Ahmer Shah" width="640" height="800" loading="lazy" decoding="async" style={{ y: reduced ? 0 : y, scale: 1.18 }} className="absolute inset-0 size-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-soil/60 via-transparent to-transparent" />
+                <p className="absolute start-6 bottom-6 font-mono text-[11px] tracking-[0.25em] text-white/85 uppercase">Hyderabad · Sindh · PK</p>
+            </motion.div>
+            <OrbitText text="Designed · Engineered · Shipped solo" />
+            <Parallax speed={0.25} className="pointer-events-none absolute -start-8 -bottom-10 w-28 md:w-36">
+                <img src={produceImage('tomato')} alt="" className="w-full animate-float drop-shadow-[0_20px_24px_rgb(0_0_0/0.25)]" />
+            </Parallax>
+        </div>
+    );
+}
+
+function Timeline({ t }) {
+    const ref = useRef(null);
+    const { scrollYProgress } = useScroll({ target: ref, offset: ['start 75%', 'end 55%'] });
+    const scale = useSpring(scrollYProgress, { stiffness: 90, damping: 24 });
+    return (
+        <div ref={ref} className="relative mt-12 grid gap-10 md:grid-cols-4 md:gap-6">
+            <div className="absolute start-0 end-0 top-5 hidden h-px bg-line md:block" />
+            <motion.div className="absolute start-0 end-0 top-5 hidden h-px origin-left bg-accent md:block rtl:origin-right" style={{ scaleX: scale }} />
+            {[1, 2, 3, 4].map((n, i) => (
+                <Reveal key={n} delay={i * 0.1} className="relative">
+                    <span className="relative z-10 flex size-10 items-center justify-center rounded-full border border-line-strong bg-bg font-mono text-sm">{`0${n}`}</span>
+                    <h3 className="font-display mt-5 text-3xl">{t(`about.t${n}`)}</h3>
+                    <p className="mt-2 text-ink-soft">{t(`about.t${n}_body`)}</p>
+                </Reveal>
+            ))}
+        </div>
+    );
+}
+
+export default function About({ stats, build = {} }) {
     const t = useT();
     const values = [
         ['about.v1_title', 'about.v1_body', 'leafy_green'],
@@ -110,63 +150,99 @@ export default function About({ stats }) {
                 </div>
             </section>
 
-            <section className="mx-auto mt-28 max-w-[1400px] px-5 sm:px-8">
-                <h2 className="font-display text-4xl font-light md:text-6xl">
+            <section className="mx-auto mt-32 max-w-[1400px] px-5 sm:px-8" aria-labelledby="builder">
+                <p className="font-mono text-xs tracking-[0.2em] text-ink-faint uppercase">{t('about.solo_eyebrow')}</p>
+                <h2 id="builder" className="font-display mt-3 text-4xl font-light md:text-6xl">
                     <SplitWords text={t('about.team_title')} />
                 </h2>
                 <p className="mt-4 max-w-2xl text-lg text-ink-soft">{t('about.team_body')}</p>
-                <div className="mt-12 grid gap-5 md:grid-cols-2">
-                    {TEAM.map((m, i) => (
-                        <Reveal key={m.name} delay={i * 0.08}>
-                            <article className="group grid h-full overflow-hidden rounded-[36px] border border-line bg-elev sm:grid-cols-[0.9fr_1fr]">
-                                <div className="relative aspect-[4/5] overflow-hidden bg-brand-soft sm:aspect-auto">
-                                    {m.photo ? (
-                                        <img
-                                            src={m.photo}
-                                            alt={m.name}
-                                            width="640"
-                                            height="800"
-                                            loading="lazy"
-                                            decoding="async"
-                                            className="size-full object-cover grayscale-[35%] transition duration-[1.2s] ease-out-expo group-hover:scale-[1.04] group-hover:grayscale-0"
-                                        />
-                                    ) : (
-                                        <GuestPortrait name={m.name} />
-                                    )}
-                                    <span className="absolute start-4 top-4 rounded-full bg-paper/90 px-3 py-1 font-mono text-[10px] tracking-[0.2em] text-forest uppercase backdrop-blur">
-                                        0{i + 1}
-                                    </span>
-                                </div>
-                                <div className="flex flex-col p-7 md:p-8">
-                                    <p className="font-mono text-[11px] tracking-[0.2em] text-ink-faint uppercase">{t(m.role)}</p>
-                                    <h3 className="font-display mt-3 text-4xl leading-none font-light">{m.name}</h3>
-                                    {m.work && (
-                                        <p className="mt-5 border-s-2 border-accent ps-4 text-ink-soft">
-                                            <span className="block text-xs font-semibold tracking-wider text-ink uppercase">{t('about.work_label')}</span>
-                                            {t(m.work)}
-                                        </p>
-                                    )}
-                                    {m.links.length > 0 && (
-                                        <div className="mt-auto flex flex-wrap gap-2 pt-8">
-                                            {m.links.map(([label, href, Icon]) => (
-                                                <a key={label} href={href} target="_blank" rel="noopener noreferrer me" className="inline-flex h-10 items-center gap-2 rounded-full border border-line px-4 text-sm font-medium transition hover:border-ink hover:bg-ink hover:text-bg">
-                                                    <Icon className="size-4" /> {label}
-                                                </a>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </article>
+
+                <div className="mt-14 grid items-center gap-14 lg:grid-cols-[0.85fr_1fr]">
+                    <Portrait />
+                    <div>
+                        <p className="font-mono text-[11px] tracking-[0.2em] text-ink-faint uppercase">{t('about.role_ahmer')}</p>
+                        <h3 className="font-display mt-3 text-6xl leading-[0.9] font-light md:text-8xl">
+                            <SplitWords text="Syed Ahmer Shah" />
+                        </h3>
+                        <Reveal delay={0.15}>
+                            <blockquote className="relative mt-10 border-s-2 border-accent ps-6">
+                                <Quote className="absolute -start-3 -top-4 size-6 rounded-full bg-bg p-1 text-accent" />
+                                <p className="font-display text-2xl leading-snug italic md:text-3xl">{t('about.solo_quote')}</p>
+                            </blockquote>
+                        </Reveal>
+                        <Reveal delay={0.25}>
+                            <p className="mt-8 text-lg font-semibold">{t('about.solo_lead')}</p>
+                            <p className="mt-2 text-ink-soft">{t('about.solo_body')}</p>
+                        </Reveal>
+                        <Reveal delay={0.3} className="mt-8 flex flex-wrap gap-2">
+                            {LINKS.map(([label, href, Icon]) => (
+                                <motion.a key={label} href={href} target="_blank" rel="noopener noreferrer me" whileHover={{ y: -3 }} className="inline-flex h-11 items-center gap-2 rounded-full border border-line px-5 text-sm font-medium transition hover:border-ink hover:bg-ink hover:text-bg">
+                                    <Icon className="size-4" /> {label}
+                                </motion.a>
+                            ))}
+                        </Reveal>
+                    </div>
+                </div>
+
+                <div className="mt-24 grid grid-cols-2 gap-px overflow-hidden rounded-[36px] border border-line bg-line md:grid-cols-4">
+                    {[
+                        ['n_screens', build.screens],
+                        ['n_languages', build.languages],
+                        ['n_tests', build.tests],
+                        ['n_roles', build.roles],
+                    ].map(([label, value]) => (
+                        <div key={label} className="bg-elev p-7 md:p-10">
+                            <CountUp value={value ?? 0} className="font-display block text-5xl font-light md:text-6xl" />
+                            <p className="mt-2 text-sm text-ink-soft">{t(`about.${label === 'n_screens' ? 'n_pages' : label}`)}</p>
+                        </div>
+                    ))}
+                </div>
+
+                <h3 className="font-display mt-28 text-4xl font-light md:text-5xl">
+                    <SplitWords text={t('about.craft_title')} />
+                </h3>
+                <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {CRAFT.map(([key, Icon, img], i) => (
+                        <Reveal key={key} delay={(i % 3) * 0.08}>
+                            <motion.article whileHover={{ y: -6 }} transition={{ type: 'spring', stiffness: 260, damping: 20 }} className="group relative h-full overflow-hidden rounded-[32px] border border-line bg-elev p-7">
+                                <span className="absolute -end-10 -bottom-10 size-40 rounded-full bg-lime/0 blur-2xl transition duration-700 group-hover:bg-lime/40" />
+                                <img src={produceImage(img)} alt="" className="absolute end-6 top-6 size-14 opacity-80 transition duration-700 group-hover:scale-125 group-hover:-rotate-12" />
+                                <span className="relative flex size-12 items-center justify-center rounded-2xl bg-brand text-brand-ink">
+                                    <Icon className="size-5" />
+                                </span>
+                                <p className="relative mt-6 font-mono text-[11px] text-ink-faint">{`0${i + 1}`}</p>
+                                <h4 className="font-display relative mt-1 text-2xl">{t(`about.craft_${key}`)}</h4>
+                                <p className="relative mt-2 text-sm leading-relaxed text-ink-soft">{t(`about.craft_${key}_body`)}</p>
+                            </motion.article>
                         </Reveal>
                     ))}
                 </div>
+
+                <h3 className="font-display mt-28 text-4xl font-light md:text-5xl">
+                    <SplitWords text={t('about.timeline_title')} />
+                </h3>
+                <Timeline t={t} />
+            </section>
+
+            <section className="mt-28" aria-label={t('about.stack_label')}>
+                <p className="mx-auto max-w-[1400px] px-5 font-mono text-xs tracking-[0.2em] text-ink-faint uppercase sm:px-8">{t('about.stack_label')}</p>
+                <Marquee duration={36} className="mt-5 border-y border-line py-6">
+                    {STACK.map((s) => (
+                        <span key={s} className="font-display mx-8 inline-flex items-center gap-8 text-4xl font-light whitespace-nowrap md:text-6xl">
+                            {s} <span className="size-3 rounded-full bg-accent" />
+                        </span>
+                    ))}
+                </Marquee>
+            </section>
+
+            <section className="mx-auto max-w-[1400px] px-5 sm:px-8">
                 <div className="mt-16 rounded-[32px] border border-line p-8 text-sm text-ink-soft">
                     <p className="font-semibold text-ink">{t('about.stack_title')}</p>
                     <p className="mt-2">{t('about.stack_body')}</p>
                 </div>
                 <div className="mt-12 flex justify-center">
                     <Link href={route('contact')} className={buttonClass('primary', 'lg')}>
-                        {t('about.contact_cta')} <ArrowRight className="rtl-flip size-5" />
+                        {t('about.say_hi')} <ArrowRight className="rtl-flip size-5" />
                     </Link>
                 </div>
             </section>

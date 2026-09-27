@@ -27,7 +27,7 @@ class PagesTest extends TestCase
             route('home'), route('markets.index'), PathFilters::url('markets.index', ['day' => 0, 'lat' => 25.39, 'lng' => 68.36]),
             route('markets.show', $market->slug), PathFilters::url('farmers.index', ['sort' => 'name']), route('farmers.show', $farmer->slug),
             PathFilters::url('products.index', ['q' => 'mango', 'sort' => 'price_desc', 'in_stock' => 1]), route('products.show', $product->slug),
-            route('about'), route('contact'), route('cart'), route('login'), route('register'),
+            route('about'), route('seasons'), route('contact'), route('cart'), route('login'), route('register'),
         ] as $url) {
             $this->get($url)->assertOk();
         }
@@ -93,10 +93,11 @@ class PagesTest extends TestCase
 
     public function test_assistant_answers_from_live_data(): void
     {
-        $this->postJson(route('assistant'), ['message' => 'Who has mangoes?'])->assertOk()->assertJsonPath('intent', 'products_found');
-        $this->postJson(route('assistant'), ['message' => 'What are the market timings?'])->assertOk()->assertJsonPath('intent', 'market_timings');
-        $this->postJson(route('assistant'), ['message' => 'How do I pay?'])->assertOk()->assertJsonPath('intent', 'faq_payment');
-        $this->postJson(route('assistant'), ['message' => 'Is Hilltop Bakehouse available?'])->assertOk()->assertJsonPath('intent', 'farmer_availability');
+        $this->postJson(route('assistant'), ['intent' => 'browse', 'topic' => 'mango'])->assertOk()->assertJsonPath('intent', 'products_found');
+        $this->postJson(route('assistant'), ['intent' => 'market_timings'])->assertOk()->assertJsonPath('intent', 'market_timings');
+        $this->postJson(route('assistant'), ['intent' => 'faq_payment'])->assertOk()->assertJsonPath('intent', 'faq_payment');
+        $this->postJson(route('assistant'), ['intent' => 'in_season'])->assertOk()->assertJsonPath('intent', 'in_season');
+        $this->postJson(route('assistant'), ['message' => 'Who has mangoes?'])->assertStatus(422);
     }
 
     public function test_urls_are_case_insensitive_and_aliases_redirect(): void

@@ -25,11 +25,11 @@ class SettingsController extends Controller
 
     public function update(Request $request): RedirectResponse
     {
-        $data = $request->validate(Settings::rules());
+        $data = $request->validate(Settings::rules('badge_', except: true));
         $before = Settings::all();
         Settings::put($data, $request->user()->id);
 
-        $changed = collect($data)->filter(fn ($v, $k) => (string) (int) $before[$k] !== (string) (int) $v)->keys();
+        $changed = collect($data)->filter(fn ($v, $k) => (string) (float) $before[$k] !== (string) (float) $v)->keys();
         if ($changed->isNotEmpty()) {
             AuditLog::record('settings.updated', 'Changed '.$changed->implode(', '), null, collect($data)->only($changed)->all());
         }

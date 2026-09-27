@@ -84,6 +84,35 @@ class User extends Authenticatable
         return $this->isDemo() ? null : $this->email;
     }
 
+    public function socialAccounts(): HasMany
+    {
+        return $this->hasMany(SocialAccount::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function stockAlerts(): HasMany
+    {
+        return $this->hasMany(StockAlert::class);
+    }
+
+    public function hasPassword(): bool
+    {
+        return filled($this->getAuthPassword());
+    }
+
+    public function needsOnboarding(): bool
+    {
+        if ($this->isAdmin()) {
+            return false;
+        }
+
+        return blank($this->phone) || blank($this->address) || ($this->isFarmer() && ! $this->farmerProfile()->exists());
+    }
+
     public function loginEvents(): HasMany
     {
         return $this->hasMany(LoginEvent::class);

@@ -97,6 +97,7 @@ class DatabaseSeeder extends Seeder
         $this->extras($admin, $customers, $farmers);
         $this->coupons($farmers);
         $this->coverPhotos();
+        $this->call(FeatureSeeder::class);
     }
 
     private function coverPhotos(): void
@@ -323,7 +324,7 @@ class DatabaseSeeder extends Seeder
             ['Zara Ahmed', 'zara', 'zara@gleangrid.test', 'Flat 302, Citizen Colony'],
             ['Omar Farooq', 'omar', 'omar@gleangrid.test', 'Latifabad Unit 6'],
             ['Mariam Siddiqui', 'mariam', 'mariam@gleangrid.test', 'Hirabad, near Liaquat Colony'],
-            ['Daniyal Hassan', 'daniyal', 'daniyal@gleangrid.test', 'Wadhu Wah Road, Qasimabad'],
+            ['Daniyal Qureshi', 'daniyal', 'daniyal@gleangrid.test', 'Wadhu Wah Road, Qasimabad'],
             ['Sana Iqbal', 'sana', 'sana@gleangrid.test', 'Naseem Nagar, Block B'],
             ['Faisal Khan', 'faisal', 'faisal@gleangrid.test', 'Hyderabad Cantonment'],
             ['Noor Fatima', 'noor', 'noor@gleangrid.test', 'Saddar, near Shahi Bazaar'],
@@ -407,7 +408,7 @@ class DatabaseSeeder extends Seeder
                     Product::whereKey($line['product_id'])->increment('sold_count', $line['quantity']);
                 }
                 if (mt_rand(1, 100) <= 70 && ! ($customer->id === $shoppers[0]->id && $n < 6)) {
-                    $rating = [5, 5, 5, 4, 4, 4, 3, 2][mt_rand(0, 7)];
+                    $rating = $approved->search($farmer) < 3 ? [5, 5, 5, 5, 4][mt_rand(0, 4)] : [5, 5, 5, 4, 4, 4, 3, 2][mt_rand(0, 7)];
                     $review = Review::create([
                         'user_id' => $customer->id, 'reviewable_type' => 'farmer', 'reviewable_id' => $farmer->id,
                         'order_id' => $order->id, 'rating' => $rating,

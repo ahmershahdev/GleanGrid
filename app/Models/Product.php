@@ -6,6 +6,7 @@ use App\Notifications\PlatformNotification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
@@ -41,6 +42,16 @@ class Product extends Model
 
     protected static function booted(): void
     {
+        static::saved(function (Product $product) {
+            if ($product->wasRecentlyCreated || $product->wasChanged('price')) {
+                DB::table('product_price_history')->upsert(
+                    [['product_id' => $product->id, 'price' => $product->price, 'recorded_on' => now()->toDateString()]],
+                    ['product_id', 'recorded_on'],
+                    ['price'],
+                );
+            }
+        });
+
         static::updated(function (Product $product) {
             $backInStock = $product->wasChanged('status')
                 && $product->status === 'available'
@@ -48,17 +59,47 @@ class Product extends Model
                 && $product->stock_quantity > 0;
 
             if ($backInStock) {
-                $product->loadMissing('farmer');
-                DB::afterCommit(fn () => Favorite::with('user')->where('favoritable_type', 'product')
-                    ->where('favoritable_id', $product->id)->where('notify_restock', true)->get()
-                    ->each(fn (Favorite $fav) => $fav->user->notify(new PlatformNotification(
-                        'restock',
-                        ['product' => $product->name, 'farmer' => $product->farmer->stall_name],
-                        route('products.show', $product->slug),
-                        true,
-                    ))));
+                static::announceRestock([$product->id]);
             }
         });
+    }
+
+    public static function announceRestock(iterable $ids): void
+    {
+        $ids = collect($ids)->map(fn ($id) => (int) $id)->unique()->values();
+        if ($ids->isEmpty()) {
+            return;
+        }
+
+        DB::afterCommit(function () use ($ids) {
+            static::with('farmer:id,stall_name')->whereIn('id', $ids)->get()
+                ->filter(fn (Product $p) => $p->isOrderable())
+                ->each(function (Product $product) {
+                    $claimed = StockAlert::where('product_id', $product->id)->whereNull('notified_at')->get(['id', 'user_id'])
+                        ->filter(fn (StockAlert $a) => StockAlert::whereKey($a->id)->whereNull('notified_at')->update(['notified_at' => now()]) === 1)
+                        ->pluck('user_id');
+                    $favourites = Favorite::where('favoritable_type', 'product')->where('favoritable_id', $product->id)
+                        ->where('notify_restock', true)->pluck('user_id');
+
+                    User::whereIn('id', $claimed->merge($favourites)->unique())->where('status', 'active')->get()
+                        ->each(fn (User $user) => $user->notify(new PlatformNotification(
+                            'restock',
+                            ['product' => $product->name, 'farmer' => $product->farmer->stall_name],
+                            route('products.show', $product->slug),
+                            true,
+                        )));
+                });
+        });
+    }
+
+    public function stockAlerts(): HasMany
+    {
+        return $this->hasMany(StockAlert::class);
+    }
+
+    public function priceHistory(): HasMany
+    {
+        return $this->hasMany(ProductPriceHistory::class)->orderBy('recorded_on');
     }
 
     public function farmer(): BelongsTo

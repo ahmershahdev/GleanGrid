@@ -58,6 +58,7 @@ export function OrderRow({ order, href, who }) {
                 <div className="flex flex-wrap items-center gap-2">
                     <span className="font-mono text-sm font-semibold">{order.code}</span>
                     <StatusBadge status={order.status} />
+                    {order.payment_method && order.payment_method !== 'cash' && <StatusBadge status={order.payment_status === 'paid' ? 'paid' : order.payment_status} />}
                     {order.editable && <span className="text-xs text-brand">{t('order.editable')}</span>}
                 </div>
                 <p className="font-display mt-1 truncate text-lg group-hover:underline">{who}</p>

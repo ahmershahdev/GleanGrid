@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Product;
 use App\Models\Review;
+use App\Models\ReviewPhoto;
+use App\Support\ImageUpload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -47,7 +49,7 @@ class ModerationController extends Controller
         $filters = $request->validate(['hidden' => 'nullable|boolean', 'max_rating' => 'nullable|integer|between:1,5']);
 
         return Inertia::render('Admin/Moderation/Reviews', [
-            'reviews' => Review::with('user:id,name,email', 'reviewable')
+            'reviews' => Review::with('user:id,name,email', 'reviewable', 'photos')
                 ->when($filters['hidden'] ?? false, fn ($q) => $q->where('is_hidden', true))
                 ->when($filters['max_rating'] ?? null, fn ($q, $r) => $q->where('rating', '<=', $r))
                 ->latest()->paginate(20)->withQueryString()
@@ -69,9 +71,27 @@ class ModerationController extends Controller
         return back()->with('success', $hide ? 'flash.review_hidden' : 'flash.review_restored');
     }
 
+    public function togglePhoto(ReviewPhoto $photo): RedirectResponse
+    {
+        $photo->update(['is_hidden' => ! $photo->is_hidden]);
+        AuditLog::record($photo->is_hidden ? 'review_photo.hidden' : 'review_photo.restored', ($photo->is_hidden ? 'Hid' : 'Restored')." a photo on review #{$photo->review_id}", $photo->review);
+
+        return back()->with('success', $photo->is_hidden ? 'flash.photo_hidden' : 'flash.photo_restored');
+    }
+
+    public function destroyPhoto(ReviewPhoto $photo): RedirectResponse
+    {
+        AuditLog::record('review_photo.deleted', "Deleted a photo on review #{$photo->review_id}", $photo->review);
+        ImageUpload::delete($photo->path);
+        $photo->delete();
+
+        return back()->with('success', 'flash.photo_deleted');
+    }
+
     public function destroyReview(Review $review): RedirectResponse
     {
         AuditLog::record('review.deleted', "Deleted a {$review->rating}★ review", null, ['id' => $review->id, 'comment' => mb_strimwidth((string) $review->comment, 0, 120, '…')]);
+        $review->photos->each(fn (ReviewPhoto $p) => ImageUpload::delete($p->path));
         $review->delete();
 
         return back()->with('success', 'flash.review_deleted');

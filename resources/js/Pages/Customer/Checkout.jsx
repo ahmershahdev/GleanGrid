@@ -1,7 +1,8 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { postJson } from '@/lib/http';
 import { motion } from 'motion/react';
-import { CalendarCheck2, Check, Loader2, MapPin, TicketPercent, Timer, X } from 'lucide-react';
+import { CalendarCheck2, Check, FlaskConical, Loader2, LockKeyhole, MapPin, TicketPercent, Timer, X } from 'lucide-react';
+import { MethodPicker } from '@/Components/PaymentVisuals';
 import { useEffect, useState } from 'react';
 import { SplitWords } from '@/Components/motion';
 import { Button, buttonClass, EmptyState, Textarea } from '@/Components/ui';
@@ -106,7 +107,7 @@ function CouponBox({ group, applied, onApply, onRemove }) {
     );
 }
 
-export default function Checkout({ customer }) {
+export default function Checkout({ customer, paymentMethods = ['cash'], sandbox = true }) {
     const t = useT();
     const { money } = useFormat();
     const { errors } = usePage().props;
@@ -115,6 +116,7 @@ export default function Checkout({ customer }) {
     const [notes, setNotes] = useState({});
     const [coupons, setCoupons] = useState({});
     const [processing, setProcessing] = useState(false);
+    const [method, setMethod] = useState(paymentMethods.includes('cash') ? 'cash' : paymentMethods[0]);
 
     useEffect(() => {
         setChoices((c) => {
@@ -142,7 +144,7 @@ export default function Checkout({ customer }) {
             coupon: coupons[g.farmer.id]?.code ?? null,
             items: g.items.map((i) => ({ product_id: i.product.id, quantity: i.quantity })),
         }));
-        router.post(route('customer.checkout.store'), { groups: payload }, {
+        router.post(route('customer.checkout.store'), { groups: payload, payment_method: method }, {
             onStart: () => setProcessing(true),
             onFinish: () => setProcessing(false),
             onSuccess: () => cart.removeMany(orderable.flatMap((g) => g.items.map((i) => i.product.id))),
@@ -211,6 +213,21 @@ export default function Checkout({ customer }) {
                                     <Textarea wrapperClass="mt-5" rows={2} label={t('checkout.note')} placeholder={t('checkout.note_placeholder')} value={notes[g.farmer.id] ?? ''} onChange={(e) => setNotes((n) => ({ ...n, [g.farmer.id]: e.target.value }))} maxLength={500} />
                                 </div>
                             ))}
+
+                            <div className="rounded-[28px] border border-line bg-elev p-5 md:p-7">
+                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <h2 className="font-display text-2xl">{t('pay.method_title')}</h2>
+                                    {sandbox && method !== 'cash' && (
+                                        <span className="inline-flex items-center gap-1.5 rounded-full bg-sun/20 px-3 py-1 text-xs font-medium text-warning">
+                                            <FlaskConical className="size-3.5" /> {t('pay.sandbox')}
+                                        </span>
+                                    )}
+                                </div>
+                                <MethodPicker className="mt-5" methods={paymentMethods} value={method} onChange={setMethod} t={t} />
+                                <p className="mt-4 flex items-start gap-2 text-xs text-ink-faint">
+                                    <LockKeyhole className="mt-0.5 size-3.5 shrink-0" /> {t('pay.secure')}
+                                </p>
+                            </div>
                         </div>
 
                         <aside className="lg:sticky lg:top-24 lg:self-start">
@@ -237,9 +254,9 @@ export default function Checkout({ customer }) {
                                     <span>{t('cart.total')}</span>
                                     <span className="font-display text-4xl tabular-nums">{money(total)}</span>
                                 </div>
-                                <p className="mt-2 text-xs text-ink-faint">{t('cart.pay_note')}</p>
+                                <p className="mt-2 text-xs text-ink-faint">{method === 'cash' ? t('pay.cash_hint') : t(`pay.${method}_hint`)}</p>
                                 <Button size="lg" variant="accent" className="mt-6 w-full" onClick={submit} loading={processing}>
-                                    {t('checkout.place', { count: orderable.length })}
+                                    {method === 'cash' ? t('checkout.place', { count: orderable.length }) : t('pay.continue')}
                                 </Button>
                                 <p className="mt-3 text-center text-xs text-ink-faint">{t('checkout.terms')}</p>
                             </div>
