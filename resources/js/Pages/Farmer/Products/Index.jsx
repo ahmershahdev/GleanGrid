@@ -14,7 +14,7 @@ export default function FarmerProducts({ products, filters }) {
     const [template, setTemplate] = useState(false);
 
     const setStatus = (p, status) => router.patch(route('farmer.products.status', p.slug), { status }, { preserveScroll: true });
-    const setStock = (p, stock) => router.patch(route('farmer.products.status', p.slug), { status: stock > 0 && p.status === 'sold_out' ? 'available' : stock === 0 && p.status === 'available' ? 'sold_out' : p.status, stock_quantity: stock }, { preserveScroll: true });
+    const setStock = (p, stock) => router.patch(route('farmer.products.status', p.slug), { status: stock > 0 && p.status === 'sold_out' ? 'available' : stock === 0 && p.status === 'available' ? 'sold_out' : p.status, stock_quantity: stock, stock_seen: p.stock_quantity }, { preserveScroll: true });
     const tab = (status) => route('farmer.products.index', cleanQuery({ ...filters, status }));
 
     return (

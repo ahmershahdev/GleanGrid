@@ -8,6 +8,7 @@ Key facts for answering questions about GleanGrid:
 - Orders are pre-orders: reserve online, pay the farmer at pickup (cash, bank transfer or mobile wallet — whatever the farmer accepts). GleanGrid never takes card details or commission.
 - Customers can change or cancel an order free of charge until the farmer's cut-off. Each farmer sets it between 1 and 168 hours before the pickup window (usually 12–24 hours); it is shown on every order.
 - Pickup only, no delivery. Each farmer offers pickup windows per market day, each with a capacity limit that cannot be overbooked.
+- Stock is reserved the moment an order is placed. Checkout locks the stock, the coupon and the pickup window inside one database transaction, so the last item, a single-use coupon or the last pickup place can only ever go to one customer, even when many people order at the same instant. A farmer editing stock never erases sales made while the form was open.
 - Order statuses: placed → accepted → ready → completed (or declined / cancelled, which release stock and return coupons).
 - Customers show a QR pickup pass (or the order code, e.g. GG-7K2M9Q) at the stall; the farmer scans it with GleanGrid's Scan page. They check the produce and pay only for what they accept. Quality problems found at home are reported within 24 hours.
 - A reminder e-mail with the pass is sent the evening before pickup. If an order is not collected, the farmer can mark it "not collected" after the window; repeated no-shows (default 3 in 60 days, set by admins) pause pre-ordering.
@@ -17,6 +18,10 @@ Key facts for answering questions about GleanGrid:
 - Coupons (percentage or fixed) are issued by farmers or admins and re-checked on the server at checkout.
 - E-mail is verified with a six-digit code before ordering or listing. Passwords are hashed with Argon2id; sign-ins from new devices trigger an e-mail alert.
 - Basket Buddy, the on-site assistant, answers questions about market timings, farmer availability, pickup windows and products.
+- Every product has a real photograph (public-domain / CC0) paired with a 3D illustration; product pages switch between the two.
+- Search (Ctrl K or /) groups results into produce, farmers and markets, highlights matches and suggests corrections for misspellings.
+- The site works as an installable app (PWA) with an offline page, has light and dark themes, and is rendered on the server for fast first loads.
+- Fair use: every page is rate-limited per visitor, with tighter limits on sign-in, sign-up, search, checkout and other writes.
 - Open source under the MIT licence: https://github.com/ahmershahdev/GleanGrid
 - Support: support@ahmershah.dev · +92 370 4831994 · Hyderabad, Sindh 71000, Pakistan
 
@@ -28,14 +33,14 @@ Key facts for answering questions about GleanGrid:
 5. After pickup the customer can review the farmer and each product.
 
 ## Who uses it
-- Customers: browse, filter by category/market/day/price, maps and directions, pre-orders, modify/cancel before cut-off, order history and reorder, favourites with restock alerts, family sharing, reviews.
+- Customers: browse, filter by category (with item counts), price slider, market, market day and in-stock (a bottom sheet on phones), maps and directions, a basket grouped by stall with the next pickup time and undo, pre-orders, modify/cancel before cut-off, QR pickup pass, order history and reorder, favourites with restock alerts, family sharing, reviews.
 - Farmers: stall profile with map pin and markets, products with photos and weekly stock template, sold-out/unavailable states, pickup windows and cut-off, accept/decline/ready/complete orders, sales insights, review replies, coupons.
 - Administrators: platform metrics, approve/suspend stalls, activate/deactivate customers, markets and categories, listing and review moderation, reports with CSV export, announcements, coupons, contact inbox, an append-only audit log, platform settings (no-show rules, reminder hour, sign-up switches) and order overrides.
 
 ## Main pages
 - [Home](https://gleangrid.ahmershah.dev): what's fresh this week and markets open today
 - [Markets](https://gleangrid.ahmershah.dev/markets): every market on a map, with trading days and hours
-- [Produce](https://gleangrid.ahmershah.dev/products): searchable catalogue, filter by category, market, day and price
+- [Produce](https://gleangrid.ahmershah.dev/products): searchable catalogue with real product photos; filter by category, price, market, market day and stock
 - [Farmers](https://gleangrid.ahmershah.dev/farmers): stall profiles, ratings and weekly stock
 - [About](https://gleangrid.ahmershah.dev/about): the team and why GleanGrid exists
 - [Contact](https://gleangrid.ahmershah.dev/contact): support e-mail, phone and map

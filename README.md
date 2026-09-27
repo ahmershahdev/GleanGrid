@@ -78,16 +78,17 @@ Every page is responsive, available in **8 languages** (including right-to-left 
 | For customers | For farmers | For administrators |
 |---|---|---|
 | Live market map, *open today* and *near me* | Stall profile with map pin, markets and stall numbers | Platform KPIs, 30-day trends, system health |
-| Produce search (⌘K), filters for category, market, day, price, stock | Products with photos, units, weekly stock template | Approve / suspend stalls with a reason |
-| Guest basket that syncs after sign-in | Sold-out and temporarily-unavailable states | Activate / deactivate customers |
+| Produce search (⌘K) and filters: category rail with counts, price slider, market, market day, in-stock switch (a bottom sheet on phones) | Products with photos, units, weekly stock template | Approve / suspend stalls with a reason |
+| Guest basket grouped by stall, with the next pickup time, undo on remove and a sticky checkout bar on phones | Sold-out and temporarily-unavailable states | Activate / deactivate customers |
 | One pre-order per farmer, pickup window per order | Pickup windows with capacity, one cut-off for all | Markets (days, hours, coordinates) and categories |
 | Modify / cancel until cut-off, reorder in one tap | Accept → ready → complete, decline with a note | Listing and review moderation |
 | Order code, directions, call / WhatsApp / e-mail the farmer | Revenue, pipeline, best sellers, low-stock alerts | Reports with CSV export and a report history |
 | Favourites with restock alerts, family sharing | Public replies to reviews | Coupons, announcements, contact inbox with replies |
 | Reviews for farmers and products after pickup | Stall coupons | Failed-sign-in and suspicious-IP panel |
+| Real photos for every product with the 3D illustration as a sticker, and a Photo / 3D switch | Stock edits that never erase sales made while the form was open | Platform settings, audit log and order overrides |
 | Basket Buddy assistant, 8 languages, light/dark | E-mail + in-app notifications | Every order across all markets |
 
-**Experience details:** instant page changes (links prefetch on hover or touch), optimistic favourites that fly into — and back out of — the header heart, fly-to-basket, a magnetic back-to-top medallion, a sun/moon theme switch that spreads from the toggle, a slim custom scrollbar, smooth scrolling and a custom cursor, all switched off for people who prefer reduced motion. URLs are forgiving: `/Contact`, `/FAQ`, `/contact-us`, `/tos` or `/refund-policy` redirect (301) to the canonical lowercase page.
+**Experience details:** pinned horizontal galleries that slide sideways as you scroll down (“Soil, sun and early mornings”, “Meet the people behind your food”), instant page changes (links prefetch on hover or touch), optimistic favourites that fly into — and back out of — the header heart, fly-to-basket, a magnetic back-to-top medallion, a sun/moon theme switch that spreads from the toggle, a slim custom scrollbar, smooth scrolling and a custom cursor, all switched off for people who prefer reduced motion. URLs are forgiving: `/Contact`, `/FAQ`, `/contact-us`, `/tos` or `/refund-policy` redirect (301) to the canonical lowercase page.
 
 ## SRS coverage
 
@@ -217,6 +218,8 @@ Farmers-market mornings are bursty: many shoppers reserve the same limited stock
 | Parallel reviews | Stale average rating | Rating recomputed with a single `UPDATE … SET avg = (SELECT …)` |
 | Parallel OTP guesses | Extra guesses; attempt counter lost on rollback | Code row locked; the decision is made inside the transaction but the error thrown **after** commit, so failed attempts persist |
 | Many buyers hit a pickup window at once | A stale snapshot: under MySQL’s REPEATABLE READ, a plain `COUNT` after waiting for a lock still sees the data from before the wait | The booking count is a locking read (`FOR UPDATE`), which always sees the latest committed orders |
+| A farmer saves the stock form while customers are buying | The farmer’s old number overwrites the sales made meanwhile (a lost update), so the stall oversells | The form sends the stock it showed; the server locks the product and subtracts anything sold since, and leaves stock alone if the field wasn’t changed |
+| Monday restock / *Apply weekly template* runs during a checkout | A read-then-save loop overwrites a reservation made in between | One atomic `UPDATE … SET stock_quantity = weekly_quantity` per run, no read-modify-write |
 | Deadlocks under load | Request fails | Transactions retry up to 3 times (`DB::transaction(..., attempts: 3)`) |
 | Notifications for rolled-back work | “Back in stock” / “order placed” e-mails for things that never happened | Notifications are dispatched **after commit** |
 
@@ -299,27 +302,34 @@ On the sign-in page, the three **demo tiles sign in with one tap**. Every `…@g
 
 ## Deploying to production
 
-1. Point `gleangrid.ahmershah.dev` at the server, serve `public/` over HTTPS.
-2. Copy `.env.example` → `.env`; fill `APP_KEY`, the database credentials, SMTP for `support@ahmershah.dev`, and (optionally) reCAPTCHA keys.
-3. `composer install --no-dev --optimize-autoloader && npm ci && npm run build`
-4. `php artisan migrate --force && php artisan optimize` (enable OPcache; it cut response time from ~0.7 s to ~0.2 s in testing)
-5. Set `QUEUE_CONNECTION=database` and keep `php artisan queue:work` running (Supervisor or systemd).
-6. Regenerate AI-assistant files after content changes: `php artisan gleangrid:llms`.
-7. After any schema change, refresh the SRS SQL scripts: `php artisan migrate:fresh --seed && php artisan gleangrid:export-sql`.
+A complete, step-by-step guide for a **free Oracle Cloud server** (Nginx, PHP-FPM, MySQL 8, the SSR process, the queue worker, the scheduler, Cloudflare HTTPS and DDoS protection, backups and a one-command deploy script) is in **[docs/wiki/Deployment.md](docs/wiki/Deployment.md)**. The short version:
+
+1. `composer install --no-dev --optimize-autoloader && npm ci && npm run build` (builds the client and the SSR bundle).
+2. Fill `.env` for production: `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL`, database, `QUEUE_CONNECTION=database`, `SESSION_SECURE_COOKIE=true`, Resend and reCAPTCHA keys, and `TRUSTED_PROXIES` when behind Cloudflare or a load balancer.
+3. MySQL 8 with binary logging needs `log_bin_trust_function_creators = 1`, because the migrations create triggers and a stored procedure.
+4. `php artisan migrate --force && php artisan storage:link && php artisan optimize` (with OPcache on).
+5. Keep `php artisan queue:work` and `php artisan inertia:start-ssr` running under Supervisor, and run `php artisan schedule:run` from cron every minute.
+6. After content changes run `php artisan gleangrid:llms`; after schema changes run `php artisan gleangrid:export-sql`.
 
 ## Testing & CI
 
 ```bash
-php artisan test
+php artisan test                           # 66 feature tests, 395 assertions
+npx playwright test                        # browser end-to-end tests (start the app first)
+php tests/Stress/checkout-race.php 50      # real parallel checkouts against MySQL
 ```
 
-53 feature tests (≈250 assertions) run against a real MySQL/MariaDB test database (`gleangrid_test`), covering:
+**Feature tests** run against a real MySQL/MariaDB test database (`gleangrid_test`) and cover:
 
-- **Order lifecycle** — place, accept, ready, complete, review; stock and cut-off rules.
-- **Security** — OTP flow and attempt limits, honeypot and time trap, password policy, lockout, new-device alerts, bcrypt → Argon2id upgrade, CSP nonce headers.
-- **Race conditions** — the interleavings listed above, plus database CHECK constraints.
-- **Pages and roles** — every page renders for its role, and each role is blocked from the others.
-- **Platform** — reCAPTCHA rules (Google faked), demo-account behaviour, contact topics, live search ranking and typo suggestions, WebP upload and removal, SVG rejection, per-response CSP nonces, throttling, case-insensitive URLs and aliases.
+- **Order lifecycle:** place, accept, ready, complete, review; stock, cut-off and pickup-window rules.
+- **Security:** OTP flow and attempt limits, honeypot and time trap, password policy, lockout, new-device alerts, bcrypt → Argon2id upgrade, CSP nonce headers, write throttling, friendly duplicate-value errors.
+- **Race conditions:** every interleaving in the table above, stale farmer stock edits, the atomic weekly restock, plus the database CHECK constraints.
+- **Pages and roles:** every page renders for its role, and each role is blocked from the others.
+- **Platform:** reCAPTCHA rules (Google faked), demo-account behaviour, contact topics, live search ranking and typo suggestions, WebP upload and removal, SVG rejection, case-insensitive URLs and aliases, pickup reminders, data export and account deletion.
+
+**End-to-end tests** (`tests/e2e`, configured by `playwright.config.js`) drive the real site in Chrome on desktop and a phone: the public pages and SEO tags, a full customer order from basket to cancellation, and the admin panel. They sign in with the demo accounts and clean up after themselves.
+
+**The stress test** (`tests/Stress/checkout-race.php`) launches up to 50 separate PHP processes at checkout at the same instant: the last item in stock, a single-use coupon, a pickup window with room for three, and one buyer double-submitting. It checks the results in the database and removes its own test data.
 
 **Continuous integration** (`.github/workflows/ci.yml`) runs on every push and pull request: a clean MySQL 8 database, PHP 8.2 and 8.3, `npm ci` + production build (fails if the Vite manifest is missing), Laravel Pint in check mode, the full test suite, and `composer audit` / `npm audit`.
 
@@ -332,8 +342,8 @@ app/
   Http/Middleware/                          SecurityHeaders (CSP), EnsureRole, EnsureEmailVerified, …
   Models/                                   Eloquent models, scopes and relations
   Notifications/                            queued, after-commit mail + in-app notifications
-  Services/                                 OrderService, AccountSecurity, AssistantService
-  Support/                                  Seo, BotGuard, LegalContent
+  Services/                                 OrderService, CouponService, AccountSecurity, AssistantService
+  Support/                                  Seo, BotGuard, ImageUpload, LegalContent, Settings
 database/
   migrations/                               schema, indexes, CHECK constraints, views
   seeders/DatabaseSeeder.php                Hyderabad demo data
@@ -346,7 +356,10 @@ resources/
 public/
   images/brand/  images/team/               WebP brand and team images, 1:1 share image
   robots.txt  llms.txt  llms-full.txt  site.webmanifest
-tests/Feature/                              OrderFlow, Pages, Security, RaceCondition
+tests/Feature/                              OrderFlow, Pages, Security, RaceCondition, Coupon, Platform…
+tests/e2e/                                  Playwright browser tests (playwright.config.js)
+tests/Stress/checkout-race.php              parallel-process race test against MySQL
+docs/                                       screenshots, diagrams and the wiki (incl. Deployment)
 ```
 
 ## Assumptions

@@ -18,6 +18,7 @@ export default function ProductForm({ product, categories, units, illustrations 
         price: product?.price ?? '',
         unit: product?.unit ?? 'kg',
         stock_quantity: product?.stock_quantity ?? 10,
+        stock_seen: product?.stock_quantity ?? null,
         weekly_quantity: product?.weekly_quantity ?? 10,
         status: product?.status ?? 'available',
         image: product?.image?.startsWith('produce:') ? product.image : product ? '' : 'produce:basket',

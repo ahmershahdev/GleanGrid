@@ -5,19 +5,14 @@ use App\Models\Product;
 use App\Notifications\PlatformNotification;
 use App\Support\Settings;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('gleangrid:restock-weekly', function () {
-    $count = 0;
-    Product::whereNull('removed_at')->where('weekly_quantity', '>', 0)
+    $count = Product::whereNull('removed_at')->where('weekly_quantity', '>', 0)
         ->where('status', '!=', 'unavailable')
         ->whereHas('farmer', fn ($q) => $q->where('status', 'approved'))
-        ->each(function (Product $product) use (&$count) {
-            $product->stock_quantity = $product->weekly_quantity;
-            $product->status = 'available';
-            $product->save();
-            $count++;
-        });
+        ->update(['stock_quantity' => DB::raw('weekly_quantity'), 'status' => 'available', 'updated_at' => now()]);
 
     $this->info("Restocked {$count} products from their weekly templates.");
 })->purpose('Reset product stock to each farmer\'s weekly template');

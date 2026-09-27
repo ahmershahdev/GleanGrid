@@ -134,4 +134,30 @@ class RaceConditionTest extends TestCase
             'rating' => 9, 'created_at' => now(), 'updated_at' => now(),
         ]);
     }
+
+    public function test_a_farmer_editing_stale_stock_does_not_erase_sales_made_meanwhile(): void
+    {
+        $product = $this->farmer->products()->where('status', 'available')->firstOrFail();
+        $product->update(['stock_quantity' => 10]);
+        $this->orders->place($this->customer, [$this->group($product, 2)]);
+        $this->assertSame(8, $product->fresh()->stock_quantity);
+
+        $this->actingAs($this->farmer->user)->patch(route('farmer.products.status', $product), ['status' => 'available', 'stock_quantity' => 15, 'stock_seen' => 10]);
+        $this->assertSame(13, $product->fresh()->stock_quantity);
+
+        $this->actingAs($this->farmer->user)->patch(route('farmer.products.status', $product), ['status' => 'available', 'stock_quantity' => 10, 'stock_seen' => 10]);
+        $this->assertSame(13, $product->fresh()->stock_quantity);
+    }
+
+    public function test_weekly_restock_is_a_single_atomic_update(): void
+    {
+        $product = $this->farmer->products()->where('weekly_quantity', '>', 0)->where('status', '!=', 'unavailable')->firstOrFail();
+        $product->update(['stock_quantity' => 0, 'status' => 'sold_out']);
+
+        $this->artisan('gleangrid:restock-weekly')->assertSuccessful();
+
+        $fresh = $product->fresh();
+        $this->assertSame($fresh->weekly_quantity, $fresh->stock_quantity);
+        $this->assertSame('available', $fresh->status);
+    }
 }

@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Support\ImageUpload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -71,11 +72,16 @@ class ProductController extends Controller
             $this->deleteImage($product);
         }
         unset($data['remove_image']);
-        if ((int) $data['stock_quantity'] === 0 && $data['status'] === 'available') {
-            $data['status'] = 'sold_out';
-        }
+        $seen = $request->filled('stock_seen') ? $request->integer('stock_seen') : null;
 
-        $product->update($data);
+        DB::transaction(function () use ($product, $data, $seen) {
+            $locked = Product::whereKey($product->id)->lockForUpdate()->firstOrFail();
+            $data['stock_quantity'] = $this->reconcileStock($locked, (int) $data['stock_quantity'], $seen);
+            if ($data['stock_quantity'] === 0 && $data['status'] === 'available') {
+                $data['status'] = 'sold_out';
+            }
+            $locked->update($data);
+        }, attempts: 3);
 
         return redirect()->route('farmer.products.index')->with('success', 'flash.product_updated');
     }
@@ -94,32 +100,45 @@ class ProductController extends Controller
         $data = $request->validate([
             'status' => 'required|in:available,sold_out,unavailable',
             'stock_quantity' => 'nullable|integer|min:0|max:100000',
+            'stock_seen' => 'nullable|integer|min:0|max:100000',
         ]);
 
-        if (isset($data['stock_quantity'])) {
-            $product->stock_quantity = $data['stock_quantity'];
-        }
-        if ($data['status'] === 'available' && $product->stock_quantity === 0) {
-            $product->stock_quantity = max(1, $product->weekly_quantity);
-        }
-        $product->status = $data['status'];
-        $product->save();
+        DB::transaction(function () use ($product, $data) {
+            $locked = Product::whereKey($product->id)->lockForUpdate()->firstOrFail();
+            if (isset($data['stock_quantity'])) {
+                $locked->stock_quantity = $this->reconcileStock($locked, (int) $data['stock_quantity'], $data['stock_seen'] ?? null);
+            }
+            if ($data['status'] === 'available' && $locked->stock_quantity === 0) {
+                $locked->stock_quantity = max(1, $locked->weekly_quantity);
+            }
+            $locked->status = $data['status'];
+            $locked->save();
+        }, attempts: 3);
 
         return back()->with('success', 'flash.product_updated');
     }
 
     public function applyTemplate(Request $request): RedirectResponse
     {
-        $this->farmer($request)->products()->whereNull('removed_at')->where('weekly_quantity', '>', 0)->get()
-            ->each(function (Product $product) {
-                $product->stock_quantity = $product->weekly_quantity;
-                if ($product->status === 'sold_out') {
-                    $product->status = 'available';
-                }
-                $product->save();
-            });
+        $this->farmer($request)->products()->whereNull('removed_at')->where('weekly_quantity', '>', 0)->update([
+            'stock_quantity' => DB::raw('weekly_quantity'),
+            'status' => DB::raw("CASE WHEN status = 'sold_out' THEN 'available' ELSE status END"),
+            'updated_at' => now(),
+        ]);
 
         return back()->with('success', 'flash.template_applied');
+    }
+
+    private function reconcileStock(Product $locked, int $submitted, ?int $seen): int
+    {
+        if ($seen === null) {
+            return $submitted;
+        }
+        if ($submitted === $seen) {
+            return $locked->stock_quantity;
+        }
+
+        return max(0, $submitted - max(0, $seen - $locked->stock_quantity));
     }
 
     private function validated(Request $request): array
