@@ -1,4 +1,4 @@
-# GleanGrid — https://gleangrid.ahmershah.dev
+# GleanGrid — {{ url('/') }}
 # Pre-order marketplace for Hyderabad (Sindh) farmers markets.
 #
 # Public marketplace pages (markets, farmers, produce, help, policies) are open
@@ -61,4 +61,4 @@ Disallow: /search/suggest
 Disallow: /assistant
 Disallow: /webhooks/
 
-Sitemap: https://gleangrid.ahmershah.dev/sitemap.xml
+Sitemap: {{ route('sitemap') }}

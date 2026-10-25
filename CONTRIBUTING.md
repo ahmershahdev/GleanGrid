@@ -80,4 +80,4 @@ Types: `feat`, `fix`, `perf`, `refactor`, `test`, `docs`, `style`, `chore`, `ci`
 
 ## Licence
 
-By contributing you agree that your work is released under the project's [MIT licence](LICENSE.txt).
+By contributing you agree that your work is released under the project's [MIT licence](LICENSE).

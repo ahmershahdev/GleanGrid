@@ -16,7 +16,7 @@
 
 <p align="center">
   <a href="https://github.com/ahmershahdev/GleanGrid/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/ahmershahdev/GleanGrid/actions/workflows/ci.yml/badge.svg"></a>
-  <a href="LICENSE.txt"><img alt="MIT licence" src="https://img.shields.io/badge/licence-MIT-2f7d4f.svg"></a>
+  <a href="LICENSE"><img alt="MIT licence" src="https://img.shields.io/badge/licence-MIT-2f7d4f.svg"></a>
   <img alt="Laravel 12" src="https://img.shields.io/badge/Laravel-12-e2552c.svg">
   <img alt="React 19" src="https://img.shields.io/badge/React-19-1f4d36.svg">
   <img alt="Inertia 3" src="https://img.shields.io/badge/Inertia-3-c9e265.svg">
@@ -30,7 +30,7 @@
   📚 <a href="https://github.com/ahmershahdev/GleanGrid/wiki">Wiki</a>
 </p>
 
-> **Status: complete and archived.** GleanGrid is a finished portfolio project, kept read-only. Final version: [v1.0.0](../../releases/tag/v1.0.0). Run it locally: [Running locally (XAMPP)](#running-locally-xampp).
+> **Status: maintained.** Latest release: [v1.1.0](../../releases/latest). Fastest way to run it: [Docker](#running-with-docker) (one command), or [XAMPP](#running-locally-xampp).
 
 ---
 
@@ -50,14 +50,15 @@
 12. [Badges, price history, seasons, photo reviews & alerts](#badges-price-history-seasons-photo-reviews--alerts)
 13. [SEO, performance & accessibility](#seo-performance--accessibility)
 14. [Internationalisation](#internationalisation)
-15. [Running locally (XAMPP)](#running-locally-xampp)
-16. [Troubleshooting](#troubleshooting)
-17. [Deploying to production](#deploying-to-production)
-18. [Testing & CI](#testing--ci)
-19. [Project structure](#project-structure)
-20. [Assumptions](#assumptions)
-21. [Contributing, security & licence](#contributing-security--licence)
-22. [Author & credits](#author--credits)
+15. [Running with Docker](#running-with-docker)
+16. [Running locally (XAMPP)](#running-locally-xampp)
+17. [Troubleshooting](#troubleshooting)
+18. [Deploying to production](#deploying-to-production)
+19. [Testing & CI](#testing--ci)
+20. [Project structure](#project-structure)
+21. [Assumptions](#assumptions)
+22. [Contributing, security & licence](#contributing-security--licence)
+23. [Author & credits](#author--credits)
 
 ---
 
@@ -295,11 +296,11 @@ Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `FACEBOOK_CLIENT_ID` and `FACEBO
 
 ## SEO, performance & accessibility
 
-- **Per-page titles (40–60 characters) and descriptions (150–160 characters)**, written by hand for static pages and composed from whole sentences for markets, stalls and products (no mid-word truncation). They are server-rendered, so crawlers see them without JavaScript.
+- **Per-page titles under 60 characters and descriptions under 150**, enforced by `App\Support\Seo` and a test that checks every public URL (`tests/Feature/SeoLimitsTest.php`), written by hand for static pages and composed from whole sentences for markets, stalls and products (no mid-word truncation). They are server-rendered, so crawlers see them without JavaScript, and each tag appears exactly once (the Blade fallback head is only printed when SSR is unavailable).
 - **Clean URLs everywhere, no `?` or `=`.** Filters, search, sorting and pages are readable path segments: `/products/category/fruits/price/100-500/sort/price-low/page/2`, `/farmers/search/honey`, `/markets/day/sunday`, `/register/farmer`. One rule set (`App\Support\PathFilters` in PHP, `resources/js/lib/url.js` in React) builds and parses them, old query-string links redirect permanently (301) to the clean form, segments are put in one canonical order, and filtered or paginated listings point their canonical URL at the plain listing (category pages stay indexable and are in the sitemap). Password-reset e-mails no longer put the address in the link.
-- Canonical URLs, Open Graph and Twitter cards with a **1200×1200** share image, `robots` directives (`noindex` on private areas), `robots.txt` and a live **`/sitemap.xml`**.
+- Canonical URLs, Open Graph and Twitter cards with a **1200×1200** share image, `robots` directives (`noindex` on private areas), and a live **`/robots.txt`** and **`/sitemap.xml`** that follow `APP_URL` (no hard-coded domain).
 - **JSON-LD:** Organization, WebSite with site search, Product (offer, pickup, rating), Place (opening hours, geo) for markets, LocalBusiness for stalls, and FAQPage.
-- **`/llms.txt` and `/llms-full.txt`** for AI assistants, generated from live data with `php artisan gleangrid:llms`.
+- **`/llms.txt` and `/llms-full.txt`** for AI assistants, built from live data on request (cached for an hour; `php artisan gleangrid:llms` rebuilds them, `--write` also saves static copies).
 - Images: the logo went from 665 KB PNG to 40 KB WebP, the team photo from 1.8 MB to 19 KB, the favicon SVG from 1 MB to 4 KB, and the 65 produce illustrations from 2.1 MB of PNG to 301 KB of WebP.
 - JavaScript: only English ships in the main bundle; each other language is a separate chunk fetched on first use. Leaflet maps load when they approach the viewport, the Basket Buddy assistant loads when the browser is idle, and axios was replaced with a 20-line `fetch` helper.
 - **PWA:** installable (manifest with shortcuts), with a service worker that caches hashed assets, images and fonts and shows a branded offline page. HTML is never cached, because every page carries a fresh CSP nonce and the signed-in user’s data.
@@ -311,6 +312,21 @@ Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `FACEBOOK_CLIENT_ID` and `FACEBO
 ## Internationalisation
 
 English, **Urdu** (RTL), **Arabic** (RTL), Hindi, Russian, Chinese, Spanish and French. Every locale has **100% key coverage** with matching `:placeholders` (checked by script). Direction, fonts per script, number, date and currency formatting all follow the chosen language. Legal pages are published in English as the governing version, and the page says so in the other languages.
+
+## Running with Docker
+
+The repository ships a production-style stack: MySQL 8, the app on PHP 8.3 + Apache, and the Inertia SSR renderer.
+
+```bash
+cp .env.docker.example .env.docker
+# set APP_KEY (docker run --rm php:8.3-cli php -r "echo 'base64:'.base64_encode(random_bytes(32)).PHP_EOL;")
+# and the same strong password in DB_PASSWORD and MYSQL_PASSWORD
+docker compose up -d --build
+```
+
+Open <http://localhost:8080>. The first boot runs the migrations and seeds the demo data (`SEED_DEMO_DATA=true`); sign in with the one-tap demo buttons on `/login`. Run the browser tests against it with `E2E_BASE_URL=http://localhost:8080 npx playwright test --project=desktop`.
+
+Uploads live in the `uploads` volume and the database in `db-data`; `docker compose down -v` wipes both. If you use your own MySQL 8 with binary logging and a non-root user, enable `log_bin_trust_function_creators` (the migrations create triggers and a stored procedure), as `compose.yaml` does.
 
 ## Running locally (XAMPP)
 
@@ -382,7 +398,7 @@ A complete, step-by-step guide for a **free Oracle Cloud server** (Nginx, PHP-FP
 ## Testing & CI
 
 ```bash
-php artisan test                           # 133 tests, 779 assertions
+php artisan test                           # 138 tests, 2,500+ assertions
 npx playwright test                        # browser end-to-end tests (start the app first)
 php tests/Stress/checkout-race.php 50      # real parallel checkouts against MySQL
 ```
@@ -393,6 +409,7 @@ php tests/Stress/checkout-race.php 50      # real parallel checkouts against MyS
 - **Security:** OTP flow and attempt limits, honeypot, forged / expired / replayed form tickets, Turnstile and reCAPTCHA rules, per-load CSRF rotation, cross-site write refusal, password policy, lockout, new-device alerts, bcrypt → Argon2id upgrade, CSP nonce headers, write throttling, friendly duplicate-value errors.
 - **Race conditions:** every interleaving in the table above, stale farmer stock edits, the atomic weekly restock, plus the database CHECK constraints.
 - **Pages and roles:** every page renders for its role, and each role is blocked from the others.
+- **SEO:** every public URL (static pages, each market, stall and product, the 404 page) has a title under 60 and a description under 150 characters, the full Open Graph / Twitter set, a canonical URL and valid JSON-LD; `robots.txt`, `llms.txt` and the sitemap only contain this deployment's URLs.
 - **Platform:** structured data (clean search URL, linked Product / LocalBusiness / Place entities), reCAPTCHA rules (Google faked), demo-account behaviour, contact topics, live search ranking and typo suggestions, WebP upload and removal, SVG rejection, case-insensitive URLs and aliases, pickup reminders, data export and account deletion.
 
 **End-to-end tests** (`tests/e2e`, configured by `playwright.config.js`) drive the real site in Chrome on desktop and a phone: the public pages and SEO tags, a full customer order from basket to cancellation, and the admin panel. They sign in with the demo accounts and clean up after themselves.
@@ -423,7 +440,7 @@ resources/
   views/vendor/mail/                        branded e-mail templates
 public/
   images/brand/  images/team/               WebP brand and team images, 1:1 share image
-  robots.txt  llms.txt  llms-full.txt  site.webmanifest
+  site.webmanifest  sw.js  offline.html   (robots.txt, llms.txt, llms-full.txt are routes)
 tests/Feature/                              OrderFlow, Pages, Security, RaceCondition, Coupon, Platform…
 tests/e2e/                                  Playwright browser tests (playwright.config.js)
 tests/Stress/checkout-race.php              parallel-process race test against MySQL
@@ -442,7 +459,7 @@ docs/images/                                screenshots and diagrams (guides liv
 
 - **Contributing:** `main` is the only branch and is protected (linear history, required CI checks, no force-push or deletion), and the repository is kept read-only as the TechWiz 7 submission. Bug reports and ideas are welcome at **support@ahmershah.dev**; [CONTRIBUTING.md](CONTRIBUTING.md) documents the coding style and commit conventions used.
 - **Security:** please report vulnerabilities privately as described in [SECURITY.md](SECURITY.md), not in public issues.
-- **Licence:** GleanGrid is open source under the [MIT licence](LICENSE.txt). Third-party assets keep their own licences (see Credits).
+- **Licence:** GleanGrid is open source under the [MIT licence](LICENSE). Third-party assets keep their own licences (see Credits).
 - **Wiki:** longer guides live in the [project wiki](https://github.com/ahmershahdev/GleanGrid/wiki): each role's guide, [Architecture](https://github.com/ahmershahdev/GleanGrid/wiki/Architecture), [Security Model](https://github.com/ahmershahdev/GleanGrid/wiki/Security-Model), [Payments](https://github.com/ahmershahdev/GleanGrid/wiki/Payments), [Race Conditions](https://github.com/ahmershahdev/GleanGrid/wiki/Race-Conditions), [Deployment](https://github.com/ahmershahdev/GleanGrid/wiki/Deployment) and [Testing and CI](https://github.com/ahmershahdev/GleanGrid/wiki/Testing-and-CI).
 
 ## Author & credits

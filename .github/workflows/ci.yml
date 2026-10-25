@@ -89,6 +89,26 @@ jobs:
       - run: composer audit --locked --no-interaction
       - run: npm audit --audit-level=high --omit=dev
 
+  docker:
+    name: Docker image builds and boots
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build and start the stack
+        run: |
+          cp .env.docker.example .env.docker
+          key="base64:$(openssl rand -base64 32)"; pw="$(openssl rand -hex 16)"
+          sed -i "s|^APP_KEY=.*|APP_KEY=$key|; s|^DB_PASSWORD=.*|DB_PASSWORD=$pw|; s|^MYSQL_PASSWORD=.*|MYSQL_PASSWORD=$pw|" .env.docker
+          docker compose up -d --build
+          for i in $(seq 1 60); do curl -fsS http://localhost:8080/up && break; sleep 5; done
+      - name: Smoke-test pages, SSR and crawler files
+        run: |
+          curl -fsS http://localhost:8080/ | grep -q 'data-server-rendered="true"'
+          for p in /markets /farmers /products /faq /sitemap.xml /robots.txt /llms.txt /llms-full.txt; do curl -fsS -o /dev/null "http://localhost:8080$p"; done
+      - if: failure()
+        run: docker compose logs
+
   e2e:
     name: Browser end-to-end (Playwright)
     runs-on: ubuntu-latest

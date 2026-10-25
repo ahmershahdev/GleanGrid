@@ -24,6 +24,7 @@ use App\Http\Controllers\ResendWebhookController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SeasonController;
 use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\TextController;
 use App\Support\PathFilters;
 use Illuminate\Support\Facades\Route;
 
@@ -43,6 +44,9 @@ Route::get('/privacy', [PageController::class, 'legal'])->defaults('page', 'priv
 Route::get('/returns', [PageController::class, 'legal'])->defaults('page', 'returns')->name('returns');
 Route::get('/pickup-policy', [PageController::class, 'legal'])->defaults('page', 'pickup')->name('pickup-policy');
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
+Route::get('/robots.txt', [TextController::class, 'robots'])->name('robots');
+Route::get('/llms.txt', [TextController::class, 'llms'])->name('llms');
+Route::get('/llms-full.txt', [TextController::class, 'llmsFull'])->name('llms.full');
 Route::post('/search/suggest', SearchController::class)->middleware('throttle:search')->name('search.suggest');
 
 Route::post('/webhooks/resend/inbound', ResendWebhookController::class)->middleware('throttle:60,1')->name('webhooks.resend');

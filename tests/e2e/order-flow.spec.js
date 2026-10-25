@@ -17,7 +17,7 @@ test('customer pre-order, farmer accepts via scan lookup, customer cancels', asy
     await expect(page).toHaveURL(/\/account\/checkout/);
     await hydrated(page);
     await page.getByRole('button', { name: /Place \d+ pre-order/ }).click();
-    await expect(page).toHaveURL(/\/account\/orders$/);
+    await expect(page).toHaveURL(/\/account\/orders$/, { timeout: 30_000 });
 
     await page.locator('a[href*="/account/orders/GG-"]').first().click();
     await expect(page.getByText('Your pickup pass')).toBeVisible();

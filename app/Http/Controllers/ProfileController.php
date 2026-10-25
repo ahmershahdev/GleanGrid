@@ -113,7 +113,7 @@ class ProfileController extends Controller
         $user = $request->user();
         $data = [
             'exported_at' => now()->toIso8601String(),
-            'service' => 'GleanGrid — https://gleangrid.ahmershah.dev',
+            'service' => 'GleanGrid — '.config('app.url'),
             'account' => $user->only('name', 'username', 'email', 'phone', 'address', 'city', 'role', 'status', 'locale', 'created_at', 'email_verified_at', 'last_login_at'),
             'farmer_stall' => $user->farmerProfile?->only('stall_name', 'slug', 'contact_person', 'phone', 'email', 'address', 'tagline', 'bio', 'latitude', 'longitude', 'operating_days', 'order_cutoff_hours', 'status', 'created_at'),
             'orders' => $user->orders()->with('items:id,order_id,product_name,unit,unit_price,quantity,line_total', 'farmer:id,stall_name', 'market:id,name')->latest()->get()

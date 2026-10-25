@@ -1,0 +1,64 @@
+# Local / demo stack: MySQL 8, the Laravel app behind Apache, and the Inertia SSR renderer.
+#
+#   cp .env.docker.example .env.docker      # then set APP_KEY and DB_PASSWORD
+#   docker compose up -d --build
+#   open http://localhost:8080
+#
+# Generate a key once with:
+#   docker run --rm php:8.3-cli php -r "echo 'base64:'.base64_encode(random_bytes(32)).PHP_EOL;"
+
+name: gleangrid
+
+x-app: &app
+    build: .
+    image: gleangrid:latest
+    env_file: .env.docker
+    restart: unless-stopped
+
+services:
+    db:
+        image: mysql:8.0
+        env_file: .env.docker
+        environment:
+            MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
+        # Triggers and stored procedures are created by a non-root user, which MySQL 8 refuses while binary logging is on unless this is set.
+        command: ['--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci', '--log-bin-trust-function-creators=1']
+        volumes:
+            - db-data:/var/lib/mysql
+        healthcheck:
+            test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 -u"$$MYSQL_USER" -p"$$MYSQL_PASSWORD" --silent']
+            interval: 5s
+            timeout: 5s
+            retries: 30
+        restart: unless-stopped
+
+    app:
+        <<: *app
+        environment:
+            DB_HOST: db
+            DB_PORT: 3306
+            INERTIA_SSR_URL: http://ssr:13714
+        ports:
+            - '${APP_PORT:-8080}:80'
+        volumes:
+            - uploads:/var/www/html/storage/app/public
+        depends_on:
+            db:
+                condition: service_healthy
+            ssr:
+                condition: service_started
+
+    ssr:
+        <<: *app
+        command: ['node', 'bootstrap/ssr/ssr.js']
+        environment:
+            RUN_MIGRATIONS: 'false'
+        healthcheck:
+            test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:13714/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+            interval: 10s
+            timeout: 5s
+            retries: 10
+
+volumes:
+    db-data:
+    uploads:

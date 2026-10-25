@@ -12,80 +12,85 @@ class Seo
 {
     public const IMAGE = 'images/brand/gleangrid-og.jpg';
 
+    /** Search engines truncate past these, so titles stay under 60 characters and descriptions under 150. */
+    public const TITLE_MAX = 59;
+
+    public const DESCRIPTION_MAX = 149;
+
     private const NOINDEX = ['customer.', 'farmer.', 'admin.', 'profile.', 'notifications.', 'password.', 'verification.', 'onboarding.', 'social.', 'dashboard', 'cart', 'login', 'register'];
 
     private const PAGES = [
         'home' => [
             'Fresh Hyderabad Produce, Straight From Local Farmers',
-            'Pre-order this week’s harvest from Hyderabad’s farmers markets: mangoes, desi tomatoes, sourdough, raw honey. Pay online or at the stall, then collect it.',
+            'Pre-order this week’s harvest from Hyderabad’s farmers markets: mangoes, desi tomatoes, sourdough, honey. Pay online or at the stall.',
         ],
         'markets.index' => [
             'Hyderabad Farmers Markets: Days, Hours & Map | GleanGrid',
-            'Every farmers market in Hyderabad, Sindh on one live map. See which are trading today, their hours and which growers set up there, then plan your shop.',
+            'Every farmers market in Hyderabad, Sindh on one live map: which trade today, their hours and the growers who set up there.',
         ],
         'farmers.index' => [
             'Meet Hyderabad’s Local Farmers & Growers | GleanGrid',
-            'Browse the growers, bakers and beekeepers selling at Hyderabad’s markets. Read their stories and ratings, see what’s picked this week, and follow favourites.',
+            'The growers, bakers and beekeepers of Hyderabad’s markets: their stories, ratings and this week’s harvest. Follow your favourites.',
         ],
         'products.index' => [
             'Seasonal Fruit, Veg & Pantry Picks This Week | GleanGrid',
-            'Shop what Sindh’s farmers harvested this week: seasonal vegetables, fruit, herbs, eggs, bread and honey. Filter by market, day or price and reserve for pickup.',
+            'What Sindh’s farmers harvested this week: vegetables, fruit, herbs, eggs, bread and honey. Filter by market or price and reserve it.',
         ],
         'about' => [
             'Why We Built GleanGrid: Fair Trade for Local Farmers',
-            'GleanGrid links Hyderabad households with the farmers who grow their food — fewer middlemen, less waste, fairer prices. Meet the developer who built it and see how it works.',
+            'GleanGrid links Hyderabad households with the farmers who grow their food: fewer middlemen, less waste, fairer prices for everyone.',
         ],
         'contact' => [
             'Contact GleanGrid: Questions, Stalls & Partnerships',
-            'Questions about an order, want to sell at a market, or have an idea? Message the GleanGrid team in Hyderabad, Sindh — a real person reads and replies to all.',
+            'A question about an order, a stall you want to open, or an idea? Message GleanGrid in Hyderabad, Sindh. A real person replies.',
         ],
         'cart' => [
             'Your Market Basket: Review Before You Pre-Order',
-            'Check the produce you’ve reserved, adjust quantities and pick a pickup window at each stall. Pay with Easypaisa, JazzCash or card, or in cash at pickup.',
+            'Check your reserved produce, adjust quantities and pick a pickup window per stall. Pay by Easypaisa, JazzCash, card or cash.',
         ],
         'login' => [
             'Sign In to GleanGrid: Orders, Favourites & Stalls',
-            'Sign in to track your pre-orders, reorder the household basket and get restock alerts — or, if you’re a farmer, manage your stall and this week’s orders.',
+            'Sign in to track pre-orders, reorder your weekly basket and get restock alerts, or to run your stall and this week’s orders.',
         ],
         'register' => [
             'Join GleanGrid: Shop Local or Sell at Your Stall',
-            'Create a free GleanGrid account to pre-order fresh produce from Hyderabad’s markets, or register your farm stall and take orders before market day arrives.',
+            'Create a free account to pre-order fresh produce from Hyderabad’s markets, or register your stall and take orders before market day.',
         ],
         'password.request' => [
             'Reset Your GleanGrid Password in Under a Minute',
-            'Forgot your password? Enter the e-mail on your GleanGrid account and we’ll send a secure link to choose a new one, so you can get back to your orders.',
+            'Forgot your password? Enter your account e-mail and we’ll send a secure link to choose a new one and get back to your orders.',
         ],
         'password.reset' => [
             'Choose a New Password for Your GleanGrid Account',
-            'Set a fresh, strong password for your GleanGrid account. Once saved, you’ll be signed straight back in to your orders, favourites and your stall tools.',
+            'Set a fresh, strong password for your GleanGrid account. Once saved, you’re signed back in to your orders, favourites and stall.',
         ],
         'faq' => [
             'GleanGrid FAQ: Pre-Orders, Pickup & Selling Help',
-            'Straight answers on pre-orders, pickup windows, cut-offs, online and cash payments, refunds and selling as a farmer on GleanGrid, plus account and security help.',
+            'Straight answers on pre-orders, pickup windows, cut-offs, payments, refunds and selling as a farmer on GleanGrid, plus account help.',
         ],
         'terms' => [
             'Terms of Use: The Ground Rules for GleanGrid',
-            'The plain-language rules for using GleanGrid: accounts, pre-orders, cut-offs, farmer listings, reviews and fair use of the Hyderabad farmers-market platform.',
+            'The plain-language rules for GleanGrid: accounts, pre-orders, cut-offs, farmer listings, reviews and fair use of the platform.',
         ],
         'privacy' => [
             'Privacy Policy: What GleanGrid Collects and Why',
-            'What personal data GleanGrid holds, why, who sees it and for how long. Card numbers are never stored, there is no ad tracking, and you can export or delete it.',
+            'What personal data GleanGrid holds, why, who sees it and for how long. No stored card numbers, no ad tracking; export or delete it.',
         ],
         'returns' => [
             'Returns, Refunds & Cancellations | GleanGrid',
-            'Cancel free until the farmer’s cut-off, check produce at the stall before you pay, and what to do if something is wrong after pickup. Fresh food, fair fixes.',
+            'Cancel free until the farmer’s cut-off, check produce at the stall before paying, and what to do if something is wrong after pickup.',
         ],
         'pickup-policy' => [
             'Pickup & Delivery Policy: How Collection Works',
-            'How GleanGrid pickup works: choose a window, get a ready alert, show your QR pass at the stall and collect. Why the platform is pickup-only by design.',
+            'How pickup works: choose a window, get a ready alert, show your QR pass at the stall and collect. Why GleanGrid is pickup-only.',
         ],
         'seasons' => [
-            'Sindh Seasonal Produce Calendar: What’s Fresh Each Month',
-            'Month-by-month harvest calendar for Hyderabad and Sindh — mangoes, kinnow, tomatoes, carrots and more. See what’s in season, what peaks now and shop it fresh.',
+            'Sindh Seasonal Produce Calendar: What’s Fresh Monthly',
+            'Month-by-month harvest calendar for Hyderabad and Sindh: mangoes, kinnow, tomatoes, carrots and more. See what peaks now and shop it.',
         ],
         'verification.notice' => [
             'Confirm Your E-mail to Start Using GleanGrid',
-            'Enter the six-digit code we e-mailed you to confirm your address. It keeps order updates and pickup codes going to the right inbox and protects your account.',
+            'Enter the six-digit code we e-mailed you to confirm your address, so order updates and pickup codes reach the right inbox.',
         ],
     ];
 
@@ -176,7 +181,7 @@ class Seo
         if ($name === '') {
             return [
                 'This Page Wandered Off — Back to the Market | GleanGrid',
-                'We couldn’t find the page you were after. It may have moved, or the stall has packed up for the week. Head back to the markets and see what’s fresh today.',
+                'We couldn’t find that page. It may have moved, or the stall packed up for the week. Head back to the markets for what’s fresh.',
                 null,
             ];
         }
@@ -194,7 +199,7 @@ class Seo
 
         return [
             $area === 'GleanGrid' ? "{$section} | GleanGrid" : "{$section} · {$area} | GleanGrid",
-            'Your private GleanGrid workspace for pre-orders, pickups and stall management across Hyderabad’s farmers markets. Sign in to see details for your account.',
+            'Your private GleanGrid workspace for pre-orders, pickups and stall management across Hyderabad’s farmers markets.',
             null,
         ];
     }
@@ -425,12 +430,14 @@ class Seo
 
     private static function fit(string $title, string $suffix): string
     {
-        $title = Str::limit($title, 60, '…');
+        if (mb_strlen($title.$suffix) <= self::TITLE_MAX) {
+            return $title.$suffix;
+        }
 
-        return mb_strlen($title.$suffix) <= 60 ? $title.$suffix : $title;
+        return mb_strlen($title) <= self::TITLE_MAX ? $title : self::clip($title, self::TITLE_MAX);
     }
 
-    private static function sentences(array $parts, int $max = 160): string
+    private static function sentences(array $parts, int $max = self::DESCRIPTION_MAX): string
     {
         $out = '';
         foreach ($parts as $part) {
@@ -442,10 +449,16 @@ class Seo
             if (mb_strlen($next) <= $max) {
                 $out = $next;
             } elseif ($out === '') {
-                $out = Str::of($part)->limit($max - 1, '')->beforeLast(' ')->rtrim(',;:—– ')->append('…')->toString();
+                $out = self::clip($part, $max);
             }
         }
 
         return $out;
+    }
+
+    /** Cut at a word boundary so the result, ellipsis included, is at most $max characters. */
+    private static function clip(string $text, int $max): string
+    {
+        return Str::of($text)->limit($max - 1, '')->beforeLast(' ')->rtrim(',;:—–·| ')->append('…')->toString();
     }
 }

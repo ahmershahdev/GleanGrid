@@ -2,6 +2,8 @@
     $locale = app()->getLocale();
     $dir = config("gleangrid.locales.$locale.dir", 'ltr');
     $seo = $page['props']['seo'] ?? \App\Support\Seo::forRequest(request());
+    // The SSR head already carries <title> and the SEO tags from <Seo />; only print them here when SSR is off or down.
+    $ssrHead = filled(app(\Inertia\Ssr\SsrState::class)->setPage($page)->dispatch()?->head);
 @endphp
 <!DOCTYPE html>
 <html lang="{{ $locale }}" dir="{{ $dir }}">
@@ -11,6 +13,7 @@
     <meta name="theme-color" content="#F3EEE3" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#0D130F" media="(prefers-color-scheme: dark)">
 
+    @unless ($ssrHead)
     <meta name="description" content="{{ $seo['description'] }}" data-inertia="description">
     <meta name="robots" content="{{ $seo['robots'] }}" data-inertia="robots">
     <link rel="canonical" href="{{ $seo['url'] }}" data-inertia="canonical">
@@ -20,10 +23,12 @@
     <meta property="og:title" content="{{ $seo['title'] }}" data-inertia="og:title">
     <meta property="og:description" content="{{ $seo['description'] }}" data-inertia="og:description">
     <meta property="og:url" content="{{ $seo['url'] }}" data-inertia="og:url">
+    @endunless
     <meta name="author" content="Syed Ahmer Shah">
     <meta name="application-name" content="GleanGrid">
     <meta name="apple-mobile-web-app-title" content="GleanGrid">
     <meta name="format-detection" content="telephone=no">
+    @unless ($ssrHead)
     <meta property="og:image" content="{{ $seo['image'] }}" data-inertia="og:image">
     <meta property="og:image:secure_url" content="{{ $seo['image'] }}" data-inertia="og:image:secure_url">
     <meta property="og:image:type" content="image/jpeg" data-inertia="og:image:type">
@@ -35,6 +40,7 @@
     <meta name="twitter:description" content="{{ $seo['description'] }}" data-inertia="twitter:description">
     <meta name="twitter:image" content="{{ $seo['image'] }}" data-inertia="twitter:image">
     <meta name="twitter:image:alt" content="{{ $seo['image_alt'] }}" data-inertia="twitter:image:alt">
+    @endunless
     <meta name="twitter:creator" content="@ahmershahdev">
 
     <script type="application/ld+json" nonce="{{ Vite::cspNonce() }}">@json(\App\Support\Seo::jsonLd(request()), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)</script>
@@ -62,7 +68,9 @@
     @routes(null, Vite::cspNonce())
     @viteReactRefresh
     @vite(['resources/css/app.css', 'resources/js/app.jsx', "resources/js/Pages/{$page['component']}.jsx"])
-    <title data-inertia="">{{ $seo['title'] }}</title>
+    @unless ($ssrHead)
+        <title data-inertia="">{{ $seo['title'] }}</title>
+    @endunless
     @inertiaHead
 </head>
 <body class="antialiased">
