@@ -1,6 +1,7 @@
 import { router } from '@inertiajs/react';
 
-const SKIP = /^\/(logout|storage\/|build\/|webhooks\/|admin\/reports\/export)|\.(pdf|csv|xml|txt|zip|png|jpe?g|webp|svg)$/i;
+const SKIP_PREFIX = /^\/(?:logout|storage\/|build\/|webhooks\/|admin\/reports\/export)/i;
+const SKIP_FILE = /\.(?:pdf|csv|xml|txt|zip|png|jpe?g|webp|svg)$/i;
 const HOVER_DELAY = 65;
 const seen = new Map();
 
@@ -13,7 +14,7 @@ function candidate(el) {
     } catch {
         return null;
     }
-    if (url.origin !== location.origin || SKIP.test(url.pathname)) return null;
+    if (url.origin !== location.origin || SKIP_PREFIX.test(url.pathname) || SKIP_FILE.test(url.pathname)) return null;
     if (url.pathname === location.pathname && url.search === location.search) return null;
     return url;
 }

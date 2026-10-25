@@ -1,4 +1,15 @@
 export default {
+    project: {
+        title: 'The story behind GleanGrid',
+        page: 'Project page',
+        page_body: 'Overview, screenshots and the full feature list on the developer’s portfolio.',
+        case_study: 'Case study',
+        case_study_body: 'How GleanGrid was planned, designed and built, from the brief to the last test.',
+        race: 'The Last Mango Problem',
+        race_body: 'Why two people can’t buy the last mango: race conditions in a real marketplace.',
+        source: 'Source code',
+        source_body: 'MIT-licensed on GitHub, with the wiki, tests and Docker setup.',
+    },
     nav: { seasons: 'Seasons' },
     home: {
         band_pickup: 'Pay online or at pickup',

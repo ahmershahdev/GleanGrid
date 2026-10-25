@@ -1,6 +1,6 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { motion, useScroll, useSpring, useTransform } from 'motion/react';
-import { ArrowRight, Code2, CreditCard, Database, Globe, Palette, Quote, Rocket, ShieldCheck } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, BookOpen, Code2, CreditCard, Database, Globe, Palette, Quote, Rocket, ShieldCheck } from 'lucide-react';
 import { useRef } from 'react';
 import { GithubIcon, LinkedinIcon } from '@/Components/icons';
 import FieldsReel from '@/Components/FieldsReel';
@@ -184,6 +184,8 @@ export default function About({ stats, build = {} }) {
                     </div>
                 </div>
 
+                <ProjectStory />
+
                 <div className="mt-24 grid grid-cols-2 gap-px overflow-hidden rounded-[36px] border border-line bg-line md:grid-cols-4">
                     {[
                         ['n_screens', build.screens],
@@ -247,5 +249,37 @@ export default function About({ stats, build = {} }) {
                 </div>
             </section>
         </>
+    );
+}
+
+function ProjectStory() {
+    const t = useT();
+    const { project } = usePage().props;
+    if (!project) return null;
+    const items = [
+        ['page', project.page, Globe],
+        ['case_study', project.case_study, BookOpen],
+        ['race', project.race_conditions, BookOpen],
+        ['source', project.source, GithubIcon],
+    ];
+
+    return (
+        <section aria-labelledby="project-story" className="mt-24">
+            <h2 id="project-story" className="font-display text-3xl md:text-4xl">{t('project.title')}</h2>
+            <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {items.map(([key, href, Icon]) => (
+                    <li key={key}>
+                        <a href={href} target="_blank" rel="noopener noreferrer" className="group flex h-full flex-col rounded-[28px] border border-line p-6 transition hover:-translate-y-1 hover:border-ink">
+                            <span className="flex items-center justify-between">
+                                <Icon className="size-5" />
+                                <ArrowUpRight className="rtl-flip size-5 text-ink-soft transition group-hover:rotate-45 group-hover:text-ink" />
+                            </span>
+                            <span className="mt-6 text-lg font-semibold">{t(`project.${key}`)}</span>
+                            <span className="mt-2 text-sm text-ink-soft">{t(`project.${key}_body`)}</span>
+                        </a>
+                    </li>
+                ))}
+            </ul>
+        </section>
     );
 }

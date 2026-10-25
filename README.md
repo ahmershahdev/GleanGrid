@@ -21,10 +21,11 @@
   <img alt="React 19" src="https://img.shields.io/badge/React-19-1f4d36.svg">
   <img alt="Inertia 3" src="https://img.shields.io/badge/Inertia-3-c9e265.svg">
   <img alt="8 languages" src="https://img.shields.io/badge/languages-8-f2b33d.svg">
-  <img alt="Tests" src="https://img.shields.io/badge/tests-133%20passing-2f7d4f.svg">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-138%20passing-2f7d4f.svg">
 </p>
 
 <p align="center">
+  🌐 <a href="https://ahmershah.dev/projects/gleangrid"><strong>Project page</strong></a> ·
   📖 <a href="https://ahmershah.dev/blogs/gleangrid-case-study-farmers-market-preorder-platform">Case study: how GleanGrid was built</a> ·
   🥭 <a href="https://ahmershah.dev/blogs/the-last-mango-problem-race-conditions-in-a-real-marketplace">The Last Mango Problem (race conditions)</a> ·
   📚 <a href="https://github.com/ahmershahdev/GleanGrid/wiki">Wiki</a>
@@ -463,6 +464,10 @@ docs/images/                                screenshots and diagrams (guides liv
 - **Wiki:** longer guides live in the [project wiki](https://github.com/ahmershahdev/GleanGrid/wiki): each role's guide, [Architecture](https://github.com/ahmershahdev/GleanGrid/wiki/Architecture), [Security Model](https://github.com/ahmershahdev/GleanGrid/wiki/Security-Model), [Payments](https://github.com/ahmershahdev/GleanGrid/wiki/Payments), [Race Conditions](https://github.com/ahmershahdev/GleanGrid/wiki/Race-Conditions), [Deployment](https://github.com/ahmershahdev/GleanGrid/wiki/Deployment) and [Testing and CI](https://github.com/ahmershahdev/GleanGrid/wiki/Testing-and-CI).
 
 ## Author & credits
+
+- **Project page:** <https://ahmershah.dev/projects/gleangrid>
+- **Case study:** [How GleanGrid was built](https://ahmershah.dev/blogs/gleangrid-case-study-farmers-market-preorder-platform)
+- **Deep dive:** [The Last Mango Problem: race conditions in a real marketplace](https://ahmershah.dev/blogs/the-last-mango-problem-race-conditions-in-a-real-marketplace)
 
 GleanGrid was designed and built solely by **Syed Ahmer Shah** — Software Engineer & Full Stack Developer, Hyderabad, Sindh — covering research, UI/UX, frontend, backend, database, payments, security, DevOps and documentation.
 [ahmershah.dev](https://ahmershah.dev/) · [GitHub](https://github.com/ahmershahdev) · [LinkedIn](https://linkedin.com/in/syedahmershah)

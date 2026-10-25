@@ -35,6 +35,10 @@ class TextFilesTest extends TestCase
         $this->assertStringContainsString('## Frequently asked questions', $full);
         $this->assertGreaterThan(strlen($summary), strlen($full));
 
+        foreach (config('gleangrid.project') as $link) {
+            $this->assertStringContainsString($link, $summary);
+        }
+
         $market = Market::active()->first();
         $this->assertStringContainsString(route('markets.show', $market->slug), $summary);
     }

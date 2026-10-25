@@ -27,6 +27,7 @@ class HandleInertiaRequests extends Middleware
             'formTicket' => fn () => BotGuard::ticket(),
             'contact' => fn () => config('gleangrid.contact'),
             'social' => fn () => config('gleangrid.social'),
+            'project' => fn () => config('gleangrid.project'),
             'oauth' => fn () => [...app(SocialAuthService::class)->status(), 'debug' => app()->isLocal()],
             'app' => [
                 'name' => config('app.name'),

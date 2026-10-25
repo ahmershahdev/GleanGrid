@@ -299,6 +299,11 @@ class Seo
                 'url' => url('/'),
                 'publisher' => ['@id' => url('/#org')],
                 'creator' => self::FOUNDER,
+                'sameAs' => [config('gleangrid.project.page'), config('gleangrid.project.source')],
+                'subjectOf' => [
+                    ['@type' => 'BlogPosting', 'url' => config('gleangrid.project.case_study'), 'headline' => 'GleanGrid case study: building a farmers-market pre-order platform', 'author' => ['@id' => self::FOUNDER['@id']]],
+                    ['@type' => 'BlogPosting', 'url' => config('gleangrid.project.race_conditions'), 'headline' => 'The Last Mango Problem: race conditions in a real marketplace', 'author' => ['@id' => self::FOUNDER['@id']]],
+                ],
                 'inLanguage' => app()->getLocale(),
                 'potentialAction' => [
                     '@type' => 'SearchAction',

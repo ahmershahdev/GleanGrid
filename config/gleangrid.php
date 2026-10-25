@@ -36,4 +36,12 @@ return [
         'facebook' => 'https://www.facebook.com/ahmershahdev',
     ],
 
+    /* The write-ups about GleanGrid on the author's portfolio, plus the source code. */
+    'project' => [
+        'page' => 'https://ahmershah.dev/projects/gleangrid',
+        'case_study' => 'https://ahmershah.dev/blogs/gleangrid-case-study-farmers-market-preorder-platform',
+        'race_conditions' => 'https://ahmershah.dev/blogs/the-last-mango-problem-race-conditions-in-a-real-marketplace',
+        'source' => 'https://github.com/ahmershahdev/GleanGrid',
+    ],
+
 ];

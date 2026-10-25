@@ -335,7 +335,7 @@ function Header() {
 
 function Footer() {
     const t = useT();
-    const { contact, social } = usePage().props;
+    const { contact, social, project } = usePage().props;
     const year = new Date().getFullYear();
     const cols = [
         { title: 'footer.explore', links: [['nav.markets', 'markets.index'], ['nav.farmers', 'farmers.index'], ['nav.produce', 'products.index'], ['nav.cart', 'cart']] },
@@ -422,6 +422,20 @@ function Footer() {
                     </a>
                     . {t('footer.rights')}
                 </p>
+                {project && (
+                    <nav aria-label={t('project.title')} className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1">
+                        {[
+                            ['project.page', project.page],
+                            ['project.case_study', project.case_study],
+                            ['project.race', project.race_conditions],
+                            ['project.source', project.source],
+                        ].map(([label, href]) => (
+                            <a key={label} href={href} target="_blank" rel="noopener noreferrer" className="underline decoration-paper/20 underline-offset-4 transition hover:text-lime hover:decoration-lime">
+                                {t(label)}
+                            </a>
+                        ))}
+                    </nav>
+                )}
             </div>
         </footer>
     );
