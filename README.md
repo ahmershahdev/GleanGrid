@@ -10,7 +10,6 @@
 </p>
 
 <p align="center">
-  <a href="https://gleangrid.ahmershah.dev">gleangrid.ahmershah.dev</a> ·
   Aptech TechWiz 7 — <em>MarketLink · eGreen Basket</em> ·
   Hyderabad, Sindh, Pakistan
 </p>
