@@ -31,6 +31,8 @@
   📚 <a href="https://github.com/ahmershahdev/GleanGrid/wiki">Wiki</a>
 </p>
 
+> **Status: complete and archived.** GleanGrid is a finished portfolio project, kept read-only. Final version: [v1.0.0](../../releases/tag/v1.0.0). Run it locally: [Running locally (XAMPP)](#running-locally-xampp).
+
 ---
 
 ## Contents
