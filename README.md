@@ -31,7 +31,7 @@
   📚 <a href="https://github.com/ahmershahdev/GleanGrid/wiki">Wiki</a>
 </p>
 
-> **Status: maintained.** Latest release: [v1.1.0](../../releases/latest). Fastest way to run it: [Docker](#running-with-docker) (one command), or [XAMPP](#running-locally-xampp).
+> **Status: complete and archived.** GleanGrid is a finished portfolio project, kept read-only. Latest release: [v1.1.1](../../releases/latest). Run it with [Docker](#running-with-docker) (one command) or [XAMPP](#running-locally-xampp).
 
 ---
 
