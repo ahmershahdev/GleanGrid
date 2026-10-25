@@ -1,0 +1,13 @@
+GleanGrid
+Copyright (c) 2026 Syed Ahmer Shah
+
+Third-party material bundled with GleanGrid keeps its own licence:
+
+- Produce illustrations: Microsoft Fluent Emoji — MIT License
+- Fonts: Fraunces, Geist and Geist Mono — SIL Open Font License 1.1
+- Icons: Lucide — ISC License
+- Map data: © OpenStreetMap contributors — Open Database License (ODbL)
+- PHP and JavaScript dependencies: see composer.lock and package-lock.json
+
+The GleanGrid name and logo identify this project; please don't use them to
+imply endorsement of a fork or a different service.
